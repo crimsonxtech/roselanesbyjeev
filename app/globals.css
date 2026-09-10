@@ -1,0 +1,169 @@
+
+@import "tailwindcss";
+
+:root {
+  --primary-light: #a3163f;
+  --primary: #831132;
+  --primary-dark: #5c0c24;
+  --primary-darker: #3f0a18;
+  --primary-darkest: #2b0510;
+
+  --secondary-light: #eeddb8;
+  --secondary: #d2b885;
+  --secondary-dark: #b8975d;
+
+  --white: #ffffff;
+  --cream: #f7ede0;
+  --black: #000000;
+
+  --success: #49d17d;
+  --placeholder: #9a9490;
+
+  /* Component tokens */
+  --background: var(--primary);
+  --foreground: var(--cream);
+  --glass-bg: rgba(255, 255, 255, 0.045);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --input-bg: rgba(255, 255, 255, 0.04);
+  --input-focus-bg: rgba(255, 255, 255, 0.06);
+}
+
+
+
+*, *::before, *::after {
+  box-sizing: border-box; }
+
+html{
+  overflow-y: scroll;
+  scroll-padding-top: 0;
+}
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+.page-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    isolation: isolate;
+
+    width: 100%;
+    height: 100dvh;
+    max-width: 100%;
+
+    overflow: hidden;
+    pointer-events: none;
+
+    z-index: -1;
+
+    background:
+        radial-gradient(
+            circle at 15% 90%,
+            var(--primary-light) 0%,
+            transparent 45%
+        ),
+
+        radial-gradient(
+            circle at 85% 85%,
+            var(--secondary) 0%,
+            transparent 30%
+        ),
+
+        radial-gradient(
+            circle at 20% 15%,
+            var(--primary-light) 0%,
+            transparent 40%
+        ),
+
+        radial-gradient(
+            circle at 90% 10%,
+            var(--primary-dark) 0%,
+            transparent 45%
+        ),
+
+        linear-gradient(
+            340deg,
+            var(--primary-darkest) 0%,
+            var(--primary-darker) 45%,
+            var(--primary-darkest) 100%
+        );
+}
+ 
+
+main {
+  position: relative;
+  z-index: 1;
+}
+
+
+button, input, textarea, select {
+  margin: 0;
+  font: inherit;
+  color: inherit;
+}
+
+
+textarea {
+  display: block;
+}
+
+input,
+textarea {
+  min-width: 0;
+}
+
+ 
+img, svg {
+  max-width: 100%;
+}
+
+img {
+  display: block;
+  height: auto;
+}
+
+svg {
+  flex-shrink: 0;
+}
+
+
+
+
+ 
+@media (forced-colors: active) {
+  .star,
+  .star-field {
+    display: none;
+  }
+
+  .page-background {
+    background: Canvas;
+  }
+}
+
+/* -------------------------------------------------------
+   Page section rhythm
+   Keep sections visually continuous: no arbitrary
+   vertical margins between sections. Each section owns
+   its own content spacing, while the header offset is
+   handled by the page layout.
+-------------------------------------------------------- */
+
+main > section {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
