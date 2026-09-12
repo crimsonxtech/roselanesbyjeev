@@ -28,7 +28,7 @@ const buttonBase =
 
     // Border
     "border",
-    "border-[rgba(210,184,133,.45)]",
+    "border-[var(--secondary)]/45",
     "rounded-[999px]",
 
     // Typography
@@ -49,7 +49,7 @@ const buttonBase =
     "[-webkit-backdrop-filter:blur(18px)_saturate(180%)]",
 
     // Base shadow
-    "[box-shadow:0_5px_14px_rgba(38,7,17,.10),0_14px_30px_rgba(38,7,17,.07),inset_0_1px_0_rgba(255,255,255,.42),inset_0_-1px_0_rgba(92,12,36,.08)]",
+    "[box-shadow:0_5px_14px_color-mix(in_srgb,var(--primary-darkest)_10%,transparent),0_14px_30px_color-mix(in_srgb,var(--primary-darkest)_7%,transparent),inset_0_1px_0_rgba(255,255,255,.42),inset_0_-1px_0_color-mix(in_srgb,var(--primary-dark)_8%,transparent)]",
 
     // Base transform
     "translate-y-0",
@@ -72,7 +72,7 @@ const glassEffects =
     "before:-z-[1]",
     "before:pointer-events-none",
 
-    "before:[background:radial-gradient(circle_at_18%_8%,rgba(255,255,255,.42),transparent_28%),radial-gradient(circle_at_85%_100%,rgba(210,184,133,.14),transparent_42%),linear-gradient(125deg,transparent_20%,rgba(255,255,255,.08)_48%,rgba(210,184,133,.10)_55%,transparent_80%)]",
+    "before:[background:radial-gradient(circle_at_18%_8%,rgba(255,255,255,.42),transparent_28%),radial-gradient(circle_at_85%_100%,color-mix(in_srgb,var(--secondary)_14%,transparent),transparent_42%),linear-gradient(125deg,transparent_20%,rgba(255,255,255,.08)_48%,color-mix(in_srgb,var(--secondary)_10%,transparent)_55%,transparent_80%)]",
 
     "before:opacity-[.85]",
     "before:-translate-x-[35%]",
@@ -107,43 +107,43 @@ const glassEffects =
 const primaryVariant =
   [
     // Color
-    "text-[#2b0510]",
+    "text-[var(--primary-darkest)]",
 
     // Background
-    "[background:linear-gradient(145deg,rgba(255,255,255,.30)_0%,rgba(255,255,255,.10)_38%,rgba(210,184,133,.10)_100%),#d2b885]",
+    "[background:linear-gradient(145deg,rgba(255,255,255,.30)_0%,rgba(255,255,255,.10)_38%,color-mix(in_srgb,var(--secondary)_10%,transparent)_100%),var(--secondary)]",
 
     // Border
-    "border-[rgba(210,184,133,.62)]",
+    "border-[var(--secondary)]/62",
 
     // Shadow
-    "[box-shadow:0_5px_14px_rgba(38,7,17,.10),0_14px_30px_rgba(38,7,17,.07),inset_0_1px_0_rgba(255,255,255,.42),inset_0_-1px_0_rgba(92,12,36,.08),0_0_18px_rgba(210,184,133,.06)]",
+    "[box-shadow:0_5px_14px_color-mix(in_srgb,var(--primary-darkest)_10%,transparent),0_14px_30px_color-mix(in_srgb,var(--primary-darkest)_7%,transparent),inset_0_1px_0_rgba(255,255,255,.42),inset_0_-1px_0_color-mix(in_srgb,var(--primary-dark)_8%,transparent),0_0_18px_color-mix(in_srgb,var(--secondary)_6%,transparent)]",
 
     // Primary hover
-    "hover:not-disabled:text-[#2b0510]",
+    "hover:not-disabled:text-[var(--primary-darkest)]",
 
-    "hover:not-disabled:[background:linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.06)),#eeddb8]",
+    "hover:not-disabled:[background:linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.06)),var(--secondary-light)]",
 
-    "hover:not-disabled:border-[#eeddb8]",
+    "hover:not-disabled:border-[var(--secondary-light)]",
 
-    "hover:not-disabled:[box-shadow:0_10px_22px_rgba(38,7,17,.14),0_18px_42px_rgba(210,184,133,.18)]",
+    "hover:not-disabled:[box-shadow:0_10px_22px_color-mix(in_srgb,var(--primary-darkest)_14%,transparent),0_18px_42px_color-mix(in_srgb,var(--secondary)_18%,transparent)]",
   ].join(" ");
 
 const secondaryVariant =
   [
     // Color
-    "text-[#f7ede0]",
+    "text-[var(--cream)]",
 
     // Background
-    "[background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.03)),rgba(131,17,50,.25)]",
+    "[background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.03)),color-mix(in_srgb,var(--primary)_25%,transparent)]",
 
     // Secondary hover
-    "hover:not-disabled:text-[#eeddb8]",
+    "hover:not-disabled:text-[var(--secondary-light)]",
 
-    "hover:not-disabled:[background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.04)),rgba(131,17,50,.30)]",
+    "hover:not-disabled:[background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.04)),color-mix(in_srgb,var(--primary)_30%,transparent)]",
 
-    "hover:not-disabled:border-[#d2b885]",
+    "hover:not-disabled:border-[var(--secondary)]",
 
-    "hover:not-disabled:[box-shadow:0_8px_20px_rgba(38,7,17,.12),0_16px_34px_rgba(38,7,17,.08)]",
+    "hover:not-disabled:[box-shadow:0_8px_20px_color-mix(in_srgb,var(--primary-darkest)_12%,transparent),0_16px_34px_color-mix(in_srgb,var(--primary-darkest)_8%,transparent)]",
   ].join(" ");
 
 const interaction =
@@ -170,7 +170,7 @@ const interaction =
     // ==================================================
 
     "focus-visible:outline-none",
-    "focus-visible:[box-shadow:0_0_0_4px_rgba(210,184,133,.14),0_10px_24px_rgba(38,7,17,.14)]",
+    "focus-visible:[box-shadow:0_0_0_4px_color-mix(in_srgb,var(--secondary)_14%,transparent),0_10px_24px_color-mix(in_srgb,var(--primary-darkest)_14%,transparent)]",
 
     // ==================================================
     // DISABLED

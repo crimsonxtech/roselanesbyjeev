@@ -1,120 +1,216 @@
-
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Manrope:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Luvee";
+  src: url("/fonts/LuveeRegular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* =========================================================
+   DESIGN TOKENS
+   ========================================================= */
+
 :root {
+  /* ---------- Primary / Burgundy ---------- */
   --primary-light: #a3163f;
   --primary: #831132;
   --primary-dark: #5c0c24;
   --primary-darker: #3f0a18;
   --primary-darkest: #2b0510;
 
+  /* ---------- Secondary / Gold ---------- */
   --secondary-light: #eeddb8;
   --secondary: #d2b885;
   --secondary-dark: #b8975d;
 
+  /* ---------- Neutral ---------- */
   --white: #ffffff;
   --cream: #f7ede0;
   --black: #000000;
 
+  /* ---------- Semantic ---------- */
   --success: #49d17d;
+  --error: #ef6461;
   --placeholder: #9a9490;
 
-  /* Component tokens */
+  /* ---------- Component Tokens ---------- */
   --background: var(--primary);
   --foreground: var(--cream);
+
   --glass-bg: rgba(255, 255, 255, 0.045);
   --glass-border: rgba(255, 255, 255, 0.12);
+
   --input-bg: rgba(255, 255, 255, 0.04);
   --input-focus-bg: rgba(255, 255, 255, 0.06);
+
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-body: "Manrope", Arial, Helvetica, sans-serif;
+  --font-brand: "Luvee", cursive;
 }
 
 
-
-*, *::before, *::after {
-  box-sizing: border-box; }
-
-html{
-  overflow-y: scroll;
-  scroll-padding-top: 0;
+.font-display {
+  font-family: var(--font-display);
 }
-html,
-body {
+
+.font-brand {
+  font-family: var(--font-brand);
+}
+
+/* =========================================================
+   GLOBAL RESET
+   ========================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   DOCUMENT
+   ========================================================= */
+
+html {
   width: 100%;
   min-height: 100%;
+
+  /* Keep scrollbar space permanently reserved */
+  overflow-y: scroll;
+
+  /* Smooth anchor scrolling */
+  scroll-behavior: smooth;
+
+  /* Prevent anchored content from hiding behind fixed UI */
+  scroll-padding-top: 0;
+
+  /* Firefox scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--secondary) var(--primary-darker);
 }
 
 body {
-  margin: 0;
+  width: 100%;
   min-width: 320px;
+  min-height: 100%;
+
+  margin: 0;
+
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+
+  font-family: var(--font-body);
+
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+
+  /* Prevent horizontal page overflow */
   overflow-x: hidden;
 }
 
-.page-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    isolation: isolate;
 
-    width: 100%;
-    height: 100dvh;
-    max-width: 100%;
+/* =========================================================
+   CUSTOM CURSOR
+   ========================================================= */
 
-    overflow: hidden;
-    pointer-events: none;
+/*
+  The CustomCursor component adds the "custom-cursor"
+  class to <html> when a fine pointer is available.
 
-    z-index: -1;
+  Using the universal selector here is important because
+  browser styles can otherwise restore the native hand
+  cursor on links and buttons.
+*/
 
-    background:
-        radial-gradient(
-            circle at 15% 90%,
-            var(--primary-light) 0%,
-            transparent 45%
-        ),
-
-        radial-gradient(
-            circle at 85% 85%,
-            var(--secondary) 0%,
-            transparent 30%
-        ),
-
-        radial-gradient(
-            circle at 20% 15%,
-            var(--primary-light) 0%,
-            transparent 40%
-        ),
-
-        radial-gradient(
-            circle at 90% 10%,
-            var(--primary-dark) 0%,
-            transparent 45%
-        ),
-
-        linear-gradient(
-            340deg,
-            var(--primary-darkest) 0%,
-            var(--primary-darker) 45%,
-            var(--primary-darkest) 100%
-        );
+html.custom-cursor,
+html.custom-cursor * {
+  cursor: none !important;
 }
- 
 
-main {
-  position: relative;
-  z-index: 1;
+@media (hover: hover) and (pointer: fine) {
+  html.custom-cursor input,
+  html.custom-cursor textarea,
+  html.custom-cursor [contenteditable="true"] {
+    cursor: text !important;
+  }
+}
+
+/*
+  Restore the text cursor where text editing is expected.
+  This keeps inputs/textareas/contenteditable elements
+  usable while the custom cursor is active.
+*/
+
+@media (hover: hover) and (pointer: fine) {
+  html.custom-cursor input,
+  html.custom-cursor textarea,
+  html.custom-cursor [contenteditable="true"] {
+    cursor: text !important;
+  }
 }
 
 
-button, input, textarea, select {
+/* =========================================================
+   TEXT SELECTION
+   ========================================================= */
+
+/*
+  Replace the browser's default blue selection with the
+  site's burgundy + gold theme.
+*/
+
+::selection {
+  background: var(--secondary);
+  color: var(--primary-darkest);
+}
+
+::-moz-selection {
+  background: var(--secondary);
+  color: var(--primary-darkest);
+}
+
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+/* Chrome / Edge / Safari */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--primary-darker);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--secondary);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--white);
+}
+
+
+/* =========================================================
+   FORM ELEMENTS
+   ========================================================= */
+
+button,
+input,
+textarea,
+select {
   margin: 0;
+
   font: inherit;
   color: inherit;
 }
-
 
 textarea {
   display: block;
@@ -125,8 +221,13 @@ textarea {
   min-width: 0;
 }
 
- 
-img, svg {
+
+/* =========================================================
+   MEDIA
+   ========================================================= */
+
+img,
+svg {
   max-width: 100%;
 }
 
@@ -140,9 +241,98 @@ svg {
 }
 
 
+/* =========================================================
+   PAGE BACKGROUND
+   ========================================================= */
+
+.page-background {
+  position: fixed;
+  inset: 0;
+
+  width: 100%;
+  height: 100dvh;
+  max-width: 100%;
+
+  overflow: hidden;
+  pointer-events: none;
+
+  isolation: isolate;
+  z-index: -1;
+
+  background:
+    /* Bottom-left burgundy glow */
+    radial-gradient(
+      circle at 15% 90%,
+      var(--primary-light) 0%,
+      transparent 45%
+    ),
+
+    /* Bottom-right gold glow */
+    radial-gradient(
+      circle at 85% 85%,
+      var(--secondary) 0%,
+      transparent 30%
+    ),
+
+    /* Top-left burgundy glow */
+    radial-gradient(
+      circle at 20% 15%,
+      var(--primary-light) 0%,
+      transparent 40%
+    ),
+
+    /* Top-right dark burgundy glow */
+    radial-gradient(
+      circle at 90% 10%,
+      var(--primary-dark) 0%,
+      transparent 45%
+    ),
+
+    /* Base gradient */
+    linear-gradient(
+      340deg,
+      var(--primary-darkest) 0%,
+      var(--primary-darker) 45%,
+      var(--primary-darkest) 100%
+    );
+}
 
 
- 
+/* =========================================================
+   MAIN CONTENT
+   ========================================================= */
+
+main {
+  position: relative;
+  z-index: 1;
+}
+
+
+/* =========================================================
+   SECTION RHYTHM
+   ========================================================= */
+
+/*
+  Sections should not introduce arbitrary external margins.
+  Each section controls its own internal spacing.
+*/
+
+main > section {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+/*
+  Respect Windows High Contrast / forced-colors mode.
+  Decorative star effects are hidden because they can become
+  visually noisy or meaningless in forced-colors mode.
+*/
+
 @media (forced-colors: active) {
   .star,
   .star-field {
@@ -154,16 +344,94 @@ svg {
   }
 }
 
-/* -------------------------------------------------------
-   Page section rhythm
-   Keep sections visually continuous: no arbitrary
-   vertical margins between sections. Each section owns
-   its own content spacing, while the header offset is
-   handled by the page layout.
--------------------------------------------------------- */
 
-main > section {
-  margin-top: 0;
-  margin-bottom: 0;
+/* =========================================================
+   POINTER FALLBACK
+   ========================================================= */
+
+/*
+  Fine pointer:
+  CustomCursor handles the visual cursor.
+
+  Coarse / touch pointer:
+  Keep the normal browser cursor behavior.
+*/
+
+@media (hover: none), (pointer: coarse) {
+  html,
+  body {
+    cursor: auto;
+  }
 }
 
+
+/* ============================================================
+   Browser Autofill
+   Prevent Chrome from turning form inputs white/yellow
+   when a previously entered value is selected.
+   ============================================================ */
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+textarea:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--foreground);
+
+  -webkit-box-shadow: 0 0 0 1000px var(--input-bg) inset;
+  box-shadow: 0 0 0 1000px var(--input-bg) inset;
+
+  caret-color: var(--foreground);
+
+  transition: background-color 9999s ease-out 0s;
+}
+/* ============================================================
+   Select Dropdown Animation
+   ============================================================ */
+
+.select-content[data-state="open"] {
+  animation: select-content-open 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top center;
+}
+
+.select-content[data-state="closed"] {
+  animation: select-content-close 220ms cubic-bezier(0.4, 0, 1, 1);
+  transform-origin: top center;
+}
+
+@keyframes select-content-open {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scaleY(0.82);
+    filter: blur(3px);
+  }
+
+  60% {
+    opacity: 1;
+    transform: translateY(2px) scaleY(1.02);
+    filter: blur(0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes select-content-close {
+  from {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+    filter: blur(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scaleY(0.88);
+    filter: blur(2px);
+  }
+}

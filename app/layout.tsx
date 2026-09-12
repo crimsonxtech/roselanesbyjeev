@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { CustomCursor } from "@/components/custom-cursor";
+import { ScrollRevealProvider } from "@/hooks/ScrollRevealProvider";
+
 
 export const metadata: Metadata = {
   title: "Roselanes by Jeev | Pixtack",
@@ -11,7 +14,11 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <CustomCursor />
+        <ScrollRevealProvider />
+        {children}
+        </body>
     </html>
   );
 }

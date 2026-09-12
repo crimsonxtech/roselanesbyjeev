@@ -1579,8 +1579,8 @@ export default function SiteHeader() {
                 }
               >
                 <img
-                  src="/brand/logo.png"
-                  alt=""
+                  src="/brand/logo.svg"
+                  alt="/brand/logo.png"
                 />
               </a>
             </div>
