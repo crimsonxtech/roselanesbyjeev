@@ -40,7 +40,7 @@ const chipDefault =
   "border-[var(--glass-border)] bg-black/20 text-[var(--cream)]/80 hover:border-[var(--secondary)]/60 hover:text-[var(--cream)]";
 
 const chipSelected =
-  "border-[var(--secondary)] bg-gradient-to-br from-[var(--secondary-light)] to-[var(--secondary)] text-[var(--primary-darkest)] font-semibold shadow-[0_4px_14px_rgba(0,0,0,.20)]";
+  "border-[var(--secondary)] bg-gradient-to-br from-[var(--secondary-light)] to-[var(--secondary)] !text-[var(--primary-darkest)] font-semibold shadow-[0_4px_14px_rgba(0,0,0,.20)]";
 
 const chipAdd =
   "border-dashed border-[var(--secondary-light)]/50 bg-transparent text-[var(--secondary-light)] hover:border-[var(--secondary-light)]";
@@ -255,14 +255,9 @@ export function QuoteSection() {
   const [success, setSuccess] = React.useState(false);
   const [sending, setSending] = React.useState(false);
 
-  // ---- Bottom-sheet drag / minimize / mini-player ----
-  const [sheetState, setSheetState] = React.useState<"partial" | "expanded">(
-    "partial"
-  );
+  // ---- Unified sheet drag state (expanded <-> mini morph) ----
   const [isDragging, setIsDragging] = React.useState(false);
-  const [isMinimizing, setIsMinimizing] = React.useState(false);
   const [dragY, setDragY] = React.useState(0);
-  const [showMiniPlayer, setShowMiniPlayer] = React.useState(false);
 
   // ---- Toast ----
   const [toast, setToast] = React.useState<string | null>(null);
@@ -275,6 +270,7 @@ export function QuoteSection() {
   const [phone, setPhone] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [budget, setBudget] = React.useState<string>("");
+  const [budgetError, setBudgetError] = React.useState(false);
   const [message, setMessage] = React.useState("");
 
   // ---- Section 2: Events ----
@@ -285,6 +281,7 @@ export function QuoteSection() {
   const [customServiceDraft, setCustomServiceDraft] = React.useState<
     Record<number, string>
   >({});
+  const [eventsError, setEventsError] = React.useState(false);
 
   // ---- Section 3: Add-ons ----
   const [addOns, setAddOns] = React.useState<AddOnItem[]>([]);
@@ -307,6 +304,8 @@ export function QuoteSection() {
 
   const successRef = React.useRef<HTMLDivElement>(null);
   const nameRef = React.useRef<HTMLInputElement>(null);
+  const budgetTriggerRef = React.useRef<HTMLButtonElement>(null);
+  const eventsSectionRef = React.useRef<HTMLDivElement>(null);
   const restoredRef = React.useRef(false);
   const dragStartYRef = React.useRef(0);
   const dragStartTimeRef = React.useRef(0);
@@ -361,7 +360,14 @@ export function QuoteSection() {
     }
   }, [name, phone, email, budget, message, events, addOns]);
 
-  /* ---------------- Mini-player visibility ---------------- */
+  /* ---------------- Derived sheet mode ----------------
+     A single element morphs between three visual states instead
+     of swapping between a modal and a separate floating pill:
+       - "expanded": the full quote form, centered
+       - "mini":     a small pill anchored to the bottom, with a
+                     draft worth resuming
+       - "hidden":   nothing worth showing, fully invisible
+  ------------------------------------------------------- */
 
   function hasMeaningfulSession() {
     return Boolean(
@@ -382,11 +388,11 @@ export function QuoteSection() {
     );
   }
 
-  React.useEffect(() => {
-    if (!restoredRef.current) return;
-    setShowMiniPlayer(hasMeaningfulSession() && !isOpen);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, phone, email, budget, message, events, addOns, isOpen]);
+  const mode: "expanded" | "mini" | "hidden" = isOpen
+    ? "expanded"
+    : hasMeaningfulSession()
+    ? "mini"
+    : "hidden";
 
   /* ---------------- Open the modal from any "/quote" link ---------------- */
 
@@ -434,8 +440,7 @@ export function QuoteSection() {
   }
 
   function openModal() {
-    setSheetState("partial");
-    setShowMiniPlayer(false);
+    setDragY(0);
     setIsOpen(true);
   }
 
@@ -444,18 +449,12 @@ export function QuoteSection() {
   }
 
   /*
-   * Minimize does NOT discard the draft — it slides the sheet
-   * down and, once the animation finishes, leaves the floating
-   * mini-player up if there's anything worth resuming.
+   * Minimize does NOT discard the draft — the same panel simply
+   * morphs down into the small pill, still holding the draft.
    */
   function minimizeModal() {
-    setIsMinimizing(true);
-    setSheetState("partial");
-
-    setTimeout(() => {
-      setIsOpen(false);
-      setIsMinimizing(false);
-    }, 360);
+    setDragY(0);
+    setIsOpen(false);
   }
 
   function handleDragStart(e: React.PointerEvent<HTMLDivElement>) {
@@ -469,7 +468,7 @@ export function QuoteSection() {
   function handleDragMove(e: React.PointerEvent<HTMLDivElement>) {
     if (!isDragging) return;
     const delta = e.clientY - dragStartYRef.current;
-    setDragY(Math.max(-180, delta));
+    setDragY(Math.max(0, delta));
   }
 
   function handleDragEnd(e: React.PointerEvent<HTMLDivElement>) {
@@ -480,7 +479,6 @@ export function QuoteSection() {
     const elapsed = Math.max(1, performance.now() - dragStartTimeRef.current);
     const velocity = delta / elapsed;
 
-    setDragY(0);
     e.currentTarget.releasePointerCapture?.(e.pointerId);
 
     if (delta > 90 || velocity > 0.65) {
@@ -488,9 +486,7 @@ export function QuoteSection() {
       return;
     }
 
-    if (delta < -70) {
-      setSheetState("expanded");
-    }
+    setDragY(0);
   }
 
   function showToast(msg: string) {
@@ -501,7 +497,6 @@ export function QuoteSection() {
 
   function deleteSession() {
     resetAll();
-    setShowMiniPlayer(false);
   }
 
   function resetAll() {
@@ -515,8 +510,10 @@ export function QuoteSection() {
     setPhone("");
     setEmail("");
     setBudget("");
+    setBudgetError(false);
     setMessage("");
     setEvents([newEvent()]);
+    setEventsError(false);
     setAddOns([]);
     setQuoteGenerated(false);
     setSummaryData(null);
@@ -571,6 +568,7 @@ export function QuoteSection() {
         };
       })
     );
+    setEventsError(false);
     markEdited();
   }
 
@@ -622,6 +620,8 @@ export function QuoteSection() {
     );
 
     setCustomServiceDraft((prev) => ({ ...prev, [id]: "" }));
+    setCustomServiceOpen((prev) => ({ ...prev, [id]: false }));
+    setEventsError(false);
     markEdited();
   }
 
@@ -665,6 +665,7 @@ export function QuoteSection() {
     });
 
     setCustomAddOnDraft("");
+    setCustomAddOnOpen(false);
     markEdited();
   }
 
@@ -676,23 +677,35 @@ export function QuoteSection() {
       setFooterNote(
         "Please fill in your name, email, and phone number first."
       );
-      nameRef.current?.focus();
+      nameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      nameRef.current?.focus({ preventScroll: true });
       return;
     }
 
     if (!budget) {
+      setBudgetError(true);
       setFooterError(true);
       setFooterNote("Please select your budget range.");
+      budgetTriggerRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      budgetTriggerRef.current?.focus();
       return;
     }
 
     const hasServices = events.some((ev) => ev.services.length > 0);
 
     if (!hasServices) {
+      setEventsError(true);
       setFooterError(true);
       setFooterNote(
         "Add at least one service to an event to generate a quote."
       );
+      eventsSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
       return;
     }
 
@@ -714,6 +727,8 @@ export function QuoteSection() {
     setSummaryData(data);
     setQuoteGenerated(true);
     setFooterError(false);
+    setBudgetError(false);
+    setEventsError(false);
     setFooterNote("Quote generated — send it to us directly.");
   }
 
@@ -757,7 +772,6 @@ export function QuoteSection() {
       }
 
       setSuccess(true);
-      setShowMiniPlayer(false);
       showToast("Quote request sent — we'll be in touch within 24 hours.");
       requestAnimationFrame(() => successRef.current?.focus());
     } catch (err) {
@@ -774,6 +788,52 @@ export function QuoteSection() {
   }
 
   /* ==========================================================
+     PANEL GEOMETRY — the single element that morphs between
+     "expanded" (full modal) and "mini" (bottom pill), YouTube /
+     Spotify miniplayer style. Only concrete, animatable values
+     are used (no "auto"), so the browser can transition smoothly
+     between them.
+     ========================================================== */
+
+  function getPanelStyle(): React.CSSProperties {
+    const transition = isDragging
+      ? "none"
+      : "top 480ms cubic-bezier(.32,.72,0,1), width 480ms cubic-bezier(.32,.72,0,1), max-width 480ms cubic-bezier(.32,.72,0,1), max-height 480ms cubic-bezier(.32,.72,0,1), border-radius 480ms cubic-bezier(.32,.72,0,1), transform 480ms cubic-bezier(.32,.72,0,1), opacity 320ms ease";
+
+    if (mode === "expanded") {
+      return {
+        position: "fixed",
+        left: "50%",
+        top: "50%",
+        width: "calc(100% - 32px)",
+        maxWidth: "880px",
+        maxHeight: "92svh",
+        borderRadius: "28px",
+        transform: `translate(-50%, calc(-50% + ${dragY}px))`,
+        opacity: 1,
+        pointerEvents: "auto",
+        transition,
+      };
+    }
+
+    const visible = mode === "mini";
+
+    return {
+      position: "fixed",
+      left: "50%",
+      top: "100%",
+      width: "calc(100% - 32px)",
+      maxWidth: "420px",
+      maxHeight: "76px",
+      borderRadius: "999px",
+      transform: "translate(-50%, calc(-100% - 20px))",
+      opacity: visible ? 1 : 0,
+      pointerEvents: visible ? "auto" : "none",
+      transition,
+    };
+  }
+
+  /* ==========================================================
      RENDER
      ========================================================== */
 
@@ -783,438 +843,439 @@ export function QuoteSection() {
         aria-hidden="true"
         onClick={undefined}
         className={`fixed inset-0 z-[999999] bg-[var(--primary-darkest)]/85 backdrop-blur-md transition-opacity duration-300 ${
-          isOpen ? "opacity-100" : "pointer-events-none opacity-0"
+          mode === "expanded"
+            ? "opacity-100"
+            : "pointer-events-none opacity-0"
         }`}
       />
 
       <div
         role="dialog"
-        aria-modal="true"
+        aria-modal={mode === "expanded"}
         aria-labelledby="quoteTitle"
-        aria-hidden={!isOpen}
-        className={`fixed inset-0 z-[999999] flex items-center justify-center p-4 transition-opacity duration-300 sm:p-8 ${
-          isOpen
-            ? "pointer-events-auto opacity-100"
-            : "pointer-events-none opacity-0"
+        aria-hidden={mode !== "expanded"}
+        onClick={mode === "mini" ? openModal : undefined}
+        className={`z-[999999] flex flex-col overflow-hidden border border-[var(--secondary)]/40 bg-gradient-to-br from-[var(--primary)]/97 via-[var(--primary-dark)]/98 to-[var(--primary-darkest)]/99 shadow-[0_30px_80px_rgba(0,0,0,.48)] ${
+          mode === "mini" ? "cursor-pointer" : ""
         }`}
+        style={getPanelStyle()}
       >
-        <div
-          className={`relative flex max-h-[92svh] w-full max-w-[880px] flex-col overflow-hidden rounded-[28px] border border-[var(--secondary)]/40 bg-gradient-to-br from-[var(--primary)]/97 via-[var(--primary-dark)]/98 to-[var(--primary-darkest)]/99 shadow-[0_30px_80px_rgba(0,0,0,.48)] ${
-            isDragging ? "" : "transition-transform duration-300"
-          } ${
-            isOpen && !isMinimizing
-              ? "translate-y-0 scale-100"
-              : "translate-y-4 scale-[.985]"
-          }`}
-          style={
-            isDragging
-              ? { transform: `translateY(${dragY}px)` }
-              : isMinimizing
-              ? { transform: "translateY(100%)" }
-              : undefined
-          }
-        >
-          <div className="absolute inset-x-0 top-0 z-20 h-[2px] bg-gradient-to-r from-transparent via-[var(--secondary-light)] to-transparent" />
-          <div className="pointer-events-none absolute left-1/2 top-2 z-20 h-1 w-[42px] -translate-x-1/2 rounded-full bg-[var(--secondary-light)]/78 shadow-[0_0_12px_rgba(210,184,133,.14)]" />
+        {mode === "expanded" && (
+          <>
+            <div className="absolute inset-x-0 top-0 z-20 h-[2px] bg-gradient-to-r from-transparent via-[var(--secondary-light)] to-transparent" />
+            <div className="pointer-events-none absolute left-1/2 top-2 z-20 h-1 w-[42px] -translate-x-1/2 rounded-full bg-[var(--secondary-light)]/78 shadow-[0_0_12px_rgba(210,184,133,.14)]" />
+          </>
+        )}
 
-          {!success ? (
-            <>
-              {/* HEADER */}
-              <div className="flex shrink-0 items-center gap-4 px-5 py-5 sm:px-8">
-                <div
-                  className="flex min-w-0 flex-1 cursor-grab select-none items-center gap-4 active:cursor-grabbing"
-                  style={{ touchAction: "none" }}
-                  onPointerDown={handleDragStart}
-                  onPointerMove={handleDragMove}
-                  onPointerUp={handleDragEnd}
-                  onPointerCancel={handleDragEnd}
-                  aria-label="Drag quote panel"
-                >
-                  <img
-                    src="/brand/icon.png"
-                    alt="Roselanes by Jeev"
-                    className="size-[54px] shrink-0 rounded-full border border-[var(--secondary)]/48 object-cover shadow-[0_8px_24px_rgba(0,0,0,.2)] sm:size-[62px]"
-                  />
+        {mode === "expanded" && !success && (
+          <>
+            {/* HEADER */}
+            <div className="flex shrink-0 items-center gap-4 px-5 py-5 sm:px-8">
+              <div
+                className="flex min-w-0 flex-1 cursor-grab select-none items-center gap-4 active:cursor-grabbing"
+                style={{ touchAction: "none" }}
+                onPointerDown={handleDragStart}
+                onPointerMove={handleDragMove}
+                onPointerUp={handleDragEnd}
+                onPointerCancel={handleDragEnd}
+                aria-label="Drag quote panel"
+              >
+                <img
+                  src="/brand/icon.png"
+                  alt="Roselanes by Jeev"
+                  className="size-[54px] shrink-0 rounded-full border border-[var(--secondary)]/48 object-cover shadow-[0_8px_24px_rgba(0,0,0,.2)] sm:size-[62px]"
+                />
 
-                  <div className="min-w-0">
-                    <h2
-                      id="quoteTitle"
-                      className="font-serif text-[1.3rem] font-normal leading-[1.15] text-[var(--cream)] sm:text-[1.45rem]"
-                    >
-                      Request a Quote
-                    </h2>
-                    <p className="mt-1 text-[.68rem] uppercase tracking-[0.1em] text-[var(--secondary-light)]">
-                      Luxé Wedding &amp; Lifestyle Photography
-                    </p>
-                  </div>
+                <div className="min-w-0">
+                  <h2
+                    id="quoteTitle"
+                    className="font-serif text-[1.3rem] font-normal leading-[1.15] text-[var(--cream)] sm:text-[1.45rem]"
+                  >
+                    Request a Quote
+                  </h2>
+                  <p className="mt-1 text-[.68rem] uppercase tracking-[0.1em] text-[var(--secondary-light)]">
+                    Luxé Wedding &amp; Lifestyle Photography
+                  </p>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={minimizeModal}
-                  aria-label="Close"
-                  className="ml-auto flex size-9 shrink-0 items-center justify-center rounded-full border border-[var(--secondary)]/38 bg-black/25 text-[var(--cream)]/80 transition-colors hover:border-[var(--secondary-light)] hover:text-[var(--secondary-light)]"
-                >
-                  <X className="size-4" />
-                </button>
               </div>
 
-              {/* BODY */}
-              <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-3 pt-1 sm:px-8">
-                {/* ================= SECTION 1 — YOUR DETAILS ================= */}
-                <QuoteSectionHeading step={1}>Your Details</QuoteSectionHeading>
+              <button
+                type="button"
+                onClick={minimizeModal}
+                aria-label="Close"
+                className="ml-auto flex size-9 shrink-0 items-center justify-center rounded-full border border-[var(--secondary)]/38 bg-black/25 text-[var(--cream)]/80 transition-colors hover:border-[var(--secondary-light)] hover:text-[var(--secondary-light)]"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
 
-                <div className="mb-6 flex flex-col gap-4">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Full Name" htmlFor="quote-name">
-                      <input
-                        ref={nameRef}
-                        className={inputClass}
-                        type="text"
-                        id="quote-name"
-                        placeholder="Your full name"
-                        autoComplete="name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                      />
-                    </Field>
+            {/* BODY */}
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-3 pt-1 sm:px-8">
+              {/* ================= SECTION 1 — YOUR DETAILS ================= */}
+              <QuoteSectionHeading step={1}>Your Details</QuoteSectionHeading>
 
-                    <Field label="Phone" htmlFor="quote-phone">
-                      <input
-                        className={inputClass}
-                        type="tel"
-                        id="quote-phone"
-                        placeholder="+91 XXXXX XXXXX"
-                        autoComplete="tel"
-                        inputMode="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                      />
-                    </Field>
-                  </div>
+              <div className="mb-6 flex flex-col gap-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Full Name" htmlFor="quote-name">
+                    <input
+                      ref={nameRef}
+                      className={inputClass}
+                      type="text"
+                      id="quote-name"
+                      placeholder="Your full name"
+                      autoComplete="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </Field>
 
-                  <div className="grid gap-4 sm:grid-cols-[2.5fr_1.5fr]">
-                    <Field label="Email" htmlFor="quote-email">
-                      <input
-                        className={inputClass}
-                        type="email"
-                        id="quote-email"
-                        placeholder="Your email address"
-                        autoComplete="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                      />
-                    </Field>
-
-                    <Field label="Budget Range" htmlFor="quote-budget">
-                      <Select
-                        value={budget}
-                        onValueChange={(value) => {
-                          setBudget(value);
-                          markEdited();
-                        }}
-                      >
-                        <SelectTrigger id="quote-budget" aria-label="Budget range">
-                          <SelectValue placeholder="Select your budget" />
-                        </SelectTrigger>
-
-                        <SelectContent>
-                          {BUDGET_OPTIONS.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </Field>
-                  </div>
-
-                  <Field label="Additional Notes" htmlFor="quote-message" optional>
-                    <textarea
-                      className={`${inputClass} h-[90px] min-h-[90px] resize-none overflow-y-auto py-4`}
-                      id="quote-message"
-                      placeholder="Tell us anything important about your event..."
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
+                  <Field label="Phone" htmlFor="quote-phone">
+                    <input
+                      className={inputClass}
+                      type="tel"
+                      id="quote-phone"
+                      placeholder="+91 XXXXX XXXXX"
+                      autoComplete="tel"
+                      inputMode="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
                     />
                   </Field>
                 </div>
 
-                {/* ================= SECTION 2 — YOUR EVENTS ================= */}
-                <QuoteSectionHeading step={2}>Your Events</QuoteSectionHeading>
-
-                <div className="mb-4 flex flex-col gap-3.5">
-                  {events.map((ev) => (
-                    <EventCard
-                      key={ev.id}
-                      event={ev}
-                      removable={events.length > 1}
-                      customServiceOpen={Boolean(customServiceOpen[ev.id])}
-                      customServiceDraft={customServiceDraft[ev.id] || ""}
-                      onTypeChange={(value) => setEventType(ev.id, value)}
-                      onCustomTypeChange={(value) =>
-                        updateEvent(ev.id, { customType: value })
-                      }
-                      onDateChange={(value) => {
-                        updateEvent(ev.id, { date: value });
-                        markEdited();
-                      }}
-                      onVenueChange={(value) => {
-                        updateEvent(ev.id, { venue: value });
-                        markEdited();
-                      }}
-                      onRemove={() => removeEvent(ev.id)}
-                      onToggleService={(name) => toggleService(ev.id, name)}
-                      onServiceQtyChange={(name, delta) =>
-                        changeServiceQty(ev.id, name, delta)
-                      }
-                      onServiceRemove={(name) => removeService(ev.id, name)}
-                      onOpenCustomService={() =>
-                        setCustomServiceOpen((prev) => ({
-                          ...prev,
-                          [ev.id]: true,
-                        }))
-                      }
-                      onCustomServiceDraftChange={(value) =>
-                        setCustomServiceDraft((prev) => ({
-                          ...prev,
-                          [ev.id]: value,
-                        }))
-                      }
-                      onAddCustomService={() => addCustomService(ev.id)}
+                <div className="grid gap-4 sm:grid-cols-[2.5fr_1.5fr]">
+                  <Field label="Email" htmlFor="quote-email">
+                    <input
+                      className={inputClass}
+                      type="email"
+                      id="quote-email"
+                      placeholder="Your email address"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                     />
-                  ))}
+                  </Field>
+
+                  <Field label="Budget Range" htmlFor="quote-budget">
+                    <Select
+                      value={budget}
+                      onValueChange={(value) => {
+                        setBudget(value);
+                        setBudgetError(false);
+                        markEdited();
+                      }}
+                    >
+                      <SelectTrigger
+                        ref={budgetTriggerRef}
+                        id="quote-budget"
+                        aria-label="Budget range"
+                        aria-invalid={budgetError}
+                        className={
+                          budgetError
+                            ? "border-red-400/70 focus:ring-red-400/20"
+                            : undefined
+                        }
+                      >
+                        <SelectValue placeholder="Select your budget" />
+                      </SelectTrigger>
+
+                      <SelectContent>
+                        {BUDGET_OPTIONS.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={addEvent}
-                  className="mb-7 w-full rounded-[12px] border border-dashed border-[var(--secondary)]/34 py-2.5 text-[.7rem] font-medium uppercase tracking-[0.09em] text-[var(--secondary-light)] transition-colors hover:border-[var(--secondary-light)]/65 hover:bg-[var(--secondary)]/5"
-                >
-                  + Add Another Event
-                </button>
-
-                {/* ================= SECTION 3 — ADD-ONS ================= */}
-                <QuoteSectionHeading step={3} optional>
-                  Add-ons
-                </QuoteSectionHeading>
-
-                <div className="mb-2">
-                  <ChipGroup
-                    label="Optional Extras"
-                    catalog={ADDON_CATALOG}
-                    selected={addOns}
-                    onToggle={toggleAddOn}
-                    customOpen={customAddOnOpen}
-                    onOpenCustom={() => setCustomAddOnOpen(true)}
-                    customDraft={customAddOnDraft}
-                    onCustomDraftChange={setCustomAddOnDraft}
-                    onAddCustom={addCustomAddOn}
-                    onQtyChange={changeAddOnQty}
-                    onRemove={removeAddOn}
+                <Field label="Additional Notes" htmlFor="quote-message" optional>
+                  <textarea
+                    className={`${inputClass} h-[90px] min-h-[90px] resize-none overflow-y-auto py-4`}
+                    id="quote-message"
+                    placeholder="Tell us anything important about your event..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
                   />
-                </div>
-
-                {/* ================= SECTION 4 — SUMMARY ================= */}
-                {quoteGenerated && summaryData && (
-                  <div className="mt-2 border-t border-[var(--cream)]/[0.07] pt-6">
-                    <QuoteSectionHeading step={4}>
-                      Quote Summary
-                    </QuoteSectionHeading>
-
-                    <div className="flex flex-col gap-2.5">
-                      {summaryData.budget && (
-                        <div className="rounded-[10px] border border-[var(--secondary)]/16 bg-black/20 px-4 py-2.5 text-[.8rem] text-[var(--cream)]/85">
-                          Budget: {summaryData.budget}
-                        </div>
-                      )}
-
-                      {summaryData.lines.map((line, i) => (
-                        <div
-                          key={i}
-                          className="rounded-[10px] border border-[var(--secondary)]/16 bg-black/[0.18] px-4 py-3.5"
-                        >
-                          <div className="mb-1.5 text-[.86rem] font-semibold text-[var(--secondary-light)]">
-                            {line.label}
-                            {line.date ? ` — ${formatDate(line.date)}` : ""}
-                            {line.venue ? ` · ${line.venue}` : ""}
-                          </div>
-                          {line.services.map((s) => (
-                            <div
-                              key={s.name}
-                              className="py-0.5 text-[.78rem] text-[var(--cream)]/80"
-                            >
-                              {s.name}
-                              {s.qty > 1 ? ` × ${s.qty}` : ""}
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-
-                      {summaryData.addOns.length > 0 && (
-                        <div className="rounded-[10px] border border-[var(--secondary)]/16 bg-black/[0.18] px-4 py-3.5">
-                          <div className="mb-1.5 text-[.86rem] font-semibold text-[var(--secondary-light)]">
-                            Add-ons
-                          </div>
-                          {summaryData.addOns.map((a) => (
-                            <div
-                              key={a.name}
-                              className="py-0.5 text-[.78rem] text-[var(--cream)]/80"
-                            >
-                              {a.name}
-                              {a.qty > 1 ? ` × ${a.qty}` : ""}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <p className="mt-4 text-[.68rem] leading-[1.6] text-[var(--cream)]/60">
-                      This is a preliminary quote request. Final pricing will
-                      be confirmed after reviewing your requirements.
-                    </p>
-                  </div>
-                )}
+                </Field>
               </div>
 
-              {/* FOOTER */}
-              <div className="flex shrink-0 flex-col gap-2.5 border-t border-[var(--cream)]/[0.09] bg-black/15 px-6 py-4 sm:flex-row sm:items-center sm:px-9">
-                <p
-                  role={footerError ? "alert" : undefined}
-                  aria-live="polite"
-                  className={`flex-1 text-[.72rem] leading-[1.5] ${
-                    footerError
-                      ? "text-red-300"
-                      : "text-[var(--cream)]/55"
-                  }`}
-                >
-                  {footerNote}
-                </p>
+              {/* ================= SECTION 2 — YOUR EVENTS ================= */}
+              <div ref={eventsSectionRef}>
+                <QuoteSectionHeading step={2}>Your Events</QuoteSectionHeading>
+              </div>
 
-                <div className="flex shrink-0 gap-2">
+              <div
+                className={`mb-4 flex flex-col gap-3.5 ${
+                  eventsError
+                    ? "rounded-[16px] ring-2 ring-red-400/50"
+                    : ""
+                }`}
+              >
+                {events.map((ev) => (
+                  <EventCard
+                    key={ev.id}
+                    event={ev}
+                    removable={events.length > 1}
+                    customServiceOpen={Boolean(customServiceOpen[ev.id])}
+                    customServiceDraft={customServiceDraft[ev.id] || ""}
+                    onTypeChange={(value) => setEventType(ev.id, value)}
+                    onCustomTypeChange={(value) =>
+                      updateEvent(ev.id, { customType: value })
+                    }
+                    onDateChange={(value) => {
+                      updateEvent(ev.id, { date: value });
+                      markEdited();
+                    }}
+                    onVenueChange={(value) => {
+                      updateEvent(ev.id, { venue: value });
+                      markEdited();
+                    }}
+                    onRemove={() => removeEvent(ev.id)}
+                    onToggleService={(name) => toggleService(ev.id, name)}
+                    onServiceQtyChange={(name, delta) =>
+                      changeServiceQty(ev.id, name, delta)
+                    }
+                    onServiceRemove={(name) => removeService(ev.id, name)}
+                    onOpenCustomService={() =>
+                      setCustomServiceOpen((prev) => ({
+                        ...prev,
+                        [ev.id]: true,
+                      }))
+                    }
+                    onCustomServiceDraftChange={(value) =>
+                      setCustomServiceDraft((prev) => ({
+                        ...prev,
+                        [ev.id]: value,
+                      }))
+                    }
+                    onAddCustomService={() => addCustomService(ev.id)}
+                  />
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={addEvent}
+                className="mb-7 w-full rounded-[12px] border border-dashed border-[var(--secondary)]/34 py-2.5 text-[.7rem] font-medium uppercase tracking-[0.09em] text-[var(--secondary-light)] transition-colors hover:border-[var(--secondary-light)]/65 hover:bg-[var(--secondary)]/5"
+              >
+                + Add Another Event
+              </button>
+
+<div className="pt-4">
+  {/* ================= SECTION 3 — ADD-ONS ================= */}
+  <QuoteSectionHeading step={3} optional>
+    Add-ons
+  </QuoteSectionHeading>
+</div>
+              <div className="mb-2">
+                <ChipGroup
+                  label="Optional Extras"
+                  catalog={ADDON_CATALOG}
+                  selected={addOns}
+                  onToggle={toggleAddOn}
+                  customOpen={customAddOnOpen}
+                  onOpenCustom={() => setCustomAddOnOpen(true)}
+                  customDraft={customAddOnDraft}
+                  onCustomDraftChange={setCustomAddOnDraft}
+                  onAddCustom={addCustomAddOn}
+                  onQtyChange={changeAddOnQty}
+                  onRemove={removeAddOn}
+                />
+              </div>
+
+              {/* ================= SECTION 4 — SUMMARY ================= */}
+              {quoteGenerated && summaryData && (
+                <div className="mt-2 border-t border-[var(--cream)]/[0.07] pt-6">
+                  <QuoteSectionHeading step={4}>
+                    Quote Summary
+                  </QuoteSectionHeading>
+
+                  <div className="flex flex-col gap-2.5">
+                    {summaryData.budget && (
+                      <div className="rounded-[10px] border border-[var(--secondary)]/16 bg-black/20 px-4 py-2.5 text-[.8rem] text-[var(--cream)]/85">
+                        Budget: {summaryData.budget}
+                      </div>
+                    )}
+
+                    {summaryData.lines.map((line, i) => (
+                      <div
+                        key={i}
+                        className="rounded-[10px] border border-[var(--secondary)]/16 bg-black/[0.18] px-4 py-3.5"
+                      >
+                        <div className="mb-1.5 text-[.86rem] font-semibold text-[var(--secondary-light)]">
+                          {line.label}
+                          {line.date ? ` — ${formatDate(line.date)}` : ""}
+                          {line.venue ? ` · ${line.venue}` : ""}
+                        </div>
+                        {line.services.map((s) => (
+                          <div
+                            key={s.name}
+                            className="py-0.5 text-[.78rem] text-[var(--cream)]/80"
+                          >
+                            {s.name}
+                            {s.qty > 1 ? ` × ${s.qty}` : ""}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+
+                    {summaryData.addOns.length > 0 && (
+                      <div className="rounded-[10px] border border-[var(--secondary)]/16 bg-black/[0.18] px-4 py-3.5">
+                        <div className="mb-1.5 text-[.86rem] font-semibold text-[var(--secondary-light)]">
+                          Add-ons
+                        </div>
+                        {summaryData.addOns.map((a) => (
+                          <div
+                            key={a.name}
+                            className="py-0.5 text-[.78rem] text-[var(--cream)]/80"
+                          >
+                            {a.name}
+                            {a.qty > 1 ? ` × ${a.qty}` : ""}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="mt-4 text-[.68rem] leading-[1.6] text-[var(--cream)]/60">
+                    This is a preliminary quote request. Final pricing will
+                    be confirmed after reviewing your requirements.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* FOOTER */}
+            <div className="flex shrink-0 flex-col gap-2.5 border-t border-[var(--cream)]/[0.09] bg-black/15 px-6 py-4 sm:flex-row sm:items-center sm:px-9">
+              <p
+                role={footerError ? "alert" : undefined}
+                aria-live="polite"
+                className={`flex-1 text-[.72rem] leading-[1.5] ${
+                  footerError
+                    ? "text-red-300"
+                    : "text-[var(--cream)]/55"
+                }`}
+              >
+                {footerNote}
+              </p>
+
+              <div className="flex shrink-0 gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={minimizeModal}
+                  className="!min-h-[42px] !min-w-0 !px-5 normal-case !text-[.72rem]"
+                >
+                  Cancel
+                </Button>
+
+                {!quoteGenerated ? (
                   <Button
                     type="button"
-                    variant="secondary"
-                    onClick={minimizeModal}
+                    onClick={generateQuote}
                     className="!min-h-[42px] !min-w-0 !px-5 normal-case !text-[.72rem]"
                   >
-                    Cancel
+                    Generate Quote
                   </Button>
-
-                  {!quoteGenerated ? (
-                    <Button
-                      type="button"
-                      onClick={generateQuote}
-                      className="!min-h-[42px] !min-w-0 !px-5 normal-case !text-[.72rem]"
-                    >
-                      Generate Quote
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      disabled={sending}
-                      onClick={confirmQuote}
-                      className="!min-h-[42px] !min-w-0 !px-5 normal-case !text-[.72rem]"
-                    >
-                      <Send className="mr-2 size-3.5" />
-                      {sending ? "Sending…" : "Send Request"}
-                    </Button>
-                  )}
-                </div>
+                ) : (
+                  <Button
+                    type="button"
+                    disabled={sending}
+                    onClick={confirmQuote}
+                    className="!min-h-[42px] !min-w-0 !px-5 normal-case !text-[.72rem]"
+                  >
+                    <Send className="mr-2 size-3.5" />
+                    {sending ? "Sending…" : "Send Request"}
+                  </Button>
+                )}
               </div>
-            </>
-          ) : (
-            /* ================= SUCCESS ================= */
-            <div
-              ref={successRef}
-              tabIndex={-1}
-              role="status"
-              aria-live="polite"
-              className="flex flex-1 flex-col items-center justify-center gap-5 overflow-y-auto px-8 py-14 text-center outline-none"
-            >
-              <div className="flex size-[58px] items-center justify-center rounded-full border border-[var(--secondary)]/55 text-[var(--secondary-light)]">
-                <CheckCircle2 className="size-6" />
-              </div>
-
-              <h3 className="font-serif text-[clamp(2rem,4vw,2.6rem)] font-normal leading-[1.05] text-[var(--cream)]">
-                Thank <span className="italic text-[var(--secondary-light)]">you</span>
-              </h3>
-
-              <p className="max-w-[42ch] text-[.92rem] leading-[1.7] text-[var(--cream)]/70">
-                Thanks for reaching out to Roselanes by Jeev. We&apos;ve
-                received your quote request and will be in touch with you
-                soon.
-              </p>
-
-              <div className="my-1 h-px w-11 bg-[var(--secondary)]" />
-
-              <p className="max-w-[42ch] text-[.92rem] leading-[1.7] text-[var(--cream)]/70">
-                Check your email for updates and follow us on Instagram to
-                see our latest work.
-              </p>
-
-              <a
-                href="https://www.instagram.com/theroselanesbyjeev/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[.76rem] uppercase tracking-[0.12em] text-[var(--secondary-light)] hover:underline"
-              >
-                @theroselanesbyjeev
-              </a>
-
-              <p className="mt-2 text-[.85rem] text-[var(--cream)]/60">
-                Have a nice day.
-              </p>
-
-              <Button
-                type="button"
-                onClick={() => {
-                  deleteSession();
-                  closeModal();
-                }}
-                className="!mt-4 !min-h-[44px] !min-w-0 !px-6 normal-case !text-[.75rem]"
-              >
-                Back to Roselanes
-              </Button>
             </div>
-          )}
-        </div>
+          </>
+        )}
+
+        {mode === "expanded" && success && (
+          /* ================= SUCCESS ================= */
+          <div
+            ref={successRef}
+            tabIndex={-1}
+            role="status"
+            aria-live="polite"
+            className="flex flex-1 flex-col items-center justify-center gap-5 overflow-y-auto px-8 py-14 text-center outline-none"
+          >
+            <div className="flex size-[58px] items-center justify-center rounded-full border border-[var(--secondary)]/55 text-[var(--secondary-light)]">
+              <CheckCircle2 className="size-6" />
+            </div>
+
+            <h3 className="font-serif text-[clamp(2rem,4vw,2.6rem)] font-normal leading-[1.05] text-[var(--cream)]">
+              Thank <span className="italic text-[var(--secondary-light)]">you</span>
+            </h3>
+
+            <p className="max-w-[42ch] text-[.92rem] leading-[1.7] text-[var(--cream)]/70">
+              Thanks for reaching out to Roselanes by Jeev. We&apos;ve
+              received your quote request and will be in touch with you
+              soon.
+            </p>
+
+            <div className="my-1 h-px w-11 bg-[var(--secondary)]" />
+
+            <p className="max-w-[42ch] text-[.92rem] leading-[1.7] text-[var(--cream)]/70">
+              Check your email for updates and follow us on Instagram to
+              see our latest work.
+            </p>
+
+            <a
+              href="https://www.instagram.com/theroselanesbyjeev/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[.76rem] uppercase tracking-[0.12em] text-[var(--secondary-light)] hover:underline"
+            >
+              @theroselanesbyjeev
+            </a>
+
+            <p className="mt-2 text-[.85rem] text-[var(--cream)]/60">
+              Have a nice day.
+            </p>
+
+            <Button
+              type="button"
+              onClick={() => {
+                deleteSession();
+                closeModal();
+              }}
+              className="!mt-4 !min-h-[44px] !min-w-0 !px-6 normal-case !text-[.75rem]"
+            >
+              Back to Roselanes
+            </Button>
+          </div>
+        )}
+
+        {mode === "mini" && (
+  <div className="flex h-full min-h-[76px] w-full min-w-[420px] items-center justify-between gap-4 px-6">
+    <div className="min-w-0">
+      <span className="block text-[.6rem] uppercase tracking-[0.12em] text-[var(--secondary-light)]">
+        Quote in progress
+      </span>
+      <span className="block truncate text-[.8rem] text-[var(--cream)]">
+        Your quote is ready to continue
+      </span>
+    </div>
+
+    <button
+      type="button"
+      aria-label="Delete saved quote session"
+      onClick={(e) => {
+        e.stopPropagation();
+        deleteSession();
+      }}
+      className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[var(--cream)]/25 text-[var(--cream)]/70 transition-colors hover:border-red-300/65 hover:text-red-200"
+    >
+      <Trash2 className="size-3.5" />
+    </button>
+  </div>
+)}
       </div>
-
-      {/* MINI PLAYER — shown when the modal is minimized but a draft exists */}
-      {showMiniPlayer && (
-        <div
-          className="fixed inset-x-0 bottom-5 z-[999999] mx-auto flex w-[min(420px,calc(100%-32px))] items-center justify-between gap-3 rounded-full border border-[var(--secondary)]/45 bg-[var(--primary-darkest)]/95 px-5 py-3 shadow-[0_18px_45px_rgba(0,0,0,.4)] backdrop-blur-xl"
-          aria-label="Saved quote session"
-        >
-          <div className="min-w-0">
-            <span className="block text-[.6rem] uppercase tracking-[0.12em] text-[var(--secondary-light)]">
-              Quote in progress
-            </span>
-            <span className="block truncate text-[.8rem] text-[var(--cream)]">
-              Your quote is ready to continue
-            </span>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={openModal}
-              className="rounded-full bg-[var(--secondary-light)] px-4 py-2 text-[.65rem] font-semibold uppercase tracking-[0.05em] text-[var(--primary-darkest)] transition-colors hover:bg-[var(--secondary)]"
-            >
-              Continue
-            </button>
-            <button
-              type="button"
-              aria-label="Delete saved quote session"
-              onClick={deleteSession}
-              className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[var(--cream)]/25 text-[var(--cream)]/70 transition-colors hover:border-red-300/65 hover:text-red-200"
-            >
-              <Trash2 className="size-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* TOAST */}
       {toast && (
@@ -1316,48 +1377,56 @@ function EventCard({
         </button>
       )}
 
-      <div
-        className={`mb-4 grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1.25fr)_minmax(150px,.75fr)] lg:grid-cols-[minmax(0,1.25fr)_minmax(150px,.75fr)_minmax(180px,1fr)] ${
-          removable ? "pr-10" : ""
-        }`}
-      >
-        <div className="min-w-0">
+      {/* Row 1 — Event Type. Full width normally; when the custom-event
+          input opens, the select shrinks to 30% and the name field
+          takes the remaining 70%. */}
+      <div className={`mb-3 flex gap-2 ${removable ? "pr-10" : ""}`}>
+        <div
+          className={
+            event.isCustomType
+              ? "w-[30%] min-w-0 shrink-0"
+              : "w-full min-w-0"
+          }
+        >
           <Field label="Event Type">
-            <div className="flex gap-2">
-              <div className="min-w-0 flex-1">
-                <Select value={selectValue} onValueChange={onTypeChange}>
-                  <SelectTrigger aria-label="Event type">
-                    <SelectValue />
-                  </SelectTrigger>
+            <Select value={selectValue} onValueChange={onTypeChange}>
+              <SelectTrigger aria-label="Event type" className="truncate">
+                <SelectValue className="truncate" />
+              </SelectTrigger>
 
-                  <SelectContent>
-                    {EVENT_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {t}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value={CUSTOM_EVENT_VALUE}>
-                      + Add Custom Event
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {event.isCustomType && (
-                <input
-                  className={`${inputClass} h-[54px] flex-1`}
-                  type="text"
-                  placeholder="Name this event"
-                  value={event.customType}
-                  onChange={(e) => onCustomTypeChange(e.target.value)}
-                  autoFocus
-                />
-              )}
-            </div>
+              <SelectContent>
+                {EVENT_TYPES.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
+                ))}
+                <SelectItem value={CUSTOM_EVENT_VALUE}>
+                  + Add Custom Event
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </Field>
         </div>
 
-        <div className="min-w-0">
+        {event.isCustomType && (
+          <div className="w-[70%] min-w-0">
+            <Field label="Custom Event Name">
+              <input
+                className={`${inputClass} h-[54px]`}
+                type="text"
+                placeholder="Name this event"
+                value={event.customType}
+                onChange={(e) => onCustomTypeChange(e.target.value)}
+                autoFocus
+              />
+            </Field>
+          </div>
+        )}
+      </div>
+
+      {/* Row 2 — Date and Venue share the row equally (50/50). */}
+      <div className="mb-4 flex gap-3">
+        <div className="w-1/2 min-w-0">
           <Field label="Date" optional>
             <input
               className={inputClass}
@@ -1369,7 +1438,7 @@ function EventCard({
           </Field>
         </div>
 
-        <div className="min-w-0 sm:col-span-2 lg:col-span-1">
+        <div className="w-1/2 min-w-0">
           <Field label="Venue" optional>
             <input
               className={inputClass}
@@ -1402,19 +1471,6 @@ function EventCard({
           );
         })}
 
-        {event.services
-          .filter((s) => s.custom)
-          .map((s) => (
-            <button
-              key={s.name}
-              type="button"
-              onClick={() => onToggleService(s.name)}
-              className={`${chipBase} ${chipSelected}`}
-            >
-              {s.name}
-            </button>
-          ))}
-
         {!customServiceOpen && (
           <button
             type="button"
@@ -1445,7 +1501,7 @@ function EventCard({
           <button
             type="button"
             onClick={onAddCustomService}
-            className="h-9 rounded-[8px] bg-[var(--secondary-light)] px-3 text-[.64rem] font-semibold uppercase tracking-[0.06em] text-[var(--primary-darkest)]"
+            className="h-9 rounded-[8px] bg-[var(--secondary-light)] px-3 text-[.64rem] font-semibold uppercase tracking-[0.06em] !text-[var(--primary-darkest)]"
           >
             Add
           </button>
@@ -1531,19 +1587,6 @@ function ChipGroup({
           </button>
         ))}
 
-        {selected
-          .filter((a) => a.custom)
-          .map((a) => (
-            <button
-              key={a.name}
-              type="button"
-              onClick={() => onToggle(a.name)}
-              className={`${chipBase} ${chipSelected}`}
-            >
-              {a.name}
-            </button>
-          ))}
-
         {!customOpen && (
           <button
             type="button"
@@ -1574,7 +1617,7 @@ function ChipGroup({
           <button
             type="button"
             onClick={onAddCustom}
-            className="h-9 rounded-[8px] bg-[var(--secondary-light)] px-3 text-[.64rem] font-semibold uppercase tracking-[0.06em] text-[var(--primary-darkest)]"
+            className="h-9 rounded-[8px] bg-[var(--secondary-light)] px-3 text-[.64rem] font-semibold uppercase tracking-[0.06em] !text-[var(--primary-darkest)]"
           >
             Add
           </button>

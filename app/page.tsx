@@ -6,6 +6,7 @@ import SiteHeader from "@/components/site-header";
 import { TestimonialsSection } from "@/components/testimonials-section";
 import { QuoteSection } from "@/components/quote-section";
 import { PortfolioSection } from "@/components/portfolio-section"; 
+import Footer from "@/components/footer";
 
 export default function Page() {
   return (
@@ -21,6 +22,7 @@ export default function Page() {
           <AboutSection />
           <ContactSection />
         </main> 
+        <Footer />
     </>
   );
 }
