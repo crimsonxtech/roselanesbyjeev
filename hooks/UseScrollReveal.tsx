@@ -15,7 +15,11 @@ import { useEffect } from "react";
  * Group stagger (replaces the old hardcoded nth-child CSS — works for
  * ANY number of items, not just 6, including items added later or in
  * batches):
- *   <div data-reveal data-reveal-group="testimonials" data-reveal-stagger="300">
+ *   <div
+ *     data-reveal
+ *     data-reveal-group="testimonials"
+ *     data-reveal-stagger="300"
+ *   >
  */
 
 /**
@@ -44,7 +48,9 @@ function queryIncludingSelf(
 
 export function useScrollReveal() {
   useEffect(() => {
-    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const motionQuery = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    );
 
     const revealAllImmediately = () => {
       document
@@ -52,110 +58,169 @@ export function useScrollReveal() {
         .forEach((el) => el.classList.add("is-visible"));
     };
 
-    if (!("IntersectionObserver" in window)) {
-      revealAllImmediately();
-      return;
-    }
+    /**
+     * Reduced-motion state is handled dynamically so the hook behaves
+     * correctly even if the user's OS/browser preference changes while
+     * the page is open.
+     */
+    let observer: IntersectionObserver | null = null;
+    let mutationObserver: MutationObserver | null = null;
 
-    if (motionQuery.matches) {
-      revealAllImmediately();
-      // Still bail out of setting up observers below — nothing left to
-      // observe once everything is already revealed. The `change`
-      // listener further down covers the case where motion preference
-      // is later relaxed/tightened without a full remount.
-    }
-
-    // Assign group-relative stagger delays dynamically. Recomputed over
-    // the WHOLE document (not just the newly-added subtree) every time a
-    // grouped element appears, so a batch of siblings added in a single
-    // commit (e.g. a list re-render) still gets a correct sequential
-    // stagger instead of every new item landing on index 0.
     const applyGroupStagger = (scope: ParentNode) => {
       const affectedGroups = new Set<string>();
 
       queryIncludingSelf(scope, "[data-reveal-group]").forEach((el) => {
-        affectedGroups.add(el.dataset.revealGroup!);
+        const group = el.dataset.revealGroup;
+
+        if (group) {
+          affectedGroups.add(group);
+        }
       });
 
       affectedGroups.forEach((group) => {
         const selector = `[data-reveal-group="${CSS.escape(group)}"]`;
+
         const members = Array.from(
           document.querySelectorAll<HTMLElement>(selector)
         );
 
         members.forEach((el, index) => {
           const stagger = Number(el.dataset.revealStagger ?? 150);
-          el.style.setProperty("--reveal-delay", `${index * stagger}ms`);
+
+          el.style.setProperty(
+            "--reveal-delay",
+            `${index * stagger}ms`
+          );
         });
       });
     };
-
-    const observer = new IntersectionObserver(
-      (entries, obs) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-
-          const el = entry.target as HTMLElement;
-
-          // Per-element delay (only applies if not already set by group stagger)
-          const delay = el.dataset.revealDelay;
-          if (delay && !el.dataset.revealGroup) {
-            el.style.setProperty("--reveal-delay", `${delay}ms`);
-          }
-
-          el.classList.add("is-visible");
-          obs.unobserve(el);
-        });
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -40px" }
-    );
 
     const observeAll = (root: ParentNode) => {
+      if (!observer || motionQuery.matches) return;
+
       applyGroupStagger(root);
+
       queryIncludingSelf(root, "[data-reveal]").forEach((el) => {
-        observer.observe(el);
+        if (!el.classList.contains("is-visible")) {
+          observer?.observe(el);
+        }
       });
     };
 
-    observeAll(document);
-
-    // Watch for elements added after mount (tab switches, async content,
-    // infinite scroll) — the original vanilla script missed these entirely.
-    const mutationObserver = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        mutation.addedNodes.forEach((node) => {
-          if (!(node instanceof HTMLElement)) return;
-          if (
-            node.hasAttribute("data-reveal") ||
-            node.querySelector("[data-reveal]")
-          ) {
-            observeAll(node);
-          }
-        });
+    const setupObservers = () => {
+      if (motionQuery.matches) {
+        revealAllImmediately();
+        return;
       }
-    });
 
-    mutationObserver.observe(document.body, { childList: true, subtree: true });
+      observer = new IntersectionObserver(
+        (entries, obs) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
 
-    // If the user's reduced-motion preference changes mid-session, react
-    // to it instead of only reading it once at mount.
+            const el = entry.target as HTMLElement;
+
+            /**
+             * Per-element delay only applies when the element is not
+             * participating in a group stagger.
+             */
+            const delay = el.dataset.revealDelay;
+
+            if (delay && !el.dataset.revealGroup) {
+              el.style.setProperty(
+                "--reveal-delay",
+                `${delay}ms`
+              );
+            }
+
+            el.classList.add("is-visible");
+            obs.unobserve(el);
+          });
+        },
+        {
+          threshold: 0.12,
+          rootMargin: "0px 0px -40px",
+        }
+      );
+
+      observeAll(document);
+
+      /**
+       * Watch for elements added after mount (tab switches, async content,
+       * infinite scroll) — the original vanilla script missed these entirely.
+       */
+      mutationObserver = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          mutation.addedNodes.forEach((node) => {
+            if (!(node instanceof HTMLElement)) return;
+
+            if (
+              node.hasAttribute("data-reveal") ||
+              node.querySelector("[data-reveal]")
+            ) {
+              observeAll(node);
+            }
+          });
+        }
+      });
+
+      mutationObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+    };
+
+    /**
+     * Initial setup.
+     *
+     * If reduced motion is already enabled, reveal everything immediately
+     * and do not create unnecessary observers.
+     */
+    setupObservers();
+
+    /**
+     * If reduced-motion preference changes during the session:
+     *
+     * reduce motion ON  -> reveal everything immediately and stop observing.
+     * reduce motion OFF -> recreate the observers so newly encountered
+     *                      elements can use normal scroll reveal again.
+     */
     const handleMotionChange = (event: MediaQueryListEvent) => {
       if (event.matches) {
-        mutationObserver.disconnect();
-        observer.disconnect();
+        mutationObserver?.disconnect();
+        observer?.disconnect();
+
+        mutationObserver = null;
+        observer = null;
+
         revealAllImmediately();
+
+        return;
       }
-      // Relaxing the preference mid-session doesn't need to do anything:
-      // anything already revealed stays revealed either way, and nothing
-      // is hidden again to re-animate.
+
+      /**
+       * Preference was relaxed.
+       *
+       * Existing elements intentionally remain visible. New elements,
+       * dynamically inserted elements, or elements that were not previously
+       * revealed can now use the normal IntersectionObserver flow.
+       */
+      setupObservers();
     };
 
     motionQuery.addEventListener("change", handleMotionChange);
 
     return () => {
-      motionQuery.removeEventListener("change", handleMotionChange);
-      observer.disconnect();
-      mutationObserver.disconnect();
+      motionQuery.removeEventListener(
+        "change",
+        handleMotionChange
+      );
+
+      observer?.disconnect();
+      mutationObserver?.disconnect();
+
+      observer = null;
+      mutationObserver = null;
     };
   }, []);
 }

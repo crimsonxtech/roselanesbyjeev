@@ -2,21 +2,18 @@
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import Image from "next/image"
+import { Card, useTapCard } from "@/components/ui/card";
 
 export default function AboutSection() {
-  const [heroActive, setHeroActive] = React.useState(false);
-
-  const toggleHeroActive = () => {
-    if (window.matchMedia("(hover: none), (pointer: coarse)").matches) {
-      setHeroActive((active) => !active);
-    }
-  };
+  const { active: activeElement, getInteractiveCardProps } = useTapCard<
+    "hero" | "intro" | "story" | "quote"
+  >({ group: "about" });
 
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const sideRef = React.useRef<HTMLDivElement>(null);
   const contentRef = React.useRef<HTMLDivElement>(null);
-  const [isTouchActive, setIsTouchActive] = React.useState(false);
+  const founderTagRef = React.useRef<HTMLDivElement>(null);
+  const [founderVisible, setFounderVisible] = React.useState(false);
 
   React.useEffect(() => {
     const wrapper = wrapperRef.current;
@@ -96,41 +93,31 @@ export default function AboutSection() {
   }, []);
 
   React.useEffect(() => {
-    if (!isTouchActive) return;
+    const element = founderTagRef.current;
+    if (!element) return;
 
-    const resetOnOutsideTap = (event: PointerEvent) => {
-      const target = event.target as Node | null;
-      if (target && sideRef.current?.contains(target)) return;
-      setIsTouchActive(false);
-    };
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setFounderVisible(true);
+      return;
+    }
 
-    document.addEventListener("pointerdown", resetOnOutsideTap);
-    return () => {
-      document.removeEventListener("pointerdown", resetOnOutsideTap);
-    };
-  }, [isTouchActive]);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setFounderVisible(true);
+          observer.disconnect();
+        }
+      },
+      {
+        threshold: 0.15,
+        rootMargin: "0px 0px -8% 0px",
+      }
+    );
 
-  const cardClass = `
-    relative
-    w-full
-    rounded-[28px]
-    border
-    border-[rgba(210,184,133,.16)]
-    bg-[linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.018))]
-    backdrop-blur-[14px]
-    backdrop-saturate-[1.15]
-    transition-[transform,box-shadow,border-color]
-    duration-[.4s]
-    ease
-    hover:-translate-y-1
-    hover:border-[rgba(210,184,133,.30)]
-    hover:shadow-[0_26px_58px_rgba(0,0,0,.26),inset_0_1px_0_rgba(255,255,255,.10)]
-    motion-reduce:transition-none
-    motion-reduce:hover:translate-y-0
-    [@media(prefers-reduced-transparency:reduce)]:bg-[var(--glass-bg-solid)]
-    [@media(prefers-reduced-transparency:reduce)]:backdrop-blur-none
-    [@media(prefers-reduced-transparency:reduce)]:backdrop-saturate-100
-  `;
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
 
   const bodyTextClass = `
     m-0
@@ -219,9 +206,10 @@ export default function AboutSection() {
             <div
               data-reveal
               data-reveal-delay="120"
+              data-about-hero
+              {...getInteractiveCardProps("hero")}
               className={`
                 group
-                ${heroActive ? "is-active" : ""}
                 relative
                 isolate
                 mx-auto
@@ -256,22 +244,12 @@ export default function AboutSection() {
                 max-[600px]:max-w-[340px]
 
               `}
-              onClick={toggleHeroActive}
-              role="button"
-              tabIndex={0}
-              aria-pressed={heroActive}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  toggleHeroActive();
-                }
-              }}
             >
               {/* BACK STACK CARD */}
 
               <div
                 aria-hidden="true"
-                className="
+                className={`
                   pointer-events-none
                   absolute
                   right-[.53cqi]
@@ -287,15 +265,13 @@ export default function AboutSection() {
                   bg-[linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.012))]
                   shadow-[0_28px_65px_rgba(0,0,0,.24),inset_0_1px_0_rgba(255,255,255,.07)]
                   transition-transform
-                  duration-[.4s]
-                  ease
+duration-500
+ease-[cubic-bezier(0.16,1,0.3,1)]
 
                   group-hover:rotate-[-7deg]
-                  group-[.is-touch-active]:rotate-[-7deg] group-[.is-active]:rotate-[-7deg]
                   group-hover:translate-x-[-2.1cqi]
-                  group-[.is-touch-active]:translate-x-[-2.1cqi] group-[.is-active]:translate-x-[-2.1cqi]
                   group-hover:translate-y-[-1.32cqi]
-                  group-[.is-touch-active]:translate-y-[-1.32cqi] group-[.is-active]:translate-y-[-1.32cqi]
+                  ${activeElement === "hero" ? "rotate-[-7deg] translate-x-[-2.1cqi] translate-y-[-1.32cqi]" : ""}
 
 
 
@@ -306,11 +282,11 @@ export default function AboutSection() {
 
                   [@media(prefers-reduced-transparency:reduce)]:bg-[var(--glass-bg-solid)]
                   [@media(prefers-reduced-transparency:reduce)]:backdrop-blur-none
-                "
+                `}
               />
               <div
                 aria-hidden="true"
-                className="
+                className={`
                   pointer-events-none
                   absolute
                   right-[5.26cqi]
@@ -326,16 +302,13 @@ export default function AboutSection() {
                   bg-[linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.012))]
                   shadow-[0_28px_65px_rgba(0,0,0,.24),inset_0_1px_0_rgba(255,255,255,.07)]
                   transition-transform
-                  duration-[.4s]
-                  ease
+duration-500
+ease-[cubic-bezier(0.16,1,0.3,1)]
 
                   group-hover:rotate-[8deg]
-                  group-[.is-touch-active]:rotate-[8deg] group-[.is-active]:rotate-[8deg]
                   group-hover:translate-x-[-4.21cqi]
-                  group-[.is-touch-active]:translate-x-[-4.21cqi] group-[.is-active]:translate-x-[-4.21cqi]
                   group-hover:translate-y-[-2.1cqi]
-                  group-[.is-touch-active]:translate-y-[-2.1cqi]
-                  group-[.is-touch-active]:translate-y-[-2.1cqi] group-[.is-active]:translate-y-[-2.1cqi]
+                  ${activeElement === "hero" ? "rotate-[8deg] translate-x-[-4.21cqi] translate-y-[-2.1cqi]" : ""}
 
 
 
@@ -346,13 +319,13 @@ export default function AboutSection() {
 
                   [@media(prefers-reduced-transparency:reduce)]:bg-[var(--glass-bg-solid)]
                   [@media(prefers-reduced-transparency:reduce)]:backdrop-blur-none
-                "
+                `}
               />
 
               {/* MAIN IMAGE FRAME */}
 
               <div
-                className="
+                className={` 
                   group/frame
                   relative
                   z-[2]
@@ -372,15 +345,13 @@ export default function AboutSection() {
                   backdrop-blur-[12px]
                   backdrop-saturate-[1.2]
                   transition-[transform,box-shadow]
-                  duration-[.4s]
-                  ease
+duration-500
+ease-[cubic-bezier(0.16,1,0.3,1)]
 
                   hover:translate-y-[-2.1cqi]
-                  group-[.is-touch-active]:translate-y-[-2.1cqi] group-[.is-active]:translate-y-[-2.1cqi]
                   hover:rotate-0
-                  group-[.is-touch-active]:rotate-0 group-[.is-active]:rotate-0
                   hover:shadow-[0_42px_90px_rgba(0,0,0,.52),0_0_50px_rgba(210,184,133,.11),inset_0_1px_0_rgba(255,255,255,.20),inset_0_-1px_0_rgba(0,0,0,.18)]
-                  group-[.is-active]:shadow-[0_42px_90px_rgba(0,0,0,.52),0_0_50px_rgba(210,184,133,.11),inset_0_1px_0_rgba(255,255,255,.20),inset_0_-1px_0_rgba(0,0,0,.18)]
+                  ${activeElement === "hero" ? "translate-y-[-2.1cqi] rotate-0 shadow-[0_42px_90px_rgba(0,0,0,.52),0_0_50px_rgba(210,184,133,.11),inset_0_1px_0_rgba(255,255,255,.20),inset_0_-1px_0_rgba(0,0,0,.18)]" : ""}
 
                   motion-reduce:transition-none
                   motion-reduce:hover:rotate-[1.2deg]
@@ -400,15 +371,13 @@ export default function AboutSection() {
                   before:shadow-[0_22px_52px_rgba(0,0,0,.20),inset_0_1px_0_rgba(255,255,255,.06)]
                   before:rotate-[4deg]
                   before:transition-transform
-                  before:duration-[.4s]
-                  before:ease
+before:duration-500
+before:ease-[cubic-bezier(0.16,1,0.3,1)]
 
                   hover:before:rotate-[5deg]
-                  group-[.is-touch-active]:before:rotate-[5deg] group-[.is-active]:before:rotate-[5deg]
                   hover:before:translate-x-[1.32cqi]
-                  group-[.is-touch-active]:before:translate-x-[1.32cqi] group-[.is-active]:before:translate-x-[1.32cqi]
                   hover:before:translate-y-[-1.05cqi]
-                  group-[.is-touch-active]:before:translate-y-[-1.05cqi] group-[.is-active]:before:translate-y-[-1.05cqi]
+                  ${activeElement === "hero" ? "before:rotate-[5deg] before:translate-x-[1.32cqi] before:translate-y-[-1.05cqi]" : ""}
 
                   motion-reduce:before:transition-none
                   motion-reduce:hover:before:rotate-[4deg]
@@ -423,15 +392,14 @@ export default function AboutSection() {
                   after:content-['']
                   after:[background:linear-gradient(180deg,rgba(var(--primary-darkest-rgb),0)_44%,rgba(var(--primary-darkest-rgb),.08)_62%,rgba(var(--primary-darkest-rgb),.50)_100%)]
 
-
-                "
+                `}
               >
 <img
   src="https://images.roselanesbyjeev.in/roselanesbyjeev/portfolio/about/08cf1a04-712f-4ca9-946a-888e109a2bdf.webp"
   alt="Portrait of the Roselanes founder"
   loading="lazy"
   decoding="async"
-  className="
+  className={`
     relative
     z-[1]
     block
@@ -440,71 +408,96 @@ export default function AboutSection() {
     rounded-[clamp(16px,5.53cqi,21px)_0_clamp(16px,5.53cqi,21px)_0]
     shadow-[inset_0_0_0_1px_rgba(255,255,255,.045)]
     transition-transform
-    duration-700
-    ease
+duration-500
+ease-[cubic-bezier(0.16,1,0.3,1)]
     group-hover/frame:scale-[1.035]
-    group-[.is-touch-active]:scale-[1.035] group-[.is-active]:scale-[1.035]
+    ${activeElement === "hero" ? "scale-[1.035]" : ""}
     motion-reduce:transition-none
     motion-reduce:group-hover/frame:scale-100
-  "
+  `}
 />
               </div>
             </div>
-            {/* =====================================================
-                FOUNDER
-                ===================================================== */}
 
-            <div
-              data-reveal
-              data-reveal-delay="280"
-              className="
-                mb-6
-                flex
-                items-center
-                justify-center
-                gap-[14px]
-                self-center
-              "
-            >
-              <span
-                aria-hidden="true"
-                className="
-                  h-[34px]
-                  w-1
-                  shrink-0
-                  bg-[var(--secondary)]
-                "
-              />
+{/* =====================================================
+    FOUNDER
+    ===================================================== */}
 
-              <div className="min-w-0">
-                <h4
-                  className="
-                    m-0
-                    text-base
-                    font-extrabold
-                    leading-[1.3]
-                    text-[var(--cream)]
-                  "
-                >
-                  Jeevan
-                </h4>
+<div
+  ref={founderTagRef}
+  className="
+    mb-6
+    flex
+    justify-center
+    self-center
+  "
+>
+  <div className="relative pl-[18px]">
+    {/* TEXT */}
+    <div
+      className={`
+        min-w-0
+        transition-[clip-path]
+        duration-[850ms]
+        ease-[cubic-bezier(0.16,1,0.3,1)]
+        ${
+          founderVisible
+            ? "[clip-path:inset(0_0_0_0)]"
+            : "[clip-path:inset(0_0_0_100%)]"
+        }
+      `}
+    >
+      <h4
+        className="
+          m-0
+          text-base
+          font-extrabold
+          leading-[1.3]
+          text-[var(--cream)]
+        "
+      >
+        Jeevan
+      </h4>
 
-                <span
-                  className="
-                    block
-                    text-[.7rem]
-                    font-extrabold
-                    uppercase
-                    leading-[1.2]
-                    tracking-[.12em]
-                    text-[var(--secondary)]
-                  "
-                >
-                  Founder &amp; Lead Photographer
-                </span>
-              </div>
-            </div>
+      <span
+        className="
+          block
+          text-[.7rem]
+          font-extrabold
+          uppercase
+          leading-[1.2]
+          tracking-[.12em]
+          text-[var(--secondary)]
+        "
+      >
+        Founder &amp; Lead Photographer
+      </span>
+    </div>
 
+    {/* GOLD SWEEP LINE */}
+    <span
+      aria-hidden="true"
+      className="
+        pointer-events-none
+        absolute
+        top-0
+        bottom-0
+        z-10
+        w-1
+        bg-[var(--secondary)]
+        transition-[left]
+        duration-[850ms]
+        ease-[cubic-bezier(0.16,1,0.3,1)]
+        motion-reduce:transition-none
+      "
+      style={{
+        left: founderVisible
+          ? "0px"
+          : "calc(100% - 4px)",
+      }}
+    />
+  </div>
+</div>
             {/* =====================================================
                 CTA
                 ===================================================== */}
@@ -594,11 +587,23 @@ export default function AboutSection() {
           >
             {/* INTRO */}
 
-            <div
+            <Card
               data-reveal
               data-reveal-delay="80"
+              data-about-card
+              active={activeElement === "intro"}
+              {...getInteractiveCardProps("intro")}
               className={`
-                ${cardClass}
+                w-full
+                rounded-[28px]
+                border
+                border-[rgba(210,184,133,.16)]
+                bg-[linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.018))]
+                backdrop-blur-[14px]
+                backdrop-saturate-[1.15]
+                [@media(prefers-reduced-transparency:reduce)]:bg-[var(--glass-bg-solid)]
+                [@media(prefers-reduced-transparency:reduce)]:backdrop-blur-none
+                [@media(prefers-reduced-transparency:reduce)]:backdrop-saturate-100
                 p-[calc(clamp(22px,2.6vw,34px)*var(--fit-scale,1))_calc(clamp(20px,2.8vw,32px)*var(--fit-scale,1))]
               `}
             >
@@ -611,15 +616,27 @@ export default function AboutSection() {
                 laughter, tears, romance, and countless unspoken feelings
                 that make every story beautifully yours.
               </p>
-            </div>
+            </Card>
 
             {/* STORY */}
 
-            <div
+            <Card
               data-reveal
               data-reveal-delay="160"
+              data-about-card
+              active={activeElement === "story"}
+              {...getInteractiveCardProps("story")}
               className={`
-                ${cardClass}
+                w-full
+                rounded-[28px]
+                border
+                border-[rgba(210,184,133,.16)]
+                bg-[linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.018))]
+                backdrop-blur-[14px]
+                backdrop-saturate-[1.15]
+                [@media(prefers-reduced-transparency:reduce)]:bg-[var(--glass-bg-solid)]
+                [@media(prefers-reduced-transparency:reduce)]:backdrop-blur-none
+                [@media(prefers-reduced-transparency:reduce)]:backdrop-saturate-100
                 p-[calc(clamp(22px,2.6vw,34px)*var(--fit-scale,1))_calc(clamp(20px,2.8vw,32px)*var(--fit-scale,1))]
               `}
             >
@@ -634,15 +651,20 @@ export default function AboutSection() {
                 My promise is simple — to capture your day not just as it
                 looked, but as your heart remembers it.
               </p>
-            </div>
+            </Card>
 
             {/* QUOTE */}
 
-            <div
+            <Card
               data-reveal
               data-reveal-delay="240"
+              data-about-card
+              active={activeElement === "quote"}
+              {...getInteractiveCardProps("quote")}
               className={`
-                ${cardClass}
+                w-full
+                rounded-[28px]
+                border
                 border-[rgba(210,184,133,.26)]
                 bg-[linear-gradient(145deg,rgba(255,255,255,.08),rgba(var(--primary-light-rgb),.12)_70%)]
                 py-[calc(clamp(22px,2.6vw,34px)*var(--fit-scale,1))]
@@ -676,10 +698,11 @@ export default function AboutSection() {
                 When the moment fades, let the feeling remain — blooming
                 forever through every frame.
               </p>
-            </div>
+            </Card>
           </div>
         </div>
       </div>
+
     </section>
   );
 }

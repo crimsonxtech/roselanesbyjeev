@@ -3,7 +3,6 @@ import "./globals.css";
 import { CustomCursor } from "@/components/custom-cursor";
 import { ScrollRevealProvider } from "@/hooks/ScrollRevealProvider";
 
-
 export const metadata: Metadata = {
   title: "Roselanes by Jeev | Pixtack",
   description: "Luxe Wedding and Lifestyle Photography",
@@ -18,7 +17,7 @@ export default function RootLayout({
         <CustomCursor />
         <ScrollRevealProvider />
         {children}
-        </body>
+      </body>
     </html>
   );
 }

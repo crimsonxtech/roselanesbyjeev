@@ -2,374 +2,380 @@
 @import "tailwindcss";
 
 @font-face {
-  font-family: "Luvee";
-  src: url("/fonts/LuveeRegular.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
+font-family: "Luvee";
+src: url("/fonts/LuveeRegular.ttf") format("truetype");
+font-style: normal;
+font-weight: 400;
+font-display: swap;
 }
 
 /* =========================================================
-   DESIGN TOKENS
-   ========================================================= */
+DESIGN TOKENS
+========================================================= */
 
 :root {
-  /* ---------- Primary / Burgundy ---------- */
-  --primary-light: #a3163f;
-  --primary: #831132;
-  --primary-dark: #5c0c24;
-  --primary-darker: #3f0a18;
-  --primary-darkest: #2b0510;
+/* ---------- Primary / Burgundy ---------- */
+--primary-light: #a3163f;
+--primary: #831132;
+--primary-dark: #5c0c24;
+--primary-darker: #3f0a18;
+--primary-darkest: #2b0510;
 
-  /* ---------- Secondary / Gold ---------- */
-  --secondary-light: #eeddb8;
-  --secondary: #d2b885;
-  --secondary-dark: #b8975d;
+/* ---------- Secondary / Gold ---------- */
+--secondary-light: #eeddb8;
+--secondary: #d2b885;
+--secondary-dark: #b8975d;
 
-  /* ---------- Neutral ---------- */
-  --white: #ffffff;
-  --cream: #f7ede0;
-  --black: #000000;
+/* ---------- Neutral ---------- */
+--white: #ffffff;
+--cream: #f7ede0;
+--black: #000000;
 
-  /* ---------- Semantic ---------- */
-  --success: #49d17d;
-  --error: #ef6461;
-  --placeholder: #9a9490;
+/* ---------- Semantic ---------- */
+--success: #49d17d;
+--error: #ef6461;
+--placeholder: #9a9490;
 
-  /* ---------- Component Tokens ---------- */
-  --background: var(--primary);
-  --foreground: var(--cream);
+/* ---------- Component Tokens ---------- */
+--background: var(--primary);
+--foreground: var(--cream);
 
-  --glass-bg: rgba(255, 255, 255, 0.045);
-  --glass-border: rgba(255, 255, 255, 0.12);
+--glass-bg: rgba(255, 255, 255, 0.045);
+--glass-border: rgba(255, 255, 255, 0.12);
 
-  --input-bg: rgba(255, 255, 255, 0.04);
-  --input-focus-bg: rgba(255, 255, 255, 0.06);
+--input-bg: rgba(255, 255, 255, 0.04);
+--input-focus-bg: rgba(255, 255, 255, 0.06);
 
-  --font-display: "Cormorant Garamond", Georgia, serif;
-  --font-body: "Manrope", Arial, Helvetica, sans-serif;
-  --font-brand: "Luvee", cursive;
+--font-display: "Cormorant Garamond", Georgia, serif;
+--font-body: "Manrope", Arial, Helvetica, sans-serif;
+--font-brand: "Luvee", cursive;
 }
 
-
 .font-display {
-  font-family: var(--font-display);
+font-family: var(--font-display);
 }
 
 .font-brand {
-  font-family: var(--font-brand);
+font-family: var(--font-brand);
 }
 
 /* =========================================================
-   GLOBAL RESET
-   ========================================================= */
+GLOBAL RESET
+========================================================= */
 
 *,
 *::before,
 *::after {
-  box-sizing: border-box;
+box-sizing: border-box;
 }
 
-
 /* =========================================================
-   DOCUMENT
-   ========================================================= */
+DOCUMENT
+========================================================= */
 
 html {
-  width: 100%;
-  min-height: 100%;
+width: 100%;
+min-height: 100%;
 
-  /* Keep scrollbar space permanently reserved */
-  overflow-y: scroll;
+/*
+Keep the document as the single page scroll container.
 
-  /* Smooth anchor scrolling */
-  scroll-behavior: smooth;
+```
+scrollbar-gutter reserves scrollbar space without creating
+an additional scrolling context.
+```
 
-  /* Prevent anchored content from hiding behind fixed UI */
-  scroll-padding-top: 0;
+*/
+overflow-x: clip;
+scrollbar-gutter: stable;
 
-  /* Firefox scrollbar */
-  scrollbar-width: thin;
-  scrollbar-color: var(--secondary) var(--primary-darker);
+/* Smooth anchor scrolling */
+scroll-behavior: smooth;
+
+/* Prevent anchored content from hiding behind fixed UI */
+scroll-padding-top: 0;
+
+/* Firefox scrollbar */
+scrollbar-width: thin;
+scrollbar-color: var(--secondary) var(--primary-darker);
 }
 
 body {
-  width: 100%;
-  min-width: 320px;
-  min-height: 100%;
+width: 100%;
+min-width: 320px;
+min-height: 100%;
 
-  margin: 0;
+margin: 0;
 
-  background: var(--background);
-  color: var(--foreground);
+background: var(--background);
+color: var(--foreground);
 
-  font-family: var(--font-body);
+font-family: var(--font-body);
 
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-
-  /* Prevent horizontal page overflow */
-  overflow-x: hidden;
-}
-
-
-/* =========================================================
-   CUSTOM CURSOR
-   ========================================================= */
+-webkit-font-smoothing: antialiased;
+text-rendering: optimizeLegibility;
 
 /*
-  The CustomCursor component adds the "custom-cursor"
-  class to <html> when a fine pointer is available.
+IMPORTANT:
+`clip` prevents horizontal overflow without turning body
+into a second vertical scrolling container.
 
-  Using the universal selector here is important because
-  browser styles can otherwise restore the native hand
-  cursor on links and buttons.
+```
+Do NOT use `overflow-x: hidden` here.
+```
+
+*/
+overflow-x: clip;
+}
+
+/* =========================================================
+CUSTOM CURSOR
+========================================================= */
+
+/*
+The CustomCursor component adds the "custom-cursor"
+class to <html> when a fine pointer is available.
+
+Using the universal selector here is important because
+browser styles can otherwise restore the native hand
+cursor on links and buttons.
 */
 
 html.custom-cursor,
 html.custom-cursor * {
-  cursor: none !important;
+cursor: none !important;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  html.custom-cursor input,
-  html.custom-cursor textarea,
-  html.custom-cursor [contenteditable="true"] {
-    cursor: text !important;
-  }
+html.custom-cursor input,
+html.custom-cursor textarea,
+html.custom-cursor [contenteditable="true"] {
+cursor: text !important;
+}
 }
 
 /*
-  Restore the text cursor where text editing is expected.
-  This keeps inputs/textareas/contenteditable elements
-  usable while the custom cursor is active.
+Restore the text cursor where text editing is expected.
+This keeps inputs/textareas/contenteditable elements
+usable while the custom cursor is active.
 */
 
 @media (hover: hover) and (pointer: fine) {
-  html.custom-cursor input,
-  html.custom-cursor textarea,
-  html.custom-cursor [contenteditable="true"] {
-    cursor: text !important;
-  }
+html.custom-cursor input,
+html.custom-cursor textarea,
+html.custom-cursor [contenteditable="true"] {
+cursor: text !important;
+}
 }
 
-
 /* =========================================================
-   TEXT SELECTION
-   ========================================================= */
+TEXT SELECTION
+========================================================= */
 
 /*
-  Replace the browser's default blue selection with the
-  site's burgundy + gold theme.
+Replace the browser's default blue selection with the
+site's burgundy + gold theme.
 */
 
 ::selection {
-  background: var(--secondary);
-  color: var(--primary-darkest);
+background: var(--secondary);
+color: var(--primary-darkest);
 }
 
 ::-moz-selection {
-  background: var(--secondary);
-  color: var(--primary-darkest);
+background: var(--secondary);
+color: var(--primary-darkest);
 }
 
-
 /* =========================================================
-   SCROLLBAR
-   ========================================================= */
+SCROLLBAR
+========================================================= */
 
 /* Chrome / Edge / Safari */
 
 ::-webkit-scrollbar {
-  width: 8px;
+width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--primary-darker);
+background: var(--primary-darker);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--secondary);
-  border-radius: 10px;
+background: var(--secondary);
+border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--white);
+background: var(--white);
 }
 
-
 /* =========================================================
-   FORM ELEMENTS
-   ========================================================= */
+FORM ELEMENTS
+========================================================= */
 
 button,
 input,
 textarea,
 select {
-  margin: 0;
+margin: 0;
 
-  font: inherit;
-  color: inherit;
+font: inherit;
+color: inherit;
 }
 
 textarea {
-  display: block;
+display: block;
 }
 
 input,
 textarea {
-  min-width: 0;
+min-width: 0;
 }
 
-
 /* =========================================================
-   MEDIA
-   ========================================================= */
+MEDIA
+========================================================= */
 
 img,
 svg {
-  max-width: 100%;
+max-width: 100%;
 }
 
 img {
-  display: block;
-  height: auto;
+display: block;
+height: auto;
 }
 
 svg {
-  flex-shrink: 0;
+flex-shrink: 0;
 }
 
-
 /* =========================================================
-   PAGE BACKGROUND
-   ========================================================= */
+PAGE BACKGROUND
+========================================================= */
 
 .page-background {
-  position: fixed;
-  inset: 0;
+position: fixed;
+inset: 0;
 
-  width: 100%;
-  height: 100dvh;
-  max-width: 100%;
+width: 100%;
+height: 100dvh;
+max-width: 100%;
 
-  overflow: hidden;
-  pointer-events: none;
+overflow: hidden;
+pointer-events: none;
 
-  isolation: isolate;
-  z-index: -1;
+isolation: isolate;
+z-index: -1;
 
-  background:
-    /* Bottom-left burgundy glow */
-    radial-gradient(
-      circle at 15% 90%,
-      var(--primary-light) 0%,
-      transparent 45%
-    ),
+background:
+/* Bottom-left burgundy glow */
+radial-gradient(
+circle at 15% 90%,
+var(--primary-light) 0%,
+transparent 45%
+),
 
-    /* Bottom-right gold glow */
-    radial-gradient(
-      circle at 85% 85%,
-      var(--secondary) 0%,
-      transparent 30%
-    ),
+/* Bottom-right gold glow */
+radial-gradient(
+  circle at 85% 85%,
+  var(--secondary) 0%,
+  transparent 30%
+),
 
-    /* Top-left burgundy glow */
-    radial-gradient(
-      circle at 20% 15%,
-      var(--primary-light) 0%,
-      transparent 40%
-    ),
+/* Top-left burgundy glow */
+radial-gradient(
+  circle at 20% 15%,
+  var(--primary-light) 0%,
+  transparent 40%
+),
 
-    /* Top-right dark burgundy glow */
-    radial-gradient(
-      circle at 90% 10%,
-      var(--primary-dark) 0%,
-      transparent 45%
-    ),
+/* Top-right dark burgundy glow */
+radial-gradient(
+  circle at 90% 10%,
+  var(--primary-dark) 0%,
+  transparent 45%
+),
 
-    /* Base gradient */
-    linear-gradient(
-      340deg,
-      var(--primary-darkest) 0%,
-      var(--primary-darker) 45%,
-      var(--primary-darkest) 100%
-    );
+/* Base gradient */
+linear-gradient(
+  340deg,
+  var(--primary-darkest) 0%,
+  var(--primary-darker) 45%,
+  var(--primary-darkest) 100%
+);
+
 }
 
-
 /* =========================================================
-   MAIN CONTENT
-   ========================================================= */
+MAIN CONTENT
+========================================================= */
 
 main {
-  position: relative;
-  z-index: 1;
+position: relative;
+z-index: 1;
 }
 
-
 /* =========================================================
-   SECTION RHYTHM
-   ========================================================= */
+SECTION RHYTHM
+========================================================= */
 
 /*
-  Sections should not introduce arbitrary external margins.
-  Each section controls its own internal spacing.
+Sections should not introduce arbitrary external margins.
+Each section controls its own internal spacing.
 */
 
 main > section {
-  margin-top: 0;
-  margin-bottom: 0;
+margin-top: 0;
+margin-bottom: 0;
 }
 
-
 /* =========================================================
-   ACCESSIBILITY
-   ========================================================= */
+ACCESSIBILITY
+========================================================= */
 
 /*
-  Respect Windows High Contrast / forced-colors mode.
-  Decorative star effects are hidden because they can become
-  visually noisy or meaningless in forced-colors mode.
+Respect Windows High Contrast / forced-colors mode.
+Decorative star effects are hidden because they can become
+visually noisy or meaningless in forced-colors mode.
 */
 
 @media (forced-colors: active) {
-  .star,
-  .star-field {
-    display: none;
-  }
-
-  .page-background {
-    background: Canvas;
-  }
+.star,
+.star-field {
+display: none;
 }
 
+.page-background {
+background: Canvas;
+}
+}
 
 /* =========================================================
-   POINTER FALLBACK
-   ========================================================= */
+POINTER FALLBACK
+========================================================= */
 
 /*
-  Fine pointer:
-  CustomCursor handles the visual cursor.
+Fine pointer:
+CustomCursor handles the visual cursor.
 
-  Coarse / touch pointer:
-  Keep the normal browser cursor behavior.
+Coarse / touch pointer:
+Keep the normal browser cursor behavior.
 */
 
 @media (hover: none), (pointer: coarse) {
-  html,
-  body {
-    cursor: auto;
-  }
+html,
+body {
+cursor: auto;
+}
 }
 
-
 /* ============================================================
-   Browser Autofill
-   Prevent Chrome from turning form inputs white/yellow
-   when a previously entered value is selected.
-   ============================================================ */
+BROWSER AUTOFILL
+Prevent Chrome from turning form inputs white/yellow
+when a previously entered value is selected.
+============================================================ */
 
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
@@ -379,59 +385,188 @@ textarea:-webkit-autofill,
 textarea:-webkit-autofill:hover,
 textarea:-webkit-autofill:focus,
 textarea:-webkit-autofill:active {
-  -webkit-text-fill-color: var(--foreground);
+-webkit-text-fill-color: var(--foreground);
 
-  -webkit-box-shadow: 0 0 0 1000px var(--input-bg) inset;
-  box-shadow: 0 0 0 1000px var(--input-bg) inset;
+-webkit-box-shadow: 0 0 0 1000px var(--input-bg) inset;
+box-shadow: 0 0 0 1000px var(--input-bg) inset;
 
-  caret-color: var(--foreground);
+caret-color: var(--foreground);
 
-  transition: background-color 9999s ease-out 0s;
+transition: background-color 9999s ease-out 0s;
 }
+
 /* ============================================================
-   Select Dropdown Animation
-   ============================================================ */
+SCROLL REVEAL
+============================================================ */
+
+/*
+Elements marked with [data-reveal] start slightly below
+their final position and fade into place.
+
+The JavaScript reveal hook adds .is-visible when the element
+enters the viewport.
+
+--reveal-delay is supplied by the reveal hook for staggered
+and individually delayed elements.
+*/
+
+[data-reveal] {
+opacity: 0;
+transform: translateY(24px);
+
+transition:
+opacity 0.6s ease-out var(--reveal-delay, 0ms),
+transform 0.6s ease-out var(--reveal-delay, 0ms);
+
+will-change: opacity, transform;
+}
+
+[data-reveal].is-visible {
+opacity: 1;
+transform: translateY(0);
+}
+
+/*
+Do not force a transform/opacity animation when the user
+explicitly requests reduced motion.
+
+This also prevents hidden content if the reveal observer
+is intentionally bypassed under reduced-motion conditions.
+*/
+
+@media (prefers-reduced-motion: reduce) {
+[data-reveal] {
+opacity: 1;
+transform: none;
+
+transition: none;
+
+will-change: auto;
+
+}
+}
+
+/* ============================================================
+SELECT DROPDOWN ANIMATION
+============================================================ */
 
 .select-content[data-state="open"] {
-  animation: select-content-open 280ms cubic-bezier(0.16, 1, 0.3, 1);
-  transform-origin: top center;
+animation: select-content-open 280ms cubic-bezier(0.16, 1, 0.3, 1);
+transform-origin: top center;
 }
 
 .select-content[data-state="closed"] {
-  animation: select-content-close 220ms cubic-bezier(0.4, 0, 1, 1);
-  transform-origin: top center;
+animation: select-content-close 220ms cubic-bezier(0.4, 0, 1, 1);
+transform-origin: top center;
 }
 
 @keyframes select-content-open {
-  from {
-    opacity: 0;
-    transform: translateY(-12px) scaleY(0.82);
-    filter: blur(3px);
-  }
+from {
+opacity: 0;
+transform: translateY(-12px) scaleY(0.82);
+filter: blur(3px);
+}
 
-  60% {
-    opacity: 1;
-    transform: translateY(2px) scaleY(1.02);
-    filter: blur(0);
-  }
+60% {
+opacity: 1;
+transform: translateY(2px) scaleY(1.02);
+filter: blur(0);
+}
 
-  to {
-    opacity: 1;
-    transform: translateY(0) scaleY(1);
-    filter: blur(0);
-  }
+to {
+opacity: 1;
+transform: translateY(0) scaleY(1);
+filter: blur(0);
+}
 }
 
 @keyframes select-content-close {
-  from {
-    opacity: 1;
-    transform: translateY(0) scaleY(1);
-    filter: blur(0);
+from {
+opacity: 1;
+transform: translateY(0) scaleY(1);
+filter: blur(0);
+}
+
+to {
+opacity: 0;
+transform: translateY(-8px) scaleY(0.88);
+filter: blur(2px);
+}
+}
+
+
+
+/* =========================================================
+   SKELETON LOADING
+   Separate from scroll reveal and card hover transforms.
+   ========================================================= */
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: transparent;
+  user-select: none;
+  pointer-events: none;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.065) 45%,
+    rgba(255, 255, 255, 0.095) 50%,
+    rgba(255, 255, 255, 0.065) 55%,
+    transparent 100%
+  );
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+.skeleton-static::after {
+  animation: none;
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Optional content crossfade helpers. */
+[data-skeleton-content] {
+  opacity: 0;
+  transition: opacity 350ms ease;
+}
+
+[data-skeleton-content].is-ready {
+  opacity: 1;
+}
+
+[data-skeleton-screen] {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 1;
+  transition: opacity 300ms ease;
+}
+
+[data-skeleton-screen].is-ready {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
   }
 
-  to {
-    opacity: 0;
-    transform: translateY(-8px) scaleY(0.88);
-    filter: blur(2px);
+  [data-skeleton-content],
+  [data-skeleton-screen] {
+    transition: none;
   }
 }
