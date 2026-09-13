@@ -2,12 +2,50 @@
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { Card, useTapCard } from "@/components/ui/card";
 
 export default function AboutSection() {
-  const { active: activeElement, getInteractiveCardProps } = useTapCard<
-    "hero" | "intro" | "story" | "quote"
-  >({ group: "about" });
+  type ActiveElement = "hero" | "intro" | "story" | "quote" | null;
+  const [activeElement, setActiveElement] = React.useState<ActiveElement>(null);
+  const lastPointerType = React.useRef<string>("mouse");
+
+  const recordPointerType = (event: React.PointerEvent) => {
+    lastPointerType.current = event.pointerType;
+  };
+
+  const toggleElement = (id: Exclude<ActiveElement, null>) => () => {
+    if (lastPointerType.current !== "touch") return;
+    setActiveElement((current) => (current === id ? null : id));
+  };
+
+  const activateOnKeyDown =
+    (id: Exclude<ActiveElement, null>) => (event: React.KeyboardEvent) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        setActiveElement((current) => (current === id ? null : id));
+      }
+    };
+
+  // Reset the tap-simulated "hover" state whenever the user taps
+  // ANYWHERE else on the page (not just inside this section), so the
+  // hero visual / cards never get stuck active.
+  React.useEffect(() => {
+    if (!activeElement) return;
+
+    const handleOutsideTap = (event: PointerEvent) => {
+      if (event.pointerType !== "touch") return;
+      const target = event.target as HTMLElement;
+      if (
+        target.closest("[data-about-hero]") ||
+        target.closest("[data-about-card]")
+      ) {
+        return;
+      }
+      setActiveElement(null);
+    };
+
+    document.addEventListener("pointerdown", handleOutsideTap);
+    return () => document.removeEventListener("pointerdown", handleOutsideTap);
+  }, [activeElement]);
 
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const sideRef = React.useRef<HTMLDivElement>(null);
@@ -119,6 +157,43 @@ export default function AboutSection() {
     return () => observer.disconnect();
   }, []);
 
+  const cardClass = (active: boolean) => `
+    group
+    relative
+    w-full
+    cursor-pointer
+    overflow-hidden
+    rounded-[28px]
+    border
+    border-[rgba(210,184,133,.16)]
+    bg-[linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.018))]
+    backdrop-blur-[14px]
+    backdrop-saturate-[1.15]
+    outline-none
+    transition-all
+    duration-300
+    hover:-translate-y-1
+    hover:border-[var(--secondary)]/35
+    hover:shadow-[0_25px_55px_rgba(0,0,0,.38)]
+    focus-visible:-translate-y-1
+    focus-visible:border-[var(--secondary)]/35
+    focus-visible:shadow-[0_25px_55px_rgba(0,0,0,.38)]
+    focus-visible:ring-2
+    focus-visible:ring-[var(--secondary-light)]
+    focus-visible:ring-offset-2
+    focus-visible:ring-offset-transparent
+    ${
+      active
+        ? "-translate-y-1 border-[var(--secondary)]/35 shadow-[0_25px_55px_rgba(0,0,0,.38)]"
+        : ""
+    }
+    motion-reduce:transition-none
+    motion-reduce:hover:translate-y-0
+    [@media(prefers-reduced-transparency:reduce)]:bg-[var(--glass-bg-solid)]
+    [@media(prefers-reduced-transparency:reduce)]:backdrop-blur-none
+    [@media(prefers-reduced-transparency:reduce)]:backdrop-saturate-100
+  `;
+
   const bodyTextClass = `
     m-0
     max-w-[62ch]
@@ -207,7 +282,8 @@ export default function AboutSection() {
               data-reveal
               data-reveal-delay="120"
               data-about-hero
-              {...getInteractiveCardProps("hero")}
+              onPointerDown={recordPointerType}
+              onClick={toggleElement("hero")}
               className={`
                 group
                 relative
@@ -244,6 +320,10 @@ export default function AboutSection() {
                 max-[600px]:max-w-[340px]
 
               `}
+              role="button"
+              tabIndex={0}
+              aria-pressed={activeElement === "hero"}
+              onKeyDown={activateOnKeyDown("hero")}
             >
               {/* BACK STACK CARD */}
 
@@ -265,8 +345,8 @@ export default function AboutSection() {
                   bg-[linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.012))]
                   shadow-[0_28px_65px_rgba(0,0,0,.24),inset_0_1px_0_rgba(255,255,255,.07)]
                   transition-transform
-duration-500
-ease-[cubic-bezier(0.16,1,0.3,1)]
+                  duration-300
+                  ease-out
 
                   group-hover:rotate-[-7deg]
                   group-hover:translate-x-[-2.1cqi]
@@ -302,8 +382,8 @@ ease-[cubic-bezier(0.16,1,0.3,1)]
                   bg-[linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.012))]
                   shadow-[0_28px_65px_rgba(0,0,0,.24),inset_0_1px_0_rgba(255,255,255,.07)]
                   transition-transform
-duration-500
-ease-[cubic-bezier(0.16,1,0.3,1)]
+                  duration-300
+                  ease-out
 
                   group-hover:rotate-[8deg]
                   group-hover:translate-x-[-4.21cqi]
@@ -325,7 +405,7 @@ ease-[cubic-bezier(0.16,1,0.3,1)]
               {/* MAIN IMAGE FRAME */}
 
               <div
-                className={` 
+                className={`
                   group/frame
                   relative
                   z-[2]
@@ -345,8 +425,8 @@ ease-[cubic-bezier(0.16,1,0.3,1)]
                   backdrop-blur-[12px]
                   backdrop-saturate-[1.2]
                   transition-[transform,box-shadow]
-duration-500
-ease-[cubic-bezier(0.16,1,0.3,1)]
+                  duration-300
+                  ease-out
 
                   hover:translate-y-[-2.1cqi]
                   hover:rotate-0
@@ -371,8 +451,8 @@ ease-[cubic-bezier(0.16,1,0.3,1)]
                   before:shadow-[0_22px_52px_rgba(0,0,0,.20),inset_0_1px_0_rgba(255,255,255,.06)]
                   before:rotate-[4deg]
                   before:transition-transform
-before:duration-500
-before:ease-[cubic-bezier(0.16,1,0.3,1)]
+                  before:duration-300
+                  before:ease-out
 
                   hover:before:rotate-[5deg]
                   hover:before:translate-x-[1.32cqi]
@@ -408,8 +488,8 @@ before:ease-[cubic-bezier(0.16,1,0.3,1)]
     rounded-[clamp(16px,5.53cqi,21px)_0_clamp(16px,5.53cqi,21px)_0]
     shadow-[inset_0_0_0_1px_rgba(255,255,255,.045)]
     transition-transform
-duration-500
-ease-[cubic-bezier(0.16,1,0.3,1)]
+    duration-300
+    ease-out
     group-hover/frame:scale-[1.035]
     ${activeElement === "hero" ? "scale-[1.035]" : ""}
     motion-reduce:transition-none
@@ -587,26 +667,23 @@ ease-[cubic-bezier(0.16,1,0.3,1)]
           >
             {/* INTRO */}
 
-            <Card
+            <div
               data-reveal
               data-reveal-delay="80"
               data-about-card
-              active={activeElement === "intro"}
-              {...getInteractiveCardProps("intro")}
+              role="button"
+              tabIndex={0}
+              aria-pressed={activeElement === "intro"}
+              onPointerDown={recordPointerType}
+              onClick={toggleElement("intro")}
+              onKeyDown={activateOnKeyDown("intro")}
               className={`
-                w-full
-                rounded-[28px]
-                border
-                border-[rgba(210,184,133,.16)]
-                bg-[linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.018))]
-                backdrop-blur-[14px]
-                backdrop-saturate-[1.15]
-                [@media(prefers-reduced-transparency:reduce)]:bg-[var(--glass-bg-solid)]
-                [@media(prefers-reduced-transparency:reduce)]:backdrop-blur-none
-                [@media(prefers-reduced-transparency:reduce)]:backdrop-saturate-100
+                ${cardClass(activeElement === "intro")}
                 p-[calc(clamp(22px,2.6vw,34px)*var(--fit-scale,1))_calc(clamp(20px,2.8vw,32px)*var(--fit-scale,1))]
               `}
             >
+        
+
               <p className={bodyTextClass}>
                 Roselanes by Jeev Photography is inspired by the language
                 of a rose — where every petal speaks of love, every bloom
@@ -616,30 +693,27 @@ ease-[cubic-bezier(0.16,1,0.3,1)]
                 laughter, tears, romance, and countless unspoken feelings
                 that make every story beautifully yours.
               </p>
-            </Card>
+            </div>
 
             {/* STORY */}
 
-            <Card
+            <div
               data-reveal
               data-reveal-delay="160"
               data-about-card
-              active={activeElement === "story"}
-              {...getInteractiveCardProps("story")}
+              role="button"
+              tabIndex={0}
+              aria-pressed={activeElement === "story"}
+              onPointerDown={recordPointerType}
+              onClick={toggleElement("story")}
+              onKeyDown={activateOnKeyDown("story")}
               className={`
-                w-full
-                rounded-[28px]
-                border
-                border-[rgba(210,184,133,.16)]
-                bg-[linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.018))]
-                backdrop-blur-[14px]
-                backdrop-saturate-[1.15]
-                [@media(prefers-reduced-transparency:reduce)]:bg-[var(--glass-bg-solid)]
-                [@media(prefers-reduced-transparency:reduce)]:backdrop-blur-none
-                [@media(prefers-reduced-transparency:reduce)]:backdrop-saturate-100
+                ${cardClass(activeElement === "story")}
                 p-[calc(clamp(22px,2.6vw,34px)*var(--fit-scale,1))_calc(clamp(20px,2.8vw,32px)*var(--fit-scale,1))]
               `}
-            >
+            > 
+ 
+
               <p className={bodyTextClass}>
                 I know that one day, these photographs will become more
                 than just photographs to you. Years from now, I want you
@@ -651,20 +725,22 @@ ease-[cubic-bezier(0.16,1,0.3,1)]
                 My promise is simple — to capture your day not just as it
                 looked, but as your heart remembers it.
               </p>
-            </Card>
+            </div>
 
             {/* QUOTE */}
 
-            <Card
+            <div
               data-reveal
               data-reveal-delay="240"
               data-about-card
-              active={activeElement === "quote"}
-              {...getInteractiveCardProps("quote")}
+              role="button"
+              tabIndex={0}
+              aria-pressed={activeElement === "quote"}
+              onPointerDown={recordPointerType}
+              onClick={toggleElement("quote")}
+              onKeyDown={activateOnKeyDown("quote")}
               className={`
-                w-full
-                rounded-[28px]
-                border
+                ${cardClass(activeElement === "quote")}
                 border-[rgba(210,184,133,.26)]
                 bg-[linear-gradient(145deg,rgba(255,255,255,.08),rgba(var(--primary-light-rgb),.12)_70%)]
                 py-[calc(clamp(22px,2.6vw,34px)*var(--fit-scale,1))]
@@ -682,7 +758,8 @@ ease-[cubic-bezier(0.16,1,0.3,1)]
                 before:opacity-[.55]
                 before:content-['“']
               `}
-            >
+            >  
+
               <p
                 className="
                   m-0
@@ -698,7 +775,7 @@ ease-[cubic-bezier(0.16,1,0.3,1)]
                 When the moment fades, let the feeling remain — blooming
                 forever through every frame.
               </p>
-            </Card>
+            </div>
           </div>
         </div>
       </div>

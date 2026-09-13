@@ -5,16 +5,14 @@ import { SiteBackground } from "@/components/site-background";
 import SiteHeader from "@/components/site-header";
 import { TestimonialsSection } from "@/components/testimonials-section";
 import { QuoteSection } from "@/components/quote-section";
-import { PortfolioSection } from "@/components/portfolio-section";
-import { PageSkeleton } from "@/components/page-skeleton";
+import { PortfolioSection } from "@/components/portfolio-section"; 
 
 export default function Page() {
   return (
     <>
       <SiteBackground />
       <SiteHeader />
-
-      <PageSkeleton>
+ 
         <main className="relative z-[1] min-h-screen">
           <HeroSection />
           <PortfolioSection />
@@ -22,8 +20,7 @@ export default function Page() {
           <TestimonialsSection />
           <AboutSection />
           <ContactSection />
-        </main>
-      </PageSkeleton>
+        </main> 
     </>
   );
 }

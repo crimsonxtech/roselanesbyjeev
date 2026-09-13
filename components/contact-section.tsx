@@ -17,9 +17,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-
-import { Card, useTapCard } from "@/components/ui/card";
-
 const glass =
   "border border-[var(--glass-border)] bg-[var(--glass-bg)] shadow-[0_18px_45px_rgba(0,0,0,.28),inset_0_1px_0_rgba(255,255,255,.07)]";
 
@@ -55,28 +52,108 @@ function ContactCard({
   label,
   children,
   active,
-  ...rest
+  onActivate,
 }: {
   icon: React.ReactNode;
   label: string;
   children: React.ReactNode;
   active: boolean;
-} & React.HTMLAttributes<HTMLDivElement>) {
+  onActivate: () => void;
+}) {
+  const lastPointerType = React.useRef<string>("mouse");
+
   return (
-    <Card
-      active={active}
-      icon={icon}
-      label={label}
-      cornerAccents
+    <div
       data-contact-card
       data-reveal
       data-reveal-group="contact-sidebar"
       data-reveal-stagger="100"
-      className={`rounded-[18px] p-5 sm:p-6 ${glassBlur}`}
-      {...rest}
+      onPointerDown={(e) => {
+        lastPointerType.current = e.pointerType;
+      }}
+      onClick={() => {
+        if (lastPointerType.current !== "touch") return;
+        onActivate();
+      }}
+      className={`
+        group relative overflow-hidden rounded-[18px] p-5 sm:p-6
+        ${glassBlur}
+        transition-all duration-300
+        hover:-translate-y-1
+        hover:border-[var(--secondary)]/35
+        hover:shadow-[0_25px_55px_rgba(0,0,0,.38)]
+        focus-within:-translate-y-1
+        focus-within:border-[var(--secondary)]/35
+        focus-within:shadow-[0_25px_55px_rgba(0,0,0,.38)]
+        ${
+          active
+            ? "-translate-y-1 border-[var(--secondary)]/35 shadow-[0_25px_55px_rgba(0,0,0,.38)]"
+            : ""
+        }
+      `}
     >
+      <span
+        className={`
+          pointer-events-none absolute left-3 top-3 h-4 w-4
+          border-l border-t border-transparent
+          transition-all duration-300
+          group-hover:border-[var(--secondary-light)]/60
+          group-focus-within:border-[var(--secondary-light)]/60
+          ${
+            active
+              ? "border-l-[var(--secondary-light)]/60 border-t-[var(--secondary-light)]/60"
+              : ""
+          }
+        `}
+      />
+
+      <span
+        className={`
+          pointer-events-none absolute bottom-3 right-3 h-4 w-4
+          border-b border-r border-transparent
+          transition-all duration-300
+          group-hover:border-[var(--secondary-light)]/60
+          group-focus-within:border-[var(--secondary-light)]/60
+          ${
+            active
+              ? "border-b-[var(--secondary-light)]/60 border-r-[var(--secondary-light)]/60"
+              : ""
+          }
+        `}
+      />
+
+      <div className="mb-2.5 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--secondary)]">
+        <span
+          className={`
+            flex size-[26px] shrink-0 items-center justify-center
+            rounded-full
+            border border-[var(--glass-border)]
+            bg-white/[0.045]
+            text-[var(--secondary-light)]
+            transition-all duration-300
+            group-hover:border-[var(--secondary-light)]/50
+            group-hover:bg-[var(--secondary-light)]/10
+            group-hover:shadow-[0_0_14px_rgba(210,184,133,.32)]
+            group-focus-within:border-[var(--secondary-light)]/50
+            group-focus-within:bg-[var(--secondary-light)]/10
+            group-focus-within:shadow-[0_0_14px_rgba(210,184,133,.32)]
+            ${
+              active
+                ? "border-[var(--secondary-light)]/50 bg-[var(--secondary-light)]/10 shadow-[0_0_14px_rgba(210,184,133,.32)]"
+                : ""
+            }
+          `}
+        >
+          {icon}
+        </span>
+
+        <span className="flex h-[26px] items-center leading-none">
+          {label}
+        </span>
+      </div>
+
       {children}
-    </Card>
+    </div>
   );
 }
 
@@ -130,10 +207,25 @@ export default function ContactSection() {
   const [submitting, setSubmitting] = React.useState(false);
   const [success, setSuccess] = React.useState(false);
   const [status, setStatus] = React.useState("");
-  const { active: activeCard, getWrapperCardProps } = useTapCard<
-    "studio" | "email" | "phone" | "whatsapp"
-  >({ group: "contact" });
+  const [activeCard, setActiveCard] = React.useState<string | null>(null);
   const successRef = React.useRef<HTMLDivElement>(null);
+
+  // Reset the tap-simulated "hover" state whenever the user taps
+  // ANYWHERE else on the page (not just inside this section), so a
+  // card never gets stuck active after switching focus elsewhere.
+  React.useEffect(() => {
+    if (!activeCard) return;
+
+    const handleOutsideTap = (event: PointerEvent) => {
+      if (event.pointerType !== "touch") return;
+      const target = event.target as HTMLElement;
+      if (target.closest("[data-contact-card]")) return;
+      setActiveCard(null);
+    };
+
+    document.addEventListener("pointerdown", handleOutsideTap);
+    return () => document.removeEventListener("pointerdown", handleOutsideTap);
+  }, [activeCard]);
 
   const currentPurpose =
     purpose === "" ? purposeContent.enquiry : purposeContent[purpose];
@@ -230,7 +322,9 @@ export default function ContactSection() {
               icon={<MapPin className="size-[13px]" aria-hidden="true" />}
               label="Studio Address"
               active={activeCard === "studio"}
-              {...getWrapperCardProps("studio")}
+              onActivate={() =>
+                setActiveCard(activeCard === "studio" ? null : "studio")
+              }
             >
               <h3 className="mb-2 text-lg font-bold leading-[1.3] text-[var(--cream)]">
                 Hyderabad, Telangana
@@ -247,7 +341,9 @@ export default function ContactSection() {
               icon={<Mail className="size-[13px]" aria-hidden="true" />}
               label="Email"
               active={activeCard === "email"}
-              {...getWrapperCardProps("email")}
+              onActivate={() =>
+                setActiveCard(activeCard === "email" ? null : "email")
+              }
             >
               <a
                 href="mailto:roselanesbyjeev@gmail.com"
@@ -262,7 +358,9 @@ export default function ContactSection() {
                 icon={<Phone className="size-[13px]" aria-hidden="true" />}
                 label="Phone"
                 active={activeCard === "phone"}
-                {...getWrapperCardProps("phone")}
+                onActivate={() =>
+                  setActiveCard(activeCard === "phone" ? null : "phone")
+                }
               >
                 <a
                   href="tel:+919550044475"
@@ -285,7 +383,11 @@ export default function ContactSection() {
                 }
                 label="WhatsApp"
                 active={activeCard === "whatsapp"}
-                {...getWrapperCardProps("whatsapp")}
+                onActivate={() =>
+                  setActiveCard(
+                    activeCard === "whatsapp" ? null : "whatsapp"
+                  )
+                }
               >
                 <a
                   href="https://wa.me/919550044475?text=Hi%20Roselanes%20by%20Jeev%2C%20I%27d%20like%20to%20know%20more%20about%20your%20photography%20services."
@@ -325,8 +427,6 @@ export default function ContactSection() {
             </a>
 
             <div
-              data-reveal
-              data-reveal-delay="400"
               className="flex items-center gap-3 px-3 py-3 text-xs font-medium leading-[1.4] text-[var(--cream)]/50"
             >
               <span className="relative size-2 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,.8)]">

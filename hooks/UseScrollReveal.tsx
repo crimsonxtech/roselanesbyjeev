@@ -65,6 +65,30 @@ export function useScrollReveal() {
      */
     let observer: IntersectionObserver | null = null;
     let mutationObserver: MutationObserver | null = null;
+    let skeletonReadyObserver: MutationObserver | null = null;
+
+    /**
+     * Elements whose intersection fired while they were still sitting
+     * behind PageSkeleton's `[data-skeleton-content]` overlay (opacity:0
+     * but NOT display:none, so IntersectionObserver sees them as "in
+     * view" regardless). Revealing them then would burn the animation
+     * before anyone could see it, so we hold them here and reveal for
+     * real once the skeleton finishes (see skeletonReadyObserver below).
+     */
+    const pendingWhileHidden = new Set<HTMLElement>();
+
+    const isHiddenBySkeleton = (el: HTMLElement) =>
+      !!el.closest("[data-skeleton-content]:not(.is-ready)");
+
+    const revealElement = (el: HTMLElement) => {
+      const delay = el.dataset.revealDelay;
+
+      if (delay && !el.dataset.revealGroup) {
+        el.style.setProperty("--reveal-delay", `${delay}ms`);
+      }
+
+      el.classList.add("is-visible");
+    };
 
     const applyGroupStagger = (scope: ParentNode) => {
       const affectedGroups = new Set<string>();
@@ -120,20 +144,14 @@ export function useScrollReveal() {
 
             const el = entry.target as HTMLElement;
 
-            /**
-             * Per-element delay only applies when the element is not
-             * participating in a group stagger.
-             */
-            const delay = el.dataset.revealDelay;
-
-            if (delay && !el.dataset.revealGroup) {
-              el.style.setProperty(
-                "--reveal-delay",
-                `${delay}ms`
-              );
+            // Still behind the loading skeleton: defer instead of
+            // burning the reveal animation on an invisible element.
+            if (isHiddenBySkeleton(el)) {
+              pendingWhileHidden.add(el);
+              return;
             }
 
-            el.classList.add("is-visible");
+            revealElement(el);
             obs.unobserve(el);
           });
         },
@@ -144,6 +162,38 @@ export function useScrollReveal() {
       );
 
       observeAll(document);
+
+      /**
+       * Once PageSkeleton flips a `[data-skeleton-content]` wrapper to
+       * `.is-ready`, replay the reveal for anything that got deferred
+       * while it was hidden. IntersectionObserver itself won't refire
+       * on its own here since the element's on-screen geometry hasn't
+       * changed - only its ancestor's opacity/class has.
+       */
+      skeletonReadyObserver = new MutationObserver((mutations) => {
+        const becameReady = mutations.some((mutation) => {
+          const target = mutation.target as HTMLElement;
+          return (
+            target.hasAttribute("data-skeleton-content") &&
+            target.classList.contains("is-ready")
+          );
+        });
+
+        if (!becameReady || pendingWhileHidden.size === 0) return;
+
+        pendingWhileHidden.forEach((el) => {
+          revealElement(el);
+          observer?.unobserve(el);
+        });
+
+        pendingWhileHidden.clear();
+      });
+
+      skeletonReadyObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ["class"],
+        subtree: true,
+      });
 
       /**
        * Watch for elements added after mount (tab switches, async content,
@@ -189,9 +239,12 @@ export function useScrollReveal() {
       if (event.matches) {
         mutationObserver?.disconnect();
         observer?.disconnect();
+        skeletonReadyObserver?.disconnect();
 
         mutationObserver = null;
         observer = null;
+        skeletonReadyObserver = null;
+        pendingWhileHidden.clear();
 
         revealAllImmediately();
 
@@ -218,9 +271,12 @@ export function useScrollReveal() {
 
       observer?.disconnect();
       mutationObserver?.disconnect();
+      skeletonReadyObserver?.disconnect();
 
       observer = null;
       mutationObserver = null;
+      skeletonReadyObserver = null;
+      pendingWhileHidden.clear();
     };
   }, []);
 }
