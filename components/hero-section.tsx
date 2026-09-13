@@ -5,6 +5,13 @@ import { createPortal } from "react-dom"
 import Image from "next/image"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Dancing_Script } from "next/font/google"
+
+const dancingScript = Dancing_Script({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--font-dancing-script",
+})
 
 type CounterProps = {
   target: number
@@ -46,12 +53,104 @@ const HERO_IMAGES: HeroImage[] = [
   },
 ]
 
-function AnimatedCounter({
+/**
+ * Scales its children's font-size so the rendered line
+ * width matches `targetPercent` of the parent container's
+ * width. Recalculates on mount and on container resize.
+ */
+function FitText({
+  children,
+  targetPercent = 0.8,
+  minFontSize = 10,
+  maxFontSize = 400,
+  className = "",
+}: {
+  children: React.ReactNode
+  targetPercent?: number
+  minFontSize?: number
+  maxFontSize?: number
+  className?: string
+}) {
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const textRef = React.useRef<HTMLSpanElement>(null)
+  const [fontSize, setFontSize] = React.useState<number | null>(null)
+
+  React.useLayoutEffect(() => {
+    const container = containerRef.current
+    const textEl = textRef.current
+    if (!container || !textEl) return
+
+    const recalc = () => {
+      const containerWidth = container.offsetWidth
+      if (!containerWidth) return
+
+      const referenceFontSize = 100
+      const previousInlineSize = textEl.style.fontSize
+      textEl.style.fontSize = `${referenceFontSize}px`
+      const textWidth = textEl.scrollWidth
+      textEl.style.fontSize = previousInlineSize
+
+      if (!textWidth) return
+
+      const targetWidth = containerWidth * targetPercent
+      const rawSize = (targetWidth / textWidth) * referenceFontSize
+      const clampedSize = Math.min(
+        Math.max(rawSize, minFontSize),
+        maxFontSize,
+      )
+
+      setFontSize(clampedSize)
+    }
+
+    recalc()
+
+    const resizeObserver = new ResizeObserver(recalc)
+    resizeObserver.observe(container)
+
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [targetPercent, minFontSize, maxFontSize, children])
+
+  return (
+    <div ref={containerRef} className="w-full">
+      <span
+        ref={textRef}
+        className={className}
+        style={{
+          display: "inline-block",
+          whiteSpace: "nowrap",
+          fontSize: fontSize ? `${fontSize}px` : undefined,
+        }}
+      >
+        {children}
+      </span>
+    </div>
+  )
+}
+
+function StatCard({
   target,
   label,
   start,
 }: CounterProps) {
   const [value, setValue] = React.useState(0)
+  const [active, setActive] = React.useState(false)
+  const lastPointerType = React.useRef<string>("mouse")
+
+  React.useEffect(() => {
+    if (!active) return
+
+    const handleOutsideTap = (event: PointerEvent) => {
+      if (event.pointerType !== "touch") return
+      const target = event.target as HTMLElement
+      if (target.closest("[data-hero-stat]")) return
+      setActive(false)
+    }
+
+    document.addEventListener("pointerdown", handleOutsideTap)
+    return () => document.removeEventListener("pointerdown", handleOutsideTap)
+  }, [active])
 
   React.useEffect(() => {
     if (!start) return
@@ -70,13 +169,8 @@ function AnimatedCounter({
     let frameId = 0
 
     const update = (now: number) => {
-      const progress = Math.min(
-        (now - startTime) / duration,
-        1,
-      )
-
-      const eased =
-        1 - Math.pow(1 - progress, 3)
+      const progress = Math.min((now - startTime) / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
 
       setValue(Math.floor(eased * target))
 
@@ -89,64 +183,73 @@ function AnimatedCounter({
 
     frameId = requestAnimationFrame(update)
 
-    return () => {
-      cancelAnimationFrame(frameId)
-    }
+    return () => cancelAnimationFrame(frameId)
   }, [start, target])
 
   return (
     <div
-      className="
-        flex min-h-[76px] min-w-0 flex-col
-        items-center justify-center gap-[5px]
-        rounded-[clamp(12px,1.5vw,18px)]
-        border border-[rgba(184,151,93,.34)]
-        bg-[linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.025))]
-        p-[clamp(10px,1.4vw,16px)]
-        shadow-[0_8px_20px_rgba(0,0,0,.10)]
-        transition-[transform,border-color,box-shadow]
-        duration-[var(--speed)]
-        ease-[var(--ease)]
+      data-hero-stat
+      data-reveal
+      data-reveal-group="hero-stats"
+      data-reveal-stagger="80"
+      onPointerDown={(event) => {
+        lastPointerType.current = event.pointerType
+      }}
+      onClick={() => {
+        if (lastPointerType.current !== "touch") return
+        setActive((current) => !current)
+      }}
+      className={`
+        group relative min-w-0 cursor-pointer overflow-hidden rounded-[18px]
+        border border-[var(--glass-border)] bg-[var(--glass-bg)] p-[clamp(6px,0.9vw,10px)]
+        shadow-[0_18px_45px_rgba(0,0,0,.28),inset_0_1px_0_rgba(255,255,255,.07)]
+        backdrop-blur-xl
+        transition-all duration-300
         hover:-translate-y-1
-        hover:border-[rgba(210,184,133,.58)]
-        hover:shadow-[0_12px_28px_rgba(0,0,0,.16),0_8px_24px_var(--shadow-hover)]
+        hover:border-[var(--secondary)]/35
+        hover:shadow-[0_25px_55px_rgba(0,0,0,.38)]
+        focus-within:-translate-y-1
+        focus-within:border-[var(--secondary)]/35
+        focus-within:shadow-[0_25px_55px_rgba(0,0,0,.38)]
+        ${
+          active
+            ? "-translate-y-1 border-[var(--secondary)]/35 shadow-[0_25px_55px_rgba(0,0,0,.38)]"
+            : ""
+        }
         motion-reduce:transition-none
         motion-reduce:hover:translate-y-0
-        max-[1100px]:min-h-[clamp(66px,7vw,76px)]
-        max-[1100px]:p-[clamp(9px,1.2vw,14px)]
-        max-[720px]:min-h-[clamp(64px,17vw,72px)]
-        max-[720px]:p-[clamp(8px,2.5vw,12px)]
-        max-[480px]:min-h-16 
-        max-[480px]:px-1.5
-        max-[480px]:py-2
-      "
+        [@media(prefers-reduced-transparency:reduce)]:bg-[var(--glass-bg-solid)]
+        [@media(prefers-reduced-transparency:reduce)]:backdrop-blur-none
+      `}
     >
-      <h3
-        className="
-          m-0 font-display font-semibold leading-none
-          text-[var(--secondary)]
-          text-[clamp(1.25rem,1.6vw,2rem)]
-          max-[1100px]:text-[clamp(1.15rem,2vw,1.7rem)]
-          max-[720px]:text-[clamp(1.05rem,5vw,1.5rem)]
-          max-[480px]:text-[clamp(1rem,5vw,1.35rem)]
-        "
-      >
-        {value}+
-      </h3>
+      <div className="relative flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-[3px]">
+        <h3
+          className="
+            m-0 font-display font-semibold leading-none
+            text-[clamp(1.25rem,1.6vw,2rem)]
+            text-[var(--secondary)]
+            transition-colors duration-300
+            group-hover:text-[var(--secondary-light)]
+            max-[1100px]:text-[clamp(1.15rem,2vw,1.7rem)]
+            max-[720px]:text-[clamp(1.05rem,5vw,1.5rem)]
+            max-[480px]:text-[clamp(1rem,5vw,1.35rem)]
+          "
+        >
+          {value}+
+        </h3>
 
-      <span
-        className="
-          block text-center uppercase
-          leading-[1.2] tracking-[.1em]
-          text-[rgba(var(--cream-rgb),.68)]
-          text-[clamp(.62rem,.65vw,.78rem)]
-          max-[1100px]:text-[clamp(.58rem,.7vw,.72rem)]
-          max-[720px]:text-[clamp(.56rem,2vw,.68rem)]
-          max-[480px]:text-[.55rem]
-        "
-      >
-        {label}
-      </span>
+        <span
+          className="
+            block text-center uppercase leading-[1.2] tracking-[.1em]
+            text-[rgba(var(--cream-rgb),.68)]
+            text-[clamp(.62rem,.65vw,.78rem)]
+            max-[720px]:text-[clamp(.56rem,2vw,.68rem)]
+            max-[480px]:text-[.55rem]
+          "
+        >
+          {label}
+        </span>
+      </div>
     </div>
   )
 }
@@ -419,8 +522,9 @@ export function HeroSection() {
         ref={heroRef}
         id="hero"
         aria-labelledby="hero-heading"
-        className="
-          relative isolate w-full overflow-hidden
+        className={`
+          ${dancingScript.variable}
+          relative isolate w-full overflow-visible
           px-5 pb-0
           pt-[calc(var(--header-offset,0px)+var(--header-height,100px))]
           sm:px-6
@@ -430,7 +534,7 @@ export function HeroSection() {
           [--hero-visual-size:clamp(330px,42vw,580px)]
 max-[1100px]:[--hero-visual-size:clamp(310px,44vw,530px)]
 max-[560px]:[--hero-visual-size:none]
-        "
+        `}
       >
         <div
           className="
@@ -464,71 +568,76 @@ max-[560px]:[--hero-visual-size:none]
               max-[480px]:[--hero-content-gap:18px]
             "
           >
-            <p
-              data-reveal
-              data-reveal-delay="80"
-              className="
-                relative m-0 max-w-[42ch]
-                pl-[18px]
-                text-[clamp(.95rem,calc(.35vw+.85rem),1.08rem)]
-                leading-[1.75]
-                text-[rgba(var(--cream-rgb),.72)]
-                before:absolute
-                before:left-0
-                before:top-[.5em]
-                before:h-[calc(100%_-_1em)]
-                before:w-0.5
-                before:rounded-full
-                before:bg-[linear-gradient(180deg,var(--secondary-light),var(--secondary))]
-                before:shadow-[0_0_12px_rgba(184,151,93,.16)]
-                max-[1100px]:text-[clamp(.9rem,1.4vw,1.02rem)]
-                max-[720px]:mx-auto
-                max-[720px]:max-w-[36ch]
-                max-[720px]:pl-4
-                max-[720px]:text-[clamp(.9rem,2.5vw,1rem)]
-                max-[720px]:leading-[1.7]
-                max-[720px]:text-center
-                max-[720px]:before:left-0
-                max-[720px]:before:top-1/2
-                max-[720px]:before:h-[2.4em]
-                max-[720px]:before:-translate-y-1/2
-                max-[480px]:max-w-[34ch]
-                max-[480px]:pl-[14px]
-                max-[480px]:text-[.9rem]
-              "
-            >
-              Luxe wedding and lifestyle photography
-            </p>
+<p
+  data-reveal
+  data-reveal-delay="80"
+  className="
+    relative m-0 w-max max-w-full
+    pl-[22px]
+    leading-[1.65]
+    text-[rgba(var(--cream-rgb),.82)]
+    before:absolute
+    before:left-0
+    before:top-[.5em]
+    before:h-[calc(100%_-_1em)]
+    before:w-0.5
+    before:rounded-full
+    before:bg-[linear-gradient(180deg,var(--secondary-light),var(--secondary))]
+    before:shadow-[0_0_12px_rgba(184,151,93,.16)]
+    max-[720px]:mx-auto
+    max-[720px]:pl-5
+    max-[720px]:text-center
+    max-[720px]:before:left-0
+    max-[720px]:before:top-1/2
+    max-[720px]:before:h-[2.4em]
+    max-[720px]:before:-translate-y-1/2
+    max-[480px]:pl-4
+  "
+>
+  <span
+    className="
+      block whitespace-nowrap
+      pl-[3px]
+      font-[family-name:var(--font-dancing-script)] font-bold
+      tracking-[.005em]
+      text-[clamp(1.1rem,calc(.7vw+.9rem),2.15rem)]
+      max-[1100px]:text-[clamp(1rem,2vw,1.7rem)]
+      max-[720px]:text-[clamp(.95rem,3.4vw,1.5rem)]
+      max-[480px]:text-[clamp(.8rem,4.3vw,1.2rem)]
+      bg-[linear-gradient(90deg,var(--secondary-dark)_0%,var(--secondary)_38%,var(--secondary-light)_72%,var(--cream)_100%)]
+      bg-clip-text text-transparent
+      drop-shadow-[0_1px_1px_rgba(0,0,0,.35)]
+    "
+  >
+    Luxé wedding and lifestyle photography
+  </span>
+</p>
 
             <h1
               id="hero-heading"
               data-reveal
               className="
                 m-0 w-full max-w-full
-                font-display font-bold
-                leading-[.98]
-                tracking-[-.035em]
+                font-display font-semibold
+                leading-[.9]
+                tracking-[-.03em]
                 text-[var(--cream)]
-                text-[clamp(3rem,calc(5vw+.5rem),5.75rem)]
-                max-[1100px]:text-[clamp(2.8rem,5.5vw,4.8rem)]
-                max-[720px]:text-[clamp(2.5rem,10vw,4rem)]
-                max-[720px]:leading-none
-                max-[480px]:text-[clamp(2.3rem,12vw,3.35rem)]
               "
             >
-              Roselanes
-
-              <span
-                className="
-                  mt-[.08em]
-                  block w-full max-w-none
-                  text-[1.08em]
-                  font-extrabold italic
-                  text-[var(--secondary-light)]
-                "
+              <FitText targetPercent={0.8} minFontSize={32} maxFontSize={140}>
+                <span className="italic">A</span>{" "}
+                <span className="font-brand text-[var(--secondary)]">
+                  Wedding
+                </span>
+              </FitText>
+              <FitText
+                targetPercent={0.5}
+                minFontSize={20}
+                maxFontSize={110}
+                className="italic"
               >
-                Photography
-              </span>
+                Theory
+              </FitText>
             </h1>
 
             <div
@@ -556,65 +665,53 @@ max-[560px]:[--hero-visual-size:none]
                   max-[480px]:gap-[7px]
                 "
               >
-                <AnimatedCounter
-                  target={500}
-                  label="Events"
-                  start={countersStarted}
-                />
+                <StatCard target={500} label="Events" start={countersStarted} />
 
-                <AnimatedCounter
-                  target={6}
-                  label="Years"
-                  start={countersStarted}
-                />
+                <StatCard target={6} label="Years" start={countersStarted} />
 
-                <AnimatedCounter
-                  target={120}
-                  label="Clients"
-                  start={countersStarted}
-                />
+                <StatCard target={120} label="Clients" start={countersStarted} />
               </div>
 
               {/* ACTION BUTTONS */}
               <div
                 className="
-                  flex w-auto max-w-full
+                  flex w-full
+                  max-w-[520px]
                   flex-row flex-nowrap
                   gap-[clamp(8px,1.2vw,14px)]
-                  max-[1100px]:w-full
+                  [container-type:inline-size]
+                  overflow-visible
                   max-[1100px]:max-w-[480px]
-                  max-[1100px]:gap-[clamp(8px,1.2vw,12px)]
                   max-[720px]:mx-auto
-                  max-[720px]:w-full
                   max-[720px]:max-w-[520px]
-                  max-[480px]:gap-2
                 "
               >
                 <Button
                   asChild
                   className="
-                    min-w-[150px]
-                    shrink-0
-                    whitespace-nowrap
+                    !min-w-0
+                    flex-1
                     !border-[var(--secondary)]
                     !bg-[var(--secondary)]
                     !text-[var(--primary-darkest)]
+                    !shadow-[0_14px_40px_rgba(0,0,0,.20)]
                     hover:!border-[var(--secondary-light)]
                     hover:!bg-[var(--secondary-light)]
-                    max-[1100px]:min-w-0
-                    max-[1100px]:px-[clamp(9px,1.3vw,18px)]
-                    max-[1100px]:text-[clamp(.65rem,calc(.75vw+.22rem),.86rem)]
-                    max-[720px]:w-1/2
-                    max-[720px]:flex-1
-                    max-[720px]:px-[clamp(8px,3vw,18px)]
-                    max-[720px]:py-[clamp(10px,2.5vw,14px)]
-                    max-[720px]:text-[clamp(.66rem,2.5vw,.88rem)]
-                    max-[480px]:px-[7px]
-                    max-[480px]:py-2.5
-                    max-[480px]:text-[clamp(.64rem,2.7vw,.78rem)]
+                    hover:!shadow-[0_18px_48px_rgba(0,0,0,.26)]
                   "
+                  style={
+                    {
+                      "--btn-padding-x": "clamp(10px, 6cqw, 34px)",
+                      "--btn-font-size": "clamp(.6rem, 3.2cqw, .88rem)",
+                      "--btn-letter-spacing": "clamp(.02em, .6cqw, .14em)",
+                      "--btn-min-height": "clamp(40px, 13cqw, 60px)",
+                    } as React.CSSProperties
+                  }
                 >
-                  <a href="/quote">
+                  <a
+                    href="/quote"
+                    className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+                  >
                     Get a Quote
                   </a>
                 </Button>
@@ -622,22 +719,15 @@ max-[560px]:[--hero-visual-size:none]
                 <Button
                   asChild
                   variant="secondary"
-                  className="
-                    min-w-[150px]
-                    shrink-0
-                    whitespace-nowrap
-                    max-[1100px]:min-w-0
-                    max-[1100px]:px-[clamp(9px,1.3vw,18px)]
-                    max-[1100px]:text-[clamp(.65rem,calc(.75vw+.22rem),.86rem)]
-                    max-[720px]:w-1/2
-                    max-[720px]:flex-1
-                    max-[720px]:px-[clamp(8px,3vw,18px)]
-                    max-[720px]:py-[clamp(10px,2.5vw,14px)]
-                    max-[720px]:text-[clamp(.66rem,2.5vw,.88rem)]
-                    max-[480px]:px-[7px]
-                    max-[480px]:py-2.5
-                    max-[480px]:text-[clamp(.64rem,2.7vw,.78rem)]
-                  "
+                  className="!min-w-0 flex-1"
+                  style={
+                    {
+                      "--btn-padding-x": "clamp(10px, 6cqw, 34px)",
+                      "--btn-font-size": "clamp(.6rem, 3.2cqw, .88rem)",
+                      "--btn-letter-spacing": "clamp(.02em, .6cqw, .14em)",
+                      "--btn-min-height": "clamp(40px, 13cqw, 60px)",
+                    } as React.CSSProperties
+                  }
                 >
                   <a
                     href="#portfolio"
@@ -650,6 +740,7 @@ max-[560px]:[--hero-visual-size:none]
                           block: "start",
                         })
                     }}
+                    className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
                   >
                     Explore Portfolio →
                   </a>

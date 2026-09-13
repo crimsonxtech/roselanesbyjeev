@@ -42,9 +42,11 @@ const SelectContent = React.forwardRef<
       sideOffset={8}
       className={cn(
         "select-content",
-        // Deliberately above the header/nav stacking context (see z-index scale below);
-        // Radix portals this content to <body>, so it must clear every fixed/sticky ancestor.
-        "z-[10050] max-h-[min(24rem,var(--radix-select-content-available-height))] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[16px] border border-[var(--secondary)] bg-[var(--primary-darkest)]/96 p-1.5 text-[var(--secondary-light)] shadow-[0_18px_45px_rgba(0,0,0,.35),inset_0_1px_0_rgba(255,255,255,.08)] backdrop-blur-xl",
+        // Deliberately above every stacking context this can be portalled into —
+        // the header/nav, AND the Quote modal overlay (z-[999999]). Radix portals
+        // this content to <body>, so it must clear every fixed/sticky ancestor,
+        // including full-screen dialogs that sit on top of the page.
+        "z-[1000010] max-h-[min(24rem,var(--radix-select-content-available-height))] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[16px] border border-[var(--secondary)] bg-[var(--primary-darkest)]/96 p-1.5 text-[var(--secondary-light)] shadow-[0_18px_45px_rgba(0,0,0,.35),inset_0_1px_0_rgba(255,255,255,.08)] backdrop-blur-xl",
         className
       )}
       {...props}

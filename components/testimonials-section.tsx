@@ -830,7 +830,7 @@ const handleResize = () => {
             </span>
 
             <span className="font-brand text-[clamp(2.5rem,10vw,4.3rem)] leading-none text-[var(--secondary-light)]">
-              couples
+              Couples
             </span>
 
             <span className="italic">

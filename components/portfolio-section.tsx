@@ -500,7 +500,7 @@ export function PortfolioSection() {
     A collection of
   </span>{" "}
   <span className="font-brand inline whitespace-nowrap text-[clamp(2.5rem,10vw,4.3rem)] leading-none text-[var(--secondary-light)]">
-    beautiful moments
+    Beautiful Moments
   </span>
 </h2>
             </div>

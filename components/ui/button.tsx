@@ -1,246 +1,388 @@
-import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
-import { cn } from "@/lib/utils";
+"use client"
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary";
-  asChild?: boolean;
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
 }
 
-const buttonBase =
-  [
-    // Layout
-    "relative",
-    "isolate",
-    "overflow-hidden",
-    "inline-flex",
-    "items-center",
-    "justify-center",
-    "w-fit",
-    "max-w-full",
-    "[flex:0_0_auto]",
+/* =========================================================
+   STYLES
+   =========================================================
+   Ported 1:1 from the original button.css. Color tokens
+   (--primary-darkest, --secondary, --secondary-light, --cream)
+   read from your globals.css :root — they already exist there
+   with the same values. Structural tokens that your globals.css
+   doesn't define (radius, blur, saturate, timing) are inlined
+   below so this component has zero external CSS dependencies.
+========================================================= */
 
-    // Size
-    "min-w-[170px]",
-    "min-h-[60px]",
-    "px-[34px]",
+const BUTTON_CSS = `
+.btn-root {
+    /* ------------------------------
+       SIZE
+       Fluid between mobile and desktop using clamp() so the
+       button scales with viewport width instead of jumping
+       at fixed breakpoints.
+    ------------------------------ */
+    --btn-min-width: clamp(0px, 30vw, 170px);
+    --btn-min-height: clamp(46px, 6vw + 30px, 60px);
+    --btn-padding-x: clamp(16px, 4vw, 34px);
+    --btn-radius: 999px;
+    --btn-gap: clamp(6px, 1.2vw, 10px);
 
-    // Border
-    "border",
-    "border-[var(--secondary)]/45",
-    "rounded-[999px]",
+    /* ------------------------------
+       TYPOGRAPHY
+    ------------------------------ */
+    --btn-font-size: clamp(.68rem, .58rem + .5vw, .88rem);
+    --btn-font-weight: 600;
+    --btn-letter-spacing: clamp(.04em, .02em + .3vw, .14em);
 
-    // Typography
-    "[font-family:inherit]",
-    "text-[.88rem]",
-    "font-semibold",
-    "leading-none",
-    "tracking-[.14em]",
-    "uppercase",
-    "whitespace-nowrap",
-    "no-underline",
+    /* ------------------------------
+       PRIMARY
+    ------------------------------ */
+    --btn-primary-text: var(--primary-darkest);
+    --btn-primary-bg: var(--secondary);
+    --btn-primary-hover-bg: var(--secondary-light);
 
-    // Interaction
-    "cursor-pointer",
+    /* ------------------------------
+       SECONDARY
+    ------------------------------ */
+    --btn-secondary-text: var(--cream);
+    --btn-secondary-bg: rgba(131, 17, 50, .25);
+    --btn-secondary-hover-bg: rgba(131, 17, 50, .30);
 
-    // Backdrop
-    "[backdrop-filter:blur(18px)_saturate(180%)]",
-    "[-webkit-backdrop-filter:blur(18px)_saturate(180%)]",
+    /* ------------------------------
+       GLASS
+    ------------------------------ */
+    --btn-blur: 18px;
+    --btn-saturate: 180%;
+    --btn-highlight: rgba(255, 255, 255, .34);
+    --btn-gold-light: rgba(210, 184, 133, .18);
+    --btn-glass-light: rgba(255, 255, 255, .25);
 
-    // Base shadow
-    "[box-shadow:0_5px_14px_color-mix(in_srgb,var(--primary-darkest)_10%,transparent),0_14px_30px_color-mix(in_srgb,var(--primary-darkest)_7%,transparent),inset_0_1px_0_rgba(255,255,255,.42),inset_0_-1px_0_color-mix(in_srgb,var(--primary-dark)_8%,transparent)]",
+    /* ------------------------------
+       BORDER
+    ------------------------------ */
+    --btn-border: rgba(210, 184, 133, .45);
+    --btn-primary-hover-border: var(--secondary-light);
+    --btn-secondary-hover-border: var(--secondary);
 
-    // Base transform
-    "translate-y-0",
+    /* ------------------------------
+       SHADOW
+    ------------------------------ */
+    --btn-shadow:
+        0 5px 14px rgba(38, 7, 17, .10),
+        0 14px 30px rgba(38, 7, 17, .07),
+        inset 0 1px 0 rgba(255, 255, 255, .42),
+        inset 0 -1px 0 rgba(92, 12, 36, .08);
 
-    // Base transitions
-    "transition-[transform,background,color,border-color,box-shadow]",
-    "duration-[.35s]",
-    "ease",
-  ].join(" ");
+    --btn-primary-hover-shadow:
+        0 10px 22px rgba(38, 7, 17, .14),
+        0 18px 42px rgba(210, 184, 133, .18);
 
-const glassEffects =
-  [
-    // ==================================================
-    // ::before — GLASS HIGHLIGHT
-    // ==================================================
+    --btn-secondary-hover-shadow:
+        0 8px 20px rgba(38, 7, 17, .12),
+        0 16px 34px rgba(38, 7, 17, .08);
 
-    "before:content-['']",
-    "before:absolute",
-    "before:inset-0",
-    "before:-z-[1]",
-    "before:pointer-events-none",
+    /* ------------------------------
+       MOTION
+    ------------------------------ */
+    --btn-hover-y: -3px;
+    --btn-transition: .35s ease;
+    --btn-glass-transition: .8s ease;
+    --btn-sweep-transition: 1s ease;
+}
 
-    "before:[background:radial-gradient(circle_at_18%_8%,rgba(255,255,255,.42),transparent_28%),radial-gradient(circle_at_85%_100%,color-mix(in_srgb,var(--secondary)_14%,transparent),transparent_42%),linear-gradient(125deg,transparent_20%,rgba(255,255,255,.08)_48%,color-mix(in_srgb,var(--secondary)_10%,transparent)_55%,transparent_80%)]",
+/*
+ * Extra-small screens: tighten the fluid values further so the
+ * pill never forces horizontal overflow when two buttons sit
+ * side-by-side in a narrow flex row (e.g. inside a phone-width
+ * hero CTA group).
+ */
+@media (max-width: 420px) {
+    .btn-root {
+        --btn-min-width: 0px;
+        --btn-min-height: 44px;
+        --btn-padding-x: 14px;
+        --btn-gap: 5px;
+        --btn-font-size: .64rem;
+        --btn-letter-spacing: .03em;
+    }
+}
 
-    "before:opacity-[.85]",
-    "before:-translate-x-[35%]",
+.btn {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    box-sizing: border-box;
 
-    "before:transition-[transform,opacity]",
-    "before:duration-[.8s]",
-    "before:ease",
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--btn-gap);
 
-    // ==================================================
-    // ::after — GLASS LIGHT SWEEP
-    // ==================================================
+    width: fit-content;
+    max-width: 100%;
+    flex: 0 0 auto;
 
-    "after:content-['']",
-    "after:absolute",
-    "after:-top-[140%]",
-    "after:-left-[55%]",
-    "after:w-[60%]",
-    "after:h-[340%]",
-    "after:rounded-[999px]",
-    "after:pointer-events-none",
+    min-width: var(--btn-min-width);
+    min-height: var(--btn-min-height);
 
-    "after:[background:radial-gradient(circle,rgba(255,255,255,.25),transparent_72%)]",
+    padding-inline: var(--btn-padding-x);
 
-    "after:blur-[24px]",
-    "after:-rotate-[22deg]",
+    border: 1px solid var(--btn-border);
+    border-radius: var(--btn-radius);
 
-    "after:transition-[left]",
-    "after:duration-[1s]",
-    "after:ease",
-  ].join(" ");
+    font-family: inherit;
+    font-size: var(--btn-font-size);
+    font-weight: var(--btn-font-weight);
+    line-height: 1;
+    letter-spacing: var(--btn-letter-spacing);
 
-const primaryVariant =
-  [
-    // Color
-    "text-[var(--primary-darkest)]",
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-decoration: none;
 
-    // Background
-    "[background:linear-gradient(145deg,rgba(255,255,255,.30)_0%,rgba(255,255,255,.10)_38%,color-mix(in_srgb,var(--secondary)_10%,transparent)_100%),var(--secondary)]",
+    cursor: pointer;
 
-    // Border
-    "border-[var(--secondary)]/62",
+    backdrop-filter: blur(var(--btn-blur)) saturate(var(--btn-saturate));
+    -webkit-backdrop-filter: blur(var(--btn-blur)) saturate(var(--btn-saturate));
 
-    // Shadow
-    "[box-shadow:0_5px_14px_color-mix(in_srgb,var(--primary-darkest)_10%,transparent),0_14px_30px_color-mix(in_srgb,var(--primary-darkest)_7%,transparent),inset_0_1px_0_rgba(255,255,255,.42),inset_0_-1px_0_color-mix(in_srgb,var(--primary-dark)_8%,transparent),0_0_18px_color-mix(in_srgb,var(--secondary)_6%,transparent)]",
+    box-shadow: var(--btn-shadow);
 
-    // Primary hover
-    "hover:not-disabled:text-[var(--primary-darkest)]",
+    transform: translateY(0);
 
-    "hover:not-disabled:[background:linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.06)),var(--secondary-light)]",
+    transition:
+        transform var(--btn-transition),
+        background var(--btn-transition),
+        color var(--btn-transition),
+        border-color var(--btn-transition),
+        box-shadow var(--btn-transition);
+}
 
-    "hover:not-disabled:border-[var(--secondary-light)]",
+.btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
 
-    "hover:not-disabled:[box-shadow:0_10px_22px_color-mix(in_srgb,var(--primary-darkest)_14%,transparent),0_18px_42px_color-mix(in_srgb,var(--secondary)_18%,transparent)]",
-  ].join(" ");
+    background:
+        radial-gradient(circle at 18% 8%, rgba(255, 255, 255, .42), transparent 28%),
+        radial-gradient(circle at 85% 100%, rgba(210, 184, 133, .14), transparent 42%),
+        linear-gradient(
+            125deg,
+            transparent 20%,
+            rgba(255, 255, 255, .08) 48%,
+            rgba(210, 184, 133, .10) 55%,
+            transparent 80%
+        );
 
-const secondaryVariant =
-  [
-    // Color
-    "text-[var(--cream)]",
+    opacity: .85;
+    transform: translateX(-35%);
 
-    // Background
-    "[background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.03)),color-mix(in_srgb,var(--primary)_25%,transparent)]",
+    transition:
+        transform var(--btn-glass-transition),
+        opacity var(--btn-transition);
+}
 
-    // Secondary hover
-    "hover:not-disabled:text-[var(--secondary-light)]",
+.btn::after {
+    content: "";
+    position: absolute;
 
-    "hover:not-disabled:[background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.04)),color-mix(in_srgb,var(--primary)_30%,transparent)]",
+    top: -140%;
+    left: -55%;
+    width: 60%;
+    height: 340%;
 
-    "hover:not-disabled:border-[var(--secondary)]",
+    border-radius: var(--btn-radius);
+    pointer-events: none;
 
-    "hover:not-disabled:[box-shadow:0_8px_20px_color-mix(in_srgb,var(--primary-darkest)_12%,transparent),0_16px_34px_color-mix(in_srgb,var(--primary-darkest)_8%,transparent)]",
-  ].join(" ");
+    background: radial-gradient(circle, var(--btn-glass-light), transparent 72%);
+    filter: blur(24px);
+    transform: rotate(-22deg);
 
-const interaction =
-  [
-    // ==================================================
-    // HOVER EFFECT
-    // ==================================================
+    transition: left var(--btn-sweep-transition);
+}
 
-    "hover:not-disabled:-translate-y-[3px]",
+.btn-primary {
+    color: var(--btn-primary-text);
 
-    "hover:not-disabled:before:opacity-100",
-    "hover:not-disabled:before:translate-x-[35%]",
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, .30) 0%,
+            rgba(255, 255, 255, .10) 38%,
+            rgba(210, 184, 133, .10) 100%
+        ),
+        var(--btn-primary-bg);
 
-    "hover:not-disabled:after:left-[110%]",
+    border-color: rgba(210, 184, 133, .62);
 
-    // ==================================================
-    // ACTIVE
-    // ==================================================
+    box-shadow: var(--btn-shadow), 0 0 18px rgba(210, 184, 133, .06);
+}
 
-    "active:not-disabled:translate-y-0",
+.btn-primary:hover:not(:disabled) {
+    color: var(--btn-primary-text);
 
-    // ==================================================
-    // FOCUS
-    // ==================================================
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .06)),
+        var(--btn-primary-hover-bg);
 
-    "focus-visible:outline-none",
-    "focus-visible:[box-shadow:0_0_0_4px_color-mix(in_srgb,var(--secondary)_14%,transparent),0_10px_24px_color-mix(in_srgb,var(--primary-darkest)_14%,transparent)]",
+    border-color: var(--btn-primary-hover-border);
+    box-shadow: var(--btn-primary-hover-shadow);
+}
 
-    // ==================================================
-    // DISABLED
-    // ==================================================
+.btn-secondary {
+    color: var(--btn-secondary-text);
 
-    "disabled:opacity-70",
-    "disabled:cursor-default",
-    "disabled:transform-none",
-    "disabled:[box-shadow:none]",
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, .03)),
+        var(--btn-secondary-bg);
+}
 
-    // ==================================================
-    // SVG / ICON
-    // ==================================================
+.btn-secondary:hover:not(:disabled) {
+    color: var(--secondary-light);
 
-    "[&_svg]:shrink-0",
-    "[&_svg]:size-[14px]",
-    "[&_svg]:transition-transform",
-    "[&_svg]:duration-[.35s]",
-    "[&_svg]:ease",
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .04)),
+        var(--btn-secondary-hover-bg);
 
-    "hover:not-disabled:[&_svg]:translate-x-[3px]",
-    "hover:not-disabled:[&_svg]:-translate-y-[3px]",
+    border-color: var(--btn-secondary-hover-border);
+    box-shadow: var(--btn-secondary-hover-shadow);
+}
 
-    // ==================================================
-    // REDUCED MOTION
-    // ==================================================
+.btn:hover:not(:disabled) {
+    transform: translateY(var(--btn-hover-y));
+}
 
-    "motion-reduce:transition-none",
-    "motion-reduce:before:transition-none",
-    "motion-reduce:after:transition-none",
-    "motion-reduce:[&_svg]:transition-none",
+.btn:hover:not(:disabled)::before {
+    opacity: 1;
+    transform: translateX(35%);
+}
 
-    "motion-reduce:hover:not-disabled:transform-none",
-    "motion-reduce:hover:not-disabled:before:transform-none",
-    "motion-reduce:hover:not-disabled:after:transform-none",
-    "motion-reduce:hover:not-disabled:[&_svg]:transform-none",
-  ].join(" ");
+.btn:hover:not(:disabled)::after {
+    left: 110%;
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn:focus-visible {
+    outline: none;
+    box-shadow:
+        0 0 0 4px rgba(210, 184, 133, .14),
+        0 10px 24px rgba(38, 7, 17, .14);
+}
+
+.btn:disabled {
+    opacity: .7;
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn svg {
+    flex: 0 0 auto;
+    width: clamp(11px, 1.6vw, 14px);
+    height: clamp(11px, 1.6vw, 14px);
+    transition: transform var(--btn-transition);
+}
+
+.btn:hover:not(:disabled) svg {
+    transform: translate(3px, -3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn,
+    .btn::before,
+    .btn::after,
+    .btn svg {
+        transition: none;
+    }
+
+    .btn:hover:not(:disabled) {
+        transform: none;
+    }
+
+    .btn:hover:not(:disabled) svg {
+        transform: none;
+    }
+}
+`
+
+const STYLE_ELEMENT_ID = "btn-component-styles"
+
+/**
+ * Injects BUTTON_CSS into <head> exactly once, no matter how many
+ * <Button> instances are mounted. Runs on the client only; since
+ * the rules are static and idempotent there's no hydration mismatch.
+ */
+function useInjectButtonStyles() {
+  React.useEffect(() => {
+    if (typeof document === "undefined") return
+    if (document.getElementById(STYLE_ELEMENT_ID)) return
+
+    const style = document.createElement("style")
+    style.id = STYLE_ELEMENT_ID
+    style.textContent = BUTTON_CSS
+    document.head.appendChild(style)
+  }, [])
+}
+
+/* =========================================================
+   COMPONENT
+========================================================= */
+
+const buttonVariants = cva("btn btn-root", {
+  variants: {
+    variant: {
+      primary: "btn-primary",
+      secondary: "btn-secondary",
+    },
+    fullWidth: {
+      true: "!w-full",
+      false: "",
+    },
+  },
+  defaultVariants: {
+    variant: "primary",
+    fullWidth: false,
+  },
+})
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  /**
+   * Render as the passed child (Radix Slot) instead of a <button>,
+   * e.g. <Button asChild><a href="/contact">Contact</a></Button>
+   */
+  asChild?: boolean
+}
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    {
-      className,
-      variant = "primary",
-      asChild = false,
-      type,
-      ...props
-    },
-    ref
-  ) => {
-    const Comp = asChild ? Slot : "button";
+  ({ className, variant, fullWidth, asChild = false, ...props }, ref) => {
+    useInjectButtonStyles()
+
+    const Comp = asChild ? Slot : "button"
 
     return (
       <Comp
+        className={cn(buttonVariants({ variant, fullWidth }), className)}
         ref={ref}
-        type={asChild ? undefined : type ?? "button"}
-        className={cn(
-          buttonBase,
-          glassEffects,
-          variant === "primary"
-            ? primaryVariant
-            : secondaryVariant,
-          interaction,
-          className
-        )}
         {...props}
       />
-    );
+    )
   }
-);
+)
+Button.displayName = "Button"
 
-Button.displayName = "Button";
-
-export { Button };
+export { Button, buttonVariants }
