@@ -304,17 +304,19 @@ export default function ContactSection() {
       className="px-5 pb-0 pt-[calc(var(--header-offset,0px)+var(--header-height,100px))] sm:px-6 lg:px-8"
     >
       <div className="mx-auto w-full max-w-[1240px]">
-        <header data-reveal className="mb-8 sm:mb-9">
-          <h2
-            id="contact-heading"
-            className="font-display text-[clamp(2.3rem,4.4vw,3.3rem)] font-medium leading-[1.05] tracking-[-0.02em] text-[var(--cream)]"
-          >
-            Let&apos;s Create{" "}
-            <span className="font-brand inline-block whitespace-nowrap text-[clamp(2.9rem,5.6vw,4.3rem)] leading-none text-[var(--secondary-light)] italic">
-              Something Beautiful
-            </span>
-          </h2>
-        </header>
+        <header data-reveal className="mb-8 min-w-0 sm:mb-9">
+<h2
+  id="contact-heading"
+  className="min-w-0 max-w-full font-display text-[clamp(2.1rem,8vw,3.3rem)] font-medium leading-[1.05] tracking-[-0.02em] text-[var(--cream)]"
+>
+  <span className="italic whitespace-nowrap">
+    Let&apos;s Create
+  </span>{" "}
+  <span className="font-brand inline whitespace-nowrap text-[clamp(2.5rem,10vw,4.3rem)] leading-none text-[var(--secondary-light)]">
+    Something Beautiful
+  </span>
+</h2>
+</header>
 
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(300px,340px)_minmax(0,1fr)] lg:gap-10">
           <aside className="order-2 flex min-w-0 flex-col gap-4 lg:order-1">
@@ -557,79 +559,101 @@ export default function ContactSection() {
                 )}
 
                 <Button
-                  type="submit"
-                  disabled={submitting}
-                  className="mt-1 min-h-[52px] w-auto max-w-full touch-manipulation self-center px-6 text-[14px] font-bold normal-case tracking-[0.02em] !text-[var(--primary-darkest)] [&_svg]:!text-[var(--primary-darkest)] lg:self-start lg:translate-x-4"
-                >
+  type="submit"
+  disabled={submitting}
+  className="mt-1 min-h-[52px] w-auto max-w-full touch-manipulation self-center px-6 text-[15px] !font-[400] normal-case tracking-normal !text-[var(--primary-darkest)] [&_svg]:!size-[20px] !text-[var(--primary-darkest)] lg:self-start lg:translate-x-4"
+>
                   <Send className="mr-2 size-3.5" aria-hidden="true" />
                   {submitting ? "Sending..." : "Send Query"}
                 </Button>
               </form>
             ) : (
               <div
-                ref={successRef}
-                tabIndex={-1}
-                role="status"
-                className="mx-auto flex w-full max-w-[640px] flex-col items-center gap-7 py-5 text-center outline-none min-[700px]:flex-row min-[700px]:text-left"
-              >
-                <div className="w-[38%] max-w-[220px] shrink-0">
-                  <div className="flex aspect-square w-[100%] items-center justify-center rounded-full border border-[var(--secondary)]/25 bg-white/[0.03]">
-                    <img
-                      src="/brand/icon.png"
-                      alt="Roselanes by Jeev"
-                      className="size-[64%] rounded-full object-contain"
-                    />
-                  </div>
-                </div>
+  ref={successRef}
+  tabIndex={-1}
+  role="status"
+  className="mx-auto flex w-full max-w-[760px] flex-col items-center py-4 text-center outline-none sm:py-6 lg:flex-row lg:items-stretch lg:text-left"
+>
+  {/* -------------------------------------------------------
+      LOGO
+  ------------------------------------------------------- */}
+  <div className="flex w-full shrink-0 items-center justify-center lg:w-[230px]">
+    <div className="flex size-[150px] items-center justify-center sm:size-[170px] lg:size-[190px]">
+      <img
+        src="/brand/icon.png"
+        alt="Roselanes by Jeev"
+        className="size-full object-contain"
+      />
+    </div>
+  </div>
 
-                <div className="flex min-w-0 flex-1 flex-col items-center gap-3 min-[700px]:items-start">
-                  <h3 className="font-brand text-[32px] leading-none text-[var(--cream)]">
-                    Thank you for reaching out
-                  </h3>
+  {/* -------------------------------------------------------
+      SEPARATOR
+      Vertical on desktop / horizontal on mobile
+  ------------------------------------------------------- */}
+  <div
+  aria-hidden="true"
+  className="my-7 h-[2px] w-[72%] bg-[var(--secondary-light)] lg:my-0 lg:mx-8 lg:h-auto lg:w-[2px] lg:self-stretch"
+/>
 
-                  <p className="m-0 text-sm font-medium leading-[1.6] text-[var(--cream)]/60">
-                    Your enquiry has been received. We&apos;ll be in touch
-                    shortly.
-                  </p>
+  {/* -------------------------------------------------------
+      CONTENT
+  ------------------------------------------------------- */}
+  <div className="flex min-w-0 flex-1 flex-col items-center justify-center lg:items-start">
+    <span className="mb-3 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--secondary)]">
+      Message Received —
+    </span>
 
-                  <p className="m-0 text-xs text-[var(--cream)]/50">
-                    Meanwhile, feel free to explore our portfolio and stories.
-                  </p>
+    <h3 className="m-0 font-brand text-[clamp(2rem,5vw,2.7rem)] leading-[1.05] text-[var(--cream)]">
+      Thanks for reaching out
+    </h3>
 
-                  <p className="font-brand m-0 text-[22px] leading-none text-[var(--secondary-light)]">
-                    with love, Roselanes
-                  </p>
+    <p className="mt-4 max-w-[480px] text-sm font-medium leading-[1.75] text-[var(--cream)]/65">
+      We&apos;ll take a thoughtful look and get back to you shortly.
+    </p>
 
-                  <div className="mt-2 flex w-full min-w-0 max-w-full gap-2">
-                    <Button
-                      asChild
-                      className="!min-w-0 min-w-0 flex-1 !min-h-[46px] !px-3 font-bold normal-case !text-[0.72rem] !tracking-[0.06em] sm:!text-[0.8rem] lg:!text-[0.88rem]"
-                    >
-                      <a
-                        href="#portfolio"
-                        className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
-                      >
-                        View Portfolio
-                      </a>
-                    </Button>
+    <p className="mt-2 max-w-[460px] text-xs leading-[1.7] text-[var(--cream)]/45">
+      Until then, take a little time to explore the stories we&apos;ve
+      captured...
+    </p>
 
-                    <Button
-                      asChild
-                      variant="secondary"
-                      className="!min-w-0 min-w-0 flex-1 !min-h-[46px] !px-3 font-bold normal-case !text-[0.72rem] !tracking-[0.06em] sm:!text-[0.8rem] lg:!text-[0.88rem]"
-                    >
-                      <a
-                        href="https://www.instagram.com/roselanes_by_jeev/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
-                      >
-                        Follow on Instagram
-                      </a>
-                    </Button>
-                  </div>
-                </div>
-              </div>
+    <p className="mt-5 font-brand text-[22px] leading-none text-[var(--secondary-light)]">
+      with love, Roselanes!
+    </p>
+
+    {/* -----------------------------------------------------
+        CTA BUTTONS
+    ----------------------------------------------------- */}
+    <div className="mt-7 flex w-full max-w-[480px] flex-row gap-2.5 lg:max-w-[440px]">
+  <Button
+    asChild
+    className="!min-w-0 !min-h-[46px] flex-1 !px-3 font-bold normal-case !text-[0.68rem] !tracking-[0.04em] sm:!px-4 sm:!text-[0.8rem]"
+  >
+    <a
+      href="#portfolio"
+      className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+    >
+      View Portfolio
+    </a>
+  </Button>
+
+  <Button
+    asChild
+    variant="secondary"
+    className="!min-w-0 !min-h-[46px] flex-1 !px-3 font-bold normal-case !text-[0.68rem] !tracking-[0.04em] sm:!px-4 sm:!text-[0.8rem]"
+  >
+    <a
+      href="https://www.instagram.com/roselanes_by_jeev/"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+    >
+      Follow on Instagram
+    </a>
+  </Button>
+</div>
+  </div>
+</div>
             )}
           </div>
         </div>

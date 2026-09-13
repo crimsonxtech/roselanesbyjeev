@@ -7,8 +7,7 @@ type Testimonial = {
   image: string
   alt: string
   quote: string
-  name: string
-  details: string
+  name: string 
   rating: number
 }
 
@@ -19,8 +18,7 @@ const testimonials: Testimonial[] = [
     alt: "Aisha and Rohan",
     quote:
       "Jeevan captured our wedding like he'd known us for years. Every candid moment felt effortless, and the final gallery still gives us goosebumps.",
-    name: "Aisha & Rohan",
-    details: "Wedding, March 2026",
+    name: "Aisha & Rohan", 
     rating: 5,
   },
   {
@@ -29,8 +27,7 @@ const testimonials: Testimonial[] = [
     alt: "Meera and Karan",
     quote:
       "We didn't even notice him shooting half the time — that's how natural everything felt. The pre-wedding shoot alone made us cry happy tears.",
-    name: "Meera & Karan",
-    details: "Pre-Wedding, January 2026",
+    name: "Meera & Karan", 
     rating: 4,
   },
   {
@@ -39,8 +36,7 @@ const testimonials: Testimonial[] = [
     alt: "Sana and Dev",
     quote:
       "Professional, warm, and endlessly patient with our chaotic families. The photos turned out more beautiful than we imagined possible.",
-    name: "Sana & Dev",
-    details: "Wedding, November 2025",
+    name: "Sana & Dev", 
     rating: 4,
   },
   {
@@ -49,8 +45,7 @@ const testimonials: Testimonial[] = [
     alt: "Priya and Arjun",
     quote:
       "Booking him was the easiest decision of our entire wedding planning. Fast turnaround, stunning edits, and such a calming presence on the day.",
-    name: "Priya & Arjun",
-    details: "Wedding, October 2025",
+    name: "Priya & Arjun", 
     rating: 5,
   },
   {
@@ -59,8 +54,7 @@ const testimonials: Testimonial[] = [
     alt: "Neha and Vikram",
     quote:
       "He has an eye for the tiny, fleeting moments — the ones you'd never think to ask for but end up loving the most.",
-    name: "Neha & Vikram",
-    details: "Lifestyle Shoot, August 2025",
+    name: "Neha & Vikram", 
     rating: 5,
   },
   {
@@ -69,8 +63,7 @@ const testimonials: Testimonial[] = [
     alt: "Ritu and Sameer",
     quote:
       "From the first call to the final delivery, everything felt thoughtful. Worth every rupee for the memories we'll keep forever.",
-    name: "Ritu & Sameer",
-    details: "Wedding, June 2025",
+    name: "Ritu & Sameer", 
     rating: 5,
   },
 ]
@@ -81,6 +74,17 @@ export function TestimonialsSection() {
 
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+
+  const scrollbarRef = useRef<HTMLDivElement>(null)
+  const [scrollbarThumbWidth, setScrollbarThumbWidth] = useState(100)
+  const [scrollbarThumbPosition, setScrollbarThumbPosition] = useState(0)
+  const scrollbarDragRef = useRef(false)
+  const scrollbarDragStartXRef = useRef(0)
+  const scrollbarDragStartPositionRef = useRef(0)
+  const scrollbarDragOffsetRef = useRef(0)
+
+  const dragRafRef = useRef<number | null>(null)
+  const pendingScrollRef = useRef<number | null>(null)
 
   const pointerDownRef = useRef(false)
   const draggingRef = useRef(false)
@@ -185,30 +189,24 @@ export function TestimonialsSection() {
     const absY = Math.abs(distanceY)
 
     if (!draggingRef.current) {
-      /*
-       * Ignore tiny movements.
-       */
-      if (absX < 8 && absY < 8) {
+      if (absX < 6 && absY < 6) {
         return
       }
 
-      /*
-       * Vertical gesture:
-       * let the browser handle page scrolling.
-       */
+      // Keep vertical gestures available for normal page scrolling.
       if (absY > absX) {
         pointerDownRef.current = false
         draggingRef.current = false
         pressedCardRef.current = null
-
         return
       }
 
-      /*
-       * Horizontal gesture.
-       */
+      // Horizontal gesture has started.
       draggingRef.current = true
       setIsDragging(true)
+
+      // Physical dragging must never be smooth-scrolled.
+      track.style.scrollBehavior = "auto"
 
       if (pointerIdRef.current !== null) {
         try {
@@ -221,11 +219,47 @@ export function TestimonialsSection() {
       }
     }
 
-    if (draggingRef.current) {
-      event.preventDefault()
+    if (!draggingRef.current) {
+      return
+    }
 
-      track.scrollLeft =
-        startScrollRef.current - distanceX
+    event.preventDefault()
+
+    const nextScroll =
+      startScrollRef.current - distanceX
+
+    pendingScrollRef.current = nextScroll
+
+    /*
+     * Limit DOM writes to one per animation frame.
+     * This keeps the card movement locked to the pointer
+     * without flooding the browser with scroll updates.
+     */
+    if (dragRafRef.current === null) {
+      dragRafRef.current = requestAnimationFrame(() => {
+        if (
+          trackRef.current &&
+          pendingScrollRef.current !== null
+        ) {
+          trackRef.current.scrollLeft =
+            pendingScrollRef.current
+        }
+
+        dragRafRef.current = null
+      })
+    }
+  }
+
+  const cleanupCarouselDrag = () => {
+    if (dragRafRef.current !== null) {
+      cancelAnimationFrame(dragRafRef.current)
+      dragRafRef.current = null
+    }
+
+    pendingScrollRef.current = null
+
+    if (trackRef.current) {
+      trackRef.current.style.scrollBehavior = ""
     }
   }
 
@@ -251,6 +285,8 @@ export function TestimonialsSection() {
     draggingRef.current = false
     pointerIdRef.current = null
     pressedCardRef.current = null
+
+    cleanupCarouselDrag()
 
     setIsDragging(false)
 
@@ -293,6 +329,8 @@ export function TestimonialsSection() {
     pointerIdRef.current = null
     pressedCardRef.current = null
 
+    cleanupCarouselDrag()
+
     setIsDragging(false)
 
     if (
@@ -320,6 +358,8 @@ export function TestimonialsSection() {
     draggingRef.current = false
     pointerIdRef.current = null
     pressedCardRef.current = null
+
+    cleanupCarouselDrag()
 
     setIsDragging(false)
   }
@@ -523,6 +563,219 @@ export function TestimonialsSection() {
 
   /*
    * ========================================
+   * CUSTOM SCROLLBAR
+   * ========================================
+   *
+   * Keeps the 75% centered scrollbar synced
+   * with the native carousel scroll position.
+   */
+  useEffect(() => {
+    const track = trackRef.current
+
+    if (!track) {
+      return
+    }
+
+    const updateScrollbar = () => {
+      const maxScroll = track.scrollWidth - track.clientWidth
+
+      if (maxScroll <= 0) {
+        setScrollbarThumbWidth(100)
+        setScrollbarThumbPosition(0)
+        return
+      }
+
+      const visibleRatio =
+        track.clientWidth / track.scrollWidth
+
+      const thumbWidth = Math.max(
+        visibleRatio * 100,
+        18,
+      )
+
+      const maxThumbTravel = 100 - thumbWidth
+      const progress = track.scrollLeft / maxScroll
+
+      setScrollbarThumbWidth(thumbWidth)
+      setScrollbarThumbPosition(
+        progress * maxThumbTravel,
+      )
+    }
+
+    updateScrollbar()
+
+    track.addEventListener("scroll", updateScrollbar, {
+      passive: true,
+    })
+
+    window.addEventListener("resize", updateScrollbar)
+
+    return () => {
+      track.removeEventListener(
+        "scroll",
+        updateScrollbar,
+      )
+      window.removeEventListener(
+        "resize",
+        updateScrollbar,
+      )
+    }
+  }, [])
+
+  const handleScrollbarPointerDown = (
+    event: React.PointerEvent<HTMLDivElement>,
+  ) => {
+    const track = trackRef.current
+    const scrollbar = scrollbarRef.current
+
+    if (!track || !scrollbar) {
+      return
+    }
+
+    event.preventDefault()
+
+    const scrollbarRect =
+      scrollbar.getBoundingClientRect()
+
+    const thumbWidthPx =
+      (scrollbarThumbWidth / 100) *
+      scrollbarRect.width
+
+    const target = event.target as HTMLElement
+    const thumb = target.closest<HTMLElement>(
+      "[data-testimonial-scrollbar-thumb]",
+    )
+
+    if (thumb) {
+      scrollbarDragRef.current = true
+      scrollbarDragStartXRef.current =
+        event.clientX
+
+      const thumbRect =
+        thumb.getBoundingClientRect()
+
+      /*
+       * Preserve the exact point where the user grabbed
+       * the thumb so it does not jump when dragging starts.
+       */
+      scrollbarDragOffsetRef.current =
+        event.clientX - thumbRect.left
+
+      scrollbarDragStartPositionRef.current =
+        scrollbarThumbPosition
+
+      window.addEventListener(
+        "pointermove",
+        handleScrollbarPointerMove,
+      )
+      window.addEventListener(
+        "pointerup",
+        handleScrollbarPointerUp,
+      )
+      return
+    }
+
+    const clickProgress =
+      (event.clientX - scrollbarRect.left) /
+      scrollbarRect.width
+
+    const clampedProgress = Math.max(
+      0,
+      Math.min(1, clickProgress),
+    )
+
+    track.scrollTo({
+      left:
+        clampedProgress *
+        (track.scrollWidth - track.clientWidth),
+      behavior: prefersReducedMotion()
+        ? "auto"
+        : "smooth",
+    })
+
+  }
+
+  const handleScrollbarPointerMove = (
+    event: PointerEvent,
+  ) => {
+    if (!scrollbarDragRef.current) {
+      return
+    }
+
+    const scrollbar = scrollbarRef.current
+    const track = trackRef.current
+
+    if (!scrollbar || !track) {
+      return
+    }
+
+    const scrollbarWidth =
+      scrollbar.getBoundingClientRect().width
+
+    const thumbWidthPx =
+      (scrollbarThumbWidth / 100) *
+      scrollbarWidth
+
+    const maxThumbTravel =
+      scrollbarWidth - thumbWidthPx
+
+    if (maxThumbTravel <= 0) {
+      return
+    }
+
+    const thumbStartPx =
+      (scrollbarDragStartPositionRef.current / 100) *
+      scrollbarWidth
+
+    const pointerDelta =
+      event.clientX -
+      scrollbarDragStartXRef.current
+
+    const newPosition = Math.max(
+      0,
+      Math.min(
+        maxThumbTravel,
+        thumbStartPx +
+          pointerDelta,
+      ),
+    )
+
+    const progress =
+      newPosition / maxThumbTravel
+
+    /*
+     * Keep the scrollbar itself direct and immediate.
+     * The carousel's normal snap behavior handles the
+     * final resting position after the user releases.
+     */
+    track.style.scrollBehavior = "auto"
+
+    track.scrollLeft =
+      progress *
+      (track.scrollWidth - track.clientWidth)
+  }
+
+  const handleScrollbarPointerUp = () => {
+    scrollbarDragRef.current = false
+
+    window.removeEventListener(
+      "pointermove",
+      handleScrollbarPointerMove,
+    )
+    window.removeEventListener(
+      "pointerup",
+      handleScrollbarPointerUp,
+    )
+  }
+
+  useEffect(() => {
+    return () => {
+      cleanupCarouselDrag()
+      handleScrollbarPointerUp()
+    }
+  }, [])
+  /*
+   * ========================================
    * RESIZE SAFETY
    * ========================================
    */
@@ -586,12 +839,11 @@ const handleResize = () => {
             onClick={handleTrackClick}
             onKeyDown={handleKeyDown}
             className={[
-              "flex w-full min-w-0 items-stretch",
-              "gap-[clamp(16px,1.6vw,22px)]",
-              "overflow-x-auto",
-              "scroll-smooth",
-              "scrollbar-none",
-              "snap-x snap-mandatory",
+  "testimonials-scroll-track",
+  "flex w-full min-w-0 items-stretch",
+  "gap-[clamp(16px,1.6vw,22px)]",
+  "overflow-x-auto",
+"snap-x snap-mandatory",
               "pl-[54px] pr-[76px] pb-14 pt-7",
               "touch-pan-y",
               "cursor-grab",
@@ -631,10 +883,7 @@ const handleResize = () => {
                 ? "cursor-grabbing snap-none select-none"
                 : "",
             ].join(" ")}
-            style={{
-              scrollbarWidth: "none",
-              WebkitOverflowScrolling: "touch",
-            }}
+            style={{ WebkitOverflowScrolling: "touch" }}
           >
             {testimonials.map(
               (
@@ -659,7 +908,7 @@ const handleResize = () => {
                       index
                     }
                     tabIndex={0}
-                    aria-label={`${testimonial.name}, ${testimonial.details}`}
+                    aria-label={`${testimonial.name}`}
                     onFocus={() =>
                       activateCard(
                         index,
@@ -900,12 +1149,6 @@ const handleResize = () => {
                             testimonial.name
                           }
                         </h3>
-
-                        <span className="mt-[3px] block whitespace-nowrap text-xs italic leading-[1.2] text-[var(--primary)] max-[480px]:text-[0.7rem]">
-                          {
-                            testimonial.details
-                          }
-                        </span>
                       </div>
                     </div>
 
@@ -924,6 +1167,31 @@ const handleResize = () => {
                 )
               },
             )}
+          </div>
+
+          {/* Custom 75% centered scrollbar */}
+          <div
+            ref={scrollbarRef}
+            role="scrollbar"
+            aria-orientation="horizontal"
+            aria-label="Testimonials scroll position"
+            tabIndex={0}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(
+              scrollbarThumbPosition,
+            )}
+            onPointerDown={handleScrollbarPointerDown}
+            className="mx-auto mt-1 h-[4px] w-[75%] touch-none select-none rounded-full bg-[var(--secondary-light)]/15"
+          >
+            <div
+              data-testimonial-scrollbar-thumb
+              className="h-full rounded-full bg-[var(--secondary-light)] transition-[background-color] duration-200 hover:bg-[var(--secondary)]"
+              style={{
+                width: `${scrollbarThumbWidth}%`,
+                marginLeft: `${scrollbarThumbPosition}%`,
+              }}
+            />
           </div>
         </div>
       </div>

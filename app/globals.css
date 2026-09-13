@@ -93,8 +93,7 @@ html {
   scrollbar-color: var(--secondary) var(--primary-darker);
 }
 
-body {
-  width: 100%;
+body { 
   min-width: 320px;
   min-height: 100%;
 
@@ -107,11 +106,14 @@ body {
 
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-
-  /* Prevent horizontal page overflow */
+ 
+}
+html,
+body {
+  width: 100%;
+  max-width: 100%;
   overflow-x: hidden;
 }
-
 
 /* =========================================================
    CUSTOM CURSOR
@@ -434,4 +436,13 @@ textarea:-webkit-autofill:active {
     transform: translateY(-8px) scaleY(0.88);
     filter: blur(2px);
   }
+}
+
+/* Testimonials carousel native scrollbar is replaced by the custom 75% scrollbar. */
+.testimonials-scroll-track {
+  scrollbar-width: none;
+}
+
+.testimonials-scroll-track::-webkit-scrollbar {
+  display: none;
 }
