@@ -225,16 +225,18 @@ export default function AboutSection() {
       <div className="mx-auto w-full max-w-[1240px]">
         {/* HEADER — intentionally identical to Contact */}
         <header className="mb-8 sm:mb-9">
-          <h2
-            id="about-heading"
-            data-reveal
-            className="font-serif text-[clamp(2.3rem,4.5vw,3.4rem)] font-normal leading-[1.05] tracking-[-0.03em] text-[var(--cream)]"
-          >
-            About{" "}
-            <span className="inline-block italic text-[var(--secondary-light)]">
-              Roselanes
-            </span>
-          </h2>
+<h2
+  id="about-heading"
+  data-reveal
+  className="min-w-0 max-w-full font-display text-[clamp(2.1rem,8vw,3.3rem)] font-medium leading-[1.05] tracking-[-0.02em] text-[var(--cream)]"
+>
+  <span className="italic whitespace-nowrap">
+    About
+  </span>{" "}
+  <span className="font-brand inline whitespace-nowrap text-[clamp(2.5rem,8vw,4.3rem)] leading-none text-[var(--secondary-light)]">
+    Roselanes
+  </span>
+</h2>
         </header>
 
         {/* ABOUT CONTENT */}

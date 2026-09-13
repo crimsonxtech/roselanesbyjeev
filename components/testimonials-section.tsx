@@ -812,10 +812,36 @@ const handleResize = () => {
   }, [clearActiveCard])
 
   return (
-<section id="testimonials" className="relative overflow-visible px-5 pt-[calc(var(--header-offset,0px)+var(--header-height,100px))] pb-0 sm:px-6 lg:px-8" aria-labelledby="testimonials-heading" > <div className="mx-auto w-full max-w-[1240px]"> {/* Header */} <div className="mb-8 flex items-end justify-between gap-6 sm:mb-9"> <div className="min-w-0" data-reveal > <h2 id="testimonials-heading" className="font-serif text-[clamp(2.3rem,4.5vw,3.4rem)] font-normal leading-[1.05] tracking-[-0.03em] text-[var(--cream)]" > What{" "} <span className="italic text-[var(--secondary-light)]"> couples </span>{" "} say </h2> </div> </div>
+  <section
+    id="testimonials"
+    className="relative overflow-visible px-5 pt-[calc(var(--header-offset,0px)+var(--header-height,100px))] pb-0 sm:px-6 lg:px-8"
+    aria-labelledby="testimonials-heading"
+  >
+    <div className="mx-auto w-full max-w-[1240px]">
+      {/* Header */}
+      <div className="mb-8 flex items-end justify-between gap-6 sm:mb-9">
+        <div className="min-w-0" data-reveal>
+          <h2
+            id="testimonials-heading"
+            className="min-w-0 max-w-full font-display text-[clamp(2.1rem,8vw,3.3rem)] font-medium leading-[1.05] tracking-[-0.02em] text-[var(--cream)]"
+          >
+            <span className="italic">
+              What{" "}
+            </span>
 
-        {/* Carousel */}
-        <div className="relative w-full overflow-visible">
+            <span className="font-brand text-[clamp(2.5rem,10vw,4.3rem)] leading-none text-[var(--secondary-light)]">
+              couples
+            </span>
+
+            <span className="italic">
+              {" "}say
+            </span>
+          </h2>
+        </div>
+      </div>
+
+      {/* Carousel */}
+      <div className="relative w-full overflow-visible">
           <div
             ref={trackRef}
             tabIndex={0}
@@ -845,7 +871,7 @@ const handleResize = () => {
   "overflow-x-auto",
 "snap-x snap-mandatory",
               "pl-[54px] pr-[76px] pb-14 pt-7",
-              "touch-pan-y",
+              "touch-pan-auto",
               "cursor-grab",
               "outline-none",
               "focus-visible:ring-1 focus-visible:ring-[var(--secondary-light)]/50",
@@ -880,8 +906,8 @@ const handleResize = () => {
               "max-[480px]:[-webkit-mask-image:linear-gradient(to_right,transparent_0,black_26px,black_calc(100%-26px),transparent_100%)]",
 
               isDragging
-                ? "cursor-grabbing snap-none select-none"
-                : "",
+  ? "cursor-grabbing snap-none select-none [&_[data-testimonial-card]]:!transition-none [&_[data-testimonial-card]]:!transform-none"
+  : "",
             ].join(" ")}
             style={{ WebkitOverflowScrolling: "touch" }}
           >
@@ -1001,19 +1027,20 @@ const handleResize = () => {
 
         "max-[480px]:basis-[92vw]",
       ].join(" ")
+    : [ 
+  "hover:z-10",
+  ...(isDragging
+    ? []
     : [
-        "hover:z-10",
         "hover:basis-[390px]",
         "hover:-translate-y-2",
         "hover:shadow-[inset_0_0_0_1px_rgba(210,184,133,0.65),0_12px_26px_rgba(var(--primary-darkest-rgb),0.20),0_30px_68px_rgba(var(--primary-darkest-rgb),0.28)]",
-
         "max-[960px]:hover:basis-[360px]",
-
         "max-[768px]:hover:basis-[330px]",
         "max-[768px]:hover:-translate-y-[5px]",
-
         "max-[480px]:hover:basis-[92vw]",
-      ].join(" "),
+      ]),
+].join(" "),
 ].join(" ")}
 >
                     {/* Image */}

@@ -471,13 +471,13 @@ export function PortfolioSection() {
           lg:px-8
         "
       >
-<div
-  className="
-    mx-auto
-    w-full
-    max-w-[1240px]
-  "
->
+        <div
+          className="
+            mx-auto
+            w-full
+            max-w-[1240px]
+          "
+        >
           {/* HEADER */}
           <div
             className="
@@ -492,30 +492,17 @@ export function PortfolioSection() {
               className="min-w-0"
               data-reveal
             >
-              <h2
-                id="portfolio-heading"
-                className="
-                  m-0
-                  font-serif
-                  text-[clamp(2.3rem,4.5vw,3.4rem)]
-                  font-normal
-                  leading-[1.12]
-                  tracking-[-0.03em]
-                  text-[var(--cream)]
-                "
-              >
-                A collection of{" "}
-                <span
-                  className="
-                    text-[1.08em]
-                    font-normal
-                    italic
-                    text-[var(--secondary-light)]
-                  "
-                >
-                  beautiful moments
-                </span>
-              </h2>
+<h2
+  id="portfolio-heading"
+  className="min-w-0 max-w-full font-display text-[clamp(2.1rem,8vw,3.3rem)] font-medium leading-[1.05] tracking-[-0.02em] text-[var(--cream)]"
+>
+  <span className="italic whitespace-nowrap">
+    A collection of
+  </span>{" "}
+  <span className="font-brand inline whitespace-nowrap text-[clamp(2.5rem,10vw,4.3rem)] leading-none text-[var(--secondary-light)]">
+    beautiful moments
+  </span>
+</h2>
             </div>
           </div>
 
@@ -551,6 +538,7 @@ export function PortfolioSection() {
                       w-full
                       overflow-hidden
                       rounded-[16px]
+                      [clip-path:inset(0_round_16px)]
                       border
                       border-transparent
                       bg-[rgba(var(--primary-darkest-rgb),.35)]
@@ -593,6 +581,7 @@ export function PortfolioSection() {
                           h-auto
                           w-full
                           object-cover
+                          transform-gpu
 
                           transition-transform
                           duration-500
