@@ -497,11 +497,8 @@ const HEADER_STYLES = `
 
   @media (max-width: 860px) {
     #siteHeader {
-      /* Keep the header on a stable composited layer on iOS Safari. */
+      /* Keep the header position stable while iOS Safari changes its visual viewport. */
       top: 10px;
-      transform: translate3d(0, 0, 0);
-      -webkit-transform: translate3d(0, 0, 0);
-      transition: none;
     }
 
     #siteHeader .navbar {
@@ -1727,7 +1724,7 @@ useEffect(() => {
               className="mobile-nav-cta btn btn-primary"
               onClick={() => closeMenu(false)}
             >
-              Get a Quote
+              Get a Quotee
             </a>
           </aside>
         </nav>
