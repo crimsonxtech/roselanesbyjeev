@@ -11,6 +11,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 import {
   Select,
   SelectContent,
@@ -282,6 +283,9 @@ export function QuoteSection() {
     Record<number, string>
   >({});
   const [eventsError, setEventsError] = React.useState(false);
+  const [invalidCustomEventId, setInvalidCustomEventId] = React.useState<
+    number | null
+  >(null);
 
   // ---- Section 3: Add-ons ----
   const [addOns, setAddOns] = React.useState<AddOnItem[]>([]);
@@ -303,6 +307,7 @@ export function QuoteSection() {
   }, []);
 
   const successRef = React.useRef<HTMLDivElement>(null);
+  const sheetRef = React.useRef<HTMLDivElement>(null);
   const nameRef = React.useRef<HTMLInputElement>(null);
   const budgetTriggerRef = React.useRef<HTMLButtonElement>(null);
   const eventsSectionRef = React.useRef<HTMLDivElement>(null);
@@ -411,11 +416,20 @@ export function QuoteSection() {
     return () => document.removeEventListener("click", handleClick);
   }, []);
 
+  /*
+   * Lock page scrolling while the modal is open.
+   *
+   * Uses a position:fixed-based lock rather than plain
+   * `overflow: hidden`, since iOS Safari still allows the page behind
+   * the modal to be dragged/rubber-banded — and briefly reveals it
+   * during the address-bar show/hide animation — with overflow alone.
+   * The sheet's own scrollable body (and its drag handle) stay
+   * interactive via `sheetRef`.
+   */
+  useBodyScrollLock(isOpen, sheetRef);
+
   React.useEffect(() => {
     if (!isOpen) return;
-
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
 
     const t = setTimeout(() => {
       nameRef.current?.focus({ preventScroll: true });
@@ -423,8 +437,6 @@ export function QuoteSection() {
 
     return () => {
       clearTimeout(t);
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
     };
   }, [isOpen]);
 
@@ -515,6 +527,7 @@ export function QuoteSection() {
     setMessage("");
     setEvents([newEvent()]);
     setEventsError(false);
+    setInvalidCustomEventId(null);
     setAddOns([]);
     setQuoteGenerated(false);
     setSummaryData(null);
@@ -535,6 +548,7 @@ export function QuoteSection() {
     setEvents((prev) =>
       prev.length <= 1 ? prev : prev.filter((ev) => ev.id !== id)
     );
+    setInvalidCustomEventId((current) => (current === id ? null : current));
     markEdited();
   }
 
@@ -550,6 +564,7 @@ export function QuoteSection() {
     } else {
       updateEvent(id, { isCustomType: false, type: value });
     }
+    setInvalidCustomEventId((current) => (current === id ? null : current));
     markEdited();
   }
 
@@ -701,7 +716,7 @@ export function QuoteSection() {
     );
 
     if (missingCustomEvent) {
-      setEventsError(true);
+      setInvalidCustomEventId(missingCustomEvent.id);
       setFooterError(true);
       setFooterNote(
         "Please name your custom event before generating a quote."
@@ -891,9 +906,10 @@ export function QuoteSection() {
         aria-labelledby="quoteTitle"
         aria-hidden={mode !== "expanded"}
         className="z-[999999]"
-        style={getPanelStyle()}
+        style={{ ...getPanelStyle(), overscrollBehavior: "none" }}
       >
         <div
+          ref={sheetRef}
           onClick={mode === "mini" ? openModal : undefined}
           className={`relative flex w-full min-h-0 flex-1 flex-col overflow-hidden border bg-gradient-to-br from-[var(--primary)]/97 via-[var(--primary-dark)]/98 to-[var(--primary-darkest)]/99 shadow-[0_30px_80px_rgba(0,0,0,.48)] ${
             mode === "mini"
@@ -1079,8 +1095,12 @@ export function QuoteSection() {
                     onTypeChange={(value) => setEventType(ev.id, value)}
                     onCustomTypeChange={(value) => {
                       updateEvent(ev.id, { customType: value });
+                      setInvalidCustomEventId((current) =>
+                        current === ev.id ? null : current
+                      );
                       markEdited();
                     }}
+                    isCustomNameInvalid={invalidCustomEventId === ev.id}
                     customNameRef={(node) => {
                       customEventNameRefs.current[ev.id] = node;
                     }}
@@ -1405,6 +1425,7 @@ function EventCard({
   onTypeChange,
   onCustomTypeChange,
   customNameRef,
+  isCustomNameInvalid,
   onDateChange,
   onVenueChange,
   onRemove,
@@ -1422,6 +1443,7 @@ function EventCard({
   onTypeChange: (value: string) => void;
   onCustomTypeChange: (value: string) => void;
   customNameRef?: React.Ref<HTMLInputElement>;
+  isCustomNameInvalid?: boolean;
   onDateChange: (value: string) => void;
   onVenueChange: (value: string) => void;
   onRemove: () => void;
@@ -1486,11 +1508,16 @@ function EventCard({
             <Field label="Custom Event Name">
               <input
                 ref={customNameRef}
-                className={`${inputClass} h-[54px] min-w-0 max-w-full box-border`}
+                className={`${inputClass} h-[54px] min-w-0 max-w-full box-border ${
+                  isCustomNameInvalid
+                    ? "border-red-400/70 ring-2 ring-red-400/30 focus:ring-red-400/25"
+                    : ""
+                }`}
                 type="text"
                 placeholder="Name this event"
                 value={event.customType}
                 onChange={(e) => onCustomTypeChange(e.target.value)}
+                aria-invalid={isCustomNameInvalid}
                 autoFocus
               />
             </Field>

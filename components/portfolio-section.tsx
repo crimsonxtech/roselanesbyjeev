@@ -4,6 +4,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { ZoomableLightboxImage } from "@/components/zoomable-lightbox-image";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 
 const R2_BASE =
   "https://images.roselanesbyjeev.in/roselanesbyjeev/portfolio/gallery";
@@ -351,17 +352,13 @@ export function PortfolioSection() {
 
   /*
    * Lock page scrolling while the lightbox is open.
+   *
+   * Uses a position:fixed-based lock rather than plain
+   * `overflow: hidden`, since iOS Safari still allows the page to be
+   * dragged/rubber-banded (and briefly reveals it during the
+   * address-bar show/hide animation) with overflow alone.
    */
-  React.useEffect(() => {
-    if (activeIndex === null) return;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [activeIndex]);
+  useBodyScrollLock(activeIndex !== null);
 
   /*
    * Keyboard controls:
@@ -687,6 +684,7 @@ export function PortfolioSection() {
             sm:p-6
             lg:p-10
           "
+          style={{ overscrollBehavior: "none" }}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
               closeImage();
@@ -816,6 +814,8 @@ export function PortfolioSection() {
               alt={activeImage.alt}
               width={activeImage.width}
               height={activeImage.height}
+              onSwipePrev={showPrevious}
+              onSwipeNext={showNext}
               priority
               sizes="100vw"
               className="
