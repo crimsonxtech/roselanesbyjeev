@@ -1142,6 +1142,7 @@ export default function SiteHeader() {
   const touchCurrentX = useRef<number | null>(null);
 
   const scrollRaf = useRef<number | null>(null);
+  const pendingNavigationRef = useRef<string | null>(null);
 
   const updateHeaderLayout = useCallback(() => {
     const header = headerRef.current;
@@ -1321,6 +1322,34 @@ useEffect(() => {
     window.scrollTo(0, scrollY);
   };
 }, [isOpen]);
+
+  /*
+   * A mobile link cannot scroll while the drawer has fixed the body. Queue
+   * the destination, let the lock cleanup restore normal document flow, then
+   * scroll on the following frame. Without this, the lock cleanup restores
+   * the old scroll position and makes mobile navigation appear unresponsive.
+   */
+  useEffect(() => {
+    if (isOpen) {
+      return;
+    }
+
+    const href = pendingNavigationRef.current;
+
+    if (!href) {
+      return;
+    }
+
+    pendingNavigationRef.current = null;
+
+    const frame = window.requestAnimationFrame(() => {
+      scrollToHash(href);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [isOpen, scrollToHash]);
 
   /*
    * Keep the original visual state tied to the component itself.
@@ -1571,7 +1600,9 @@ useEffect(() => {
     event.preventDefault();
 
     if (isOpen) {
+      pendingNavigationRef.current = href;
       closeMenu(false);
+      return;
     }
 
     scrollToHash(href);
