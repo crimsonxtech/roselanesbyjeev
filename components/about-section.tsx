@@ -220,7 +220,7 @@ export default function AboutSection() {
     <section
       id="about"
       aria-labelledby="about-heading"
-      className="px-5 pb-0 pt-[calc(var(--header-offset,0px)+var(--header-height,100px))] sm:px-6 lg:px-8"
+      className="px-5 pb-0 pt-[calc(var(--header-offset,0px)+var(--header-height,100px)+var(--section-header-gap,0px))] sm:px-6 lg:px-8"
     >
       <div className="mx-auto w-full max-w-[1240px]">
         {/* HEADER — intentionally identical to Contact */}

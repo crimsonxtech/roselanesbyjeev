@@ -61,6 +61,15 @@
     radial-gradient(circle at 20% 15%, var(--primary-light) 0%, transparent 40%),
     radial-gradient(circle at 90% 10%, var(--primary-dark) 0%, transparent 45%),
     linear-gradient(340deg, var(--primary-darkest) 0%, var(--primary-darker) 45%, var(--primary-darkest) 100%);
+
+  /* Extra breathing room between a fixed header and section headings. */
+  --section-header-gap: 0px;
+}
+
+@media (max-width: 860px) {
+  :root {
+    --section-header-gap: 18px;
+  }
 }
 
 

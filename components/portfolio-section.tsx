@@ -462,7 +462,7 @@ export function PortfolioSection() {
           w-full
           overflow-visible
           px-5
-          pt-[calc(var(--header-offset,0px)+var(--header-height,100px))]
+          pt-[calc(var(--header-offset,0px)+var(--header-height,100px)+var(--section-header-gap,0px))]
           pb-[clamp(52px,6vw,88px)]
           sm:px-6
           lg:px-8

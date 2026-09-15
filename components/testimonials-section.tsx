@@ -814,7 +814,7 @@ const handleResize = () => {
   return (
   <section
     id="testimonials"
-    className="relative overflow-visible px-5 pt-[calc(var(--header-offset,0px)+var(--header-height,100px))] pb-0 sm:px-6 lg:px-8"
+    className="relative overflow-visible px-5 pt-[calc(var(--header-offset,0px)+var(--header-height,100px)+var(--section-header-gap,0px))] pb-0 sm:px-6 lg:px-8"
     aria-labelledby="testimonials-heading"
   >
     <div className="mx-auto w-full max-w-[1240px]">
