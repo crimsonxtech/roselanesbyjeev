@@ -191,6 +191,18 @@ function formatDate(iso: string) {
   });
 }
 
+/* Date inputs use YYYY-MM-DD. Build it in the visitor's local timezone rather
+   than with toISOString(), which can incorrectly become tomorrow/yesterday
+   around midnight in India and other non-UTC timezones. */
+function getTodayLocalIso() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 /* ==========================================================
    VALIDATION — one pure validator per field.
 
@@ -1993,8 +2005,15 @@ function EventCard({
             <input
               className={`${inputClass} ${dateInputFix} [color-scheme:dark] accent-[var(--secondary)]`}
               type="date"
+              min={getTodayLocalIso()}
               value={event.date}
-              onChange={(e) => onDateChange(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+
+                onDateChange(
+                  value && value < getTodayLocalIso() ? "" : value,
+                );
+              }}
               aria-label="Event date"
             />
           </Field>
