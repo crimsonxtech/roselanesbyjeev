@@ -1639,7 +1639,7 @@ useEffect(() => {
               href="/quote"
               className="header-cta btn btn-primary"
             >
-              Get a Quotee
+              Get a Quote
             </a>
           </div>
 
