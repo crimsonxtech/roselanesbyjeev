@@ -276,15 +276,11 @@ video {
 .page-background {
   position: fixed;
   inset: 0;
-
   width: 100%;
   height: 100lvh;
   min-height: 100lvh;
-  max-width: 100%;
-
   overflow: hidden;
   pointer-events: none;
-
   isolation: isolate;
   z-index: -1;
 
