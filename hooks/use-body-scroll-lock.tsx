@@ -55,10 +55,25 @@ export function useBodyScrollLock(
     }
 
     const preventBackgroundTouchMove = (event: TouchEvent) => {
+      const target = event.target as Node;
       const allowedEl = allowedRef?.current;
 
-      if (allowedEl && allowedEl.contains(event.target as Node)) {
+      if (allowedEl && allowedEl.contains(target)) {
         // Let the designated scrollable area handle its own touches.
+        return;
+      }
+
+      // Radix (Select, Popover, DropdownMenu, ...) portals its content
+      // straight to <body> via SelectPrimitive.Portal, so it lives
+      // outside allowedRef's subtree even though it's visually part of
+      // the modal. Without this, swiping inside an open Select's
+      // dropdown gets blocked by this same lock on any touch browser
+      // (not just iOS) — the wheel-based desktop path never hits this
+      // listener, which is why it "only breaks on mobile".
+      if (
+        target instanceof Element &&
+        target.closest("[data-radix-popper-content-wrapper]")
+      ) {
         return;
       }
 
