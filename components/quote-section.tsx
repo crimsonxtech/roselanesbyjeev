@@ -34,7 +34,7 @@ const inputClass =
   "h-[54px] w-full rounded-[10px] border border-[var(--glass-border)] bg-[var(--input-bg)] px-4 text-[15px] font-medium text-[var(--cream)] outline-none transition-all duration-300 placeholder:text-[var(--placeholder)] focus:border-[var(--secondary-light)] focus:bg-[var(--input-focus-bg)] focus:ring-4 focus:ring-[var(--secondary)]/15";
 
 const chipBase =
-  "inline-flex min-h-[34px] items-center gap-1 rounded-full border px-3.5 py-1.5 text-xs font-medium leading-tight transition-all duration-200";
+  "inline-flex min-h-[28px] items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium leading-tight transition-all duration-200 sm:min-h-[34px] sm:px-3.5 sm:py-1.5 sm:text-xs";
 
 const chipDefault =
   "border-[var(--glass-border)] bg-black/20 text-[var(--cream)]/80 hover:border-[var(--secondary)]/60 hover:text-[var(--cream)]";
@@ -694,6 +694,23 @@ export function QuoteSection() {
       return;
     }
 
+    const missingCustomName = events.some(
+      (ev) => ev.isCustomType && !ev.customType.trim()
+    );
+
+    if (missingCustomName) {
+      setEventsError(true);
+      setFooterError(true);
+      setFooterNote(
+        "Please name your custom event before generating a quote."
+      );
+      eventsSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+      return;
+    }
+
     const hasServices = events.some((ev) => ev.services.length > 0);
 
     if (!hasServices) {
@@ -812,6 +829,8 @@ export function QuoteSection() {
         transform: `translate(-50%, calc(-50% + ${dragY}px))`,
         opacity: 1,
         pointerEvents: "auto",
+        display: "flex",
+        flexDirection: "column",
         transition,
       };
     }
@@ -829,6 +848,8 @@ export function QuoteSection() {
       transform: "translate(-50%, calc(-100% - 20px))",
       opacity: visible ? 1 : 0,
       pointerEvents: visible ? "auto" : "none",
+      display: "flex",
+      flexDirection: "column",
       transition,
     };
   }
@@ -854,12 +875,18 @@ export function QuoteSection() {
         aria-modal={mode === "expanded"}
         aria-labelledby="quoteTitle"
         aria-hidden={mode !== "expanded"}
-        onClick={mode === "mini" ? openModal : undefined}
-        className={`z-[999999] flex flex-col overflow-hidden border border-[var(--secondary)]/40 bg-gradient-to-br from-[var(--primary)]/97 via-[var(--primary-dark)]/98 to-[var(--primary-darkest)]/99 shadow-[0_30px_80px_rgba(0,0,0,.48)] ${
-          mode === "mini" ? "cursor-pointer" : ""
-        }`}
+        className="z-[999999]"
         style={getPanelStyle()}
       >
+        <div
+          onClick={mode === "mini" ? openModal : undefined}
+          className={`relative flex w-full min-h-0 flex-1 flex-col overflow-hidden border bg-gradient-to-br from-[var(--primary)]/97 via-[var(--primary-dark)]/98 to-[var(--primary-darkest)]/99 shadow-[0_30px_80px_rgba(0,0,0,.48)] ${
+            mode === "mini"
+              ? "cursor-pointer border-[var(--secondary)]/55 transition-transform duration-300 ease-out hover:scale-x-[1.055] hover:scale-y-[1.022] hover:border-[var(--secondary-light)]/75 hover:shadow-[0_20px_55px_rgba(0,0,0,.55)]"
+              : "border-[var(--secondary)]/40"
+          }`}
+          style={{ borderRadius: "inherit" }}
+        >
         {mode === "expanded" && (
           <>
             <div className="absolute inset-x-0 top-0 z-20 h-[2px] bg-gradient-to-r from-transparent via-[var(--secondary-light)] to-transparent" />
@@ -867,19 +894,20 @@ export function QuoteSection() {
           </>
         )}
 
+
         {mode === "expanded" && !success && (
           <>
             {/* HEADER */}
-            <div className="flex shrink-0 items-center gap-4 px-5 py-5 sm:px-8">
-              <div
-                className="flex min-w-0 flex-1 cursor-grab select-none items-center gap-4 active:cursor-grabbing"
-                style={{ touchAction: "none" }}
-                onPointerDown={handleDragStart}
-                onPointerMove={handleDragMove}
-                onPointerUp={handleDragEnd}
-                onPointerCancel={handleDragEnd}
-                aria-label="Drag quote panel"
-              >
+            <div
+              className="flex shrink-0 cursor-grab select-none items-center gap-4 px-5 py-5 active:cursor-grabbing sm:px-8"
+              style={{ touchAction: "none" }}
+              onPointerDown={handleDragStart}
+              onPointerMove={handleDragMove}
+              onPointerUp={handleDragEnd}
+              onPointerCancel={handleDragEnd}
+              aria-label="Drag quote panel"
+            >
+              <div className="flex min-w-0 flex-1 items-center gap-4">
                 <img
                   src="/brand/icon.png"
                   alt="Roselanes by Jeev"
@@ -902,6 +930,7 @@ export function QuoteSection() {
               <button
                 type="button"
                 onClick={minimizeModal}
+                onPointerDown={(e) => e.stopPropagation()}
                 aria-label="Close"
                 className="ml-auto flex size-9 shrink-0 items-center justify-center rounded-full border border-[var(--secondary)]/38 bg-black/25 text-[var(--cream)]/80 transition-colors hover:border-[var(--secondary-light)] hover:text-[var(--secondary-light)]"
               >
@@ -925,7 +954,10 @@ export function QuoteSection() {
                       placeholder="Your full name"
                       autoComplete="name"
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      onChange={(e) => {
+                        setName(e.target.value);
+                        markEdited();
+                      }}
                     />
                   </Field>
 
@@ -938,7 +970,10 @@ export function QuoteSection() {
                       autoComplete="tel"
                       inputMode="tel"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => {
+                        setPhone(e.target.value);
+                        markEdited();
+                      }}
                     />
                   </Field>
                 </div>
@@ -952,7 +987,10 @@ export function QuoteSection() {
                       placeholder="Your email address"
                       autoComplete="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        markEdited();
+                      }}
                     />
                   </Field>
 
@@ -996,7 +1034,10 @@ export function QuoteSection() {
                     id="quote-message"
                     placeholder="Tell us anything important about your event..."
                     value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    onChange={(e) => {
+                      setMessage(e.target.value);
+                      markEdited();
+                    }}
                   />
                 </Field>
               </div>
@@ -1021,9 +1062,10 @@ export function QuoteSection() {
                     customServiceOpen={Boolean(customServiceOpen[ev.id])}
                     customServiceDraft={customServiceDraft[ev.id] || ""}
                     onTypeChange={(value) => setEventType(ev.id, value)}
-                    onCustomTypeChange={(value) =>
-                      updateEvent(ev.id, { customType: value })
-                    }
+                    onCustomTypeChange={(value) => {
+                      updateEvent(ev.id, { customType: value });
+                      markEdited();
+                    }}
                     onDateChange={(value) => {
                       updateEvent(ev.id, { date: value });
                       markEdited();
@@ -1161,7 +1203,7 @@ export function QuoteSection() {
                 {footerNote}
               </p>
 
-              <div className="flex shrink-0 gap-2">
+              <div className="flex shrink-0 items-center justify-end gap-2 self-end sm:self-auto">
                 <Button
                   type="button"
                   variant="secondary"
@@ -1252,14 +1294,21 @@ export function QuoteSection() {
         )}
 
         {mode === "mini" && (
-  <div className="flex h-full min-h-[76px] w-full min-w-[420px] items-center justify-between gap-4 px-6">
-    <div className="min-w-0">
-      <span className="block text-[.6rem] uppercase tracking-[0.12em] text-[var(--secondary-light)]">
-        Quote in progress
-      </span>
-      <span className="block truncate text-[.8rem] text-[var(--cream)]">
-        Your quote is ready to continue
-      </span>
+  <div className="flex h-full min-h-[76px] w-full items-center justify-between gap-4 py-2 pl-6 pr-5 sm:pr-6">
+    <div className="flex min-w-0 items-center gap-3.5">
+      <img
+        src="/brand/icon.png"
+        alt=""
+        className="size-[40px] shrink-0 rounded-full border border-[var(--secondary)]/48 object-cover"
+      />
+      <div className="min-w-0">
+        <span className="block text-[.6rem] uppercase tracking-[0.12em] text-[var(--secondary-light)]">
+          Quote in progress
+        </span>
+        <span className="block truncate text-[.8rem] text-[var(--cream)]">
+          Your quote is ready to continue
+        </span>
+      </div>
     </div>
 
     <button
@@ -1275,6 +1324,7 @@ export function QuoteSection() {
     </button>
   </div>
 )}
+        </div>
       </div>
 
       {/* TOAST */}
@@ -1377,14 +1427,14 @@ function EventCard({
         </button>
       )}
 
-      {/* Row 1 — Event Type. Full width normally; when the custom-event
-          input opens, the select shrinks to 30% and the name field
-          takes the remaining 70%. */}
-      <div className={`mb-3 flex gap-2 ${removable ? "pr-10" : ""}`}>
+      {/* Row 1 — Event Type. Stacks full-width on mobile; from sm up,
+          when the custom-event input opens, the select shrinks to 30%
+          and the name field takes the remaining 70%. */}
+      <div className={`mb-3 flex flex-col gap-2 sm:flex-row ${removable ? "pr-10" : ""}`}>
         <div
           className={
             event.isCustomType
-              ? "w-[30%] min-w-0 shrink-0"
+              ? "w-full min-w-0 sm:w-[30%] sm:shrink-0"
               : "w-full min-w-0"
           }
         >
@@ -1409,7 +1459,7 @@ function EventCard({
         </div>
 
         {event.isCustomType && (
-          <div className="w-[70%] min-w-0">
+          <div className="w-full min-w-0 sm:w-[70%]">
             <Field label="Custom Event Name">
               <input
                 className={`${inputClass} h-[54px]`}
@@ -1424,12 +1474,13 @@ function EventCard({
         )}
       </div>
 
-      {/* Row 2 — Date and Venue share the row equally (50/50). */}
-      <div className="mb-4 flex gap-3">
-        <div className="w-1/2 min-w-0">
+      {/* Row 2 — Date and Venue stack full-width on mobile, share the
+          row equally (50/50) from sm up. */}
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+        <div className="w-full min-w-0 sm:w-1/2">
           <Field label="Date" optional>
             <input
-              className={inputClass}
+              className={`${inputClass} [color-scheme:dark] accent-[var(--secondary)]`}
               type="date"
               value={event.date}
               onChange={(e) => onDateChange(e.target.value)}
@@ -1438,7 +1489,7 @@ function EventCard({
           </Field>
         </div>
 
-        <div className="w-1/2 min-w-0">
+        <div className="w-full min-w-0 sm:w-1/2">
           <Field label="Venue" optional>
             <input
               className={inputClass}

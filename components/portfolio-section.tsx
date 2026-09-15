@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
 import { X } from "lucide-react";
+import { ZoomableLightboxImage } from "@/components/zoomable-lightbox-image";
 
 const R2_BASE =
   "https://images.roselanesbyjeev.in/roselanesbyjeev/portfolio/gallery";
@@ -575,6 +575,7 @@ export function PortfolioSection() {
                             : "lazy"
                         }
                         decoding="async"
+                        draggable={false}
                         onError={() => markErrored(image.id)}
                         className="
                           block
@@ -802,13 +803,14 @@ export function PortfolioSection() {
               w-full
               items-center
               justify-center
+              overflow-hidden
               px-8
               py-12
               sm:px-14
               sm:py-14
             "
           >
-            <Image
+            <ZoomableLightboxImage
               key={activeImage.id}
               src={imageUrl(activeImage.id, "display")}
               alt={activeImage.alt}

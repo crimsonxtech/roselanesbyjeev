@@ -91,6 +91,14 @@ html {
   /* Firefox scrollbar */
   scrollbar-width: thin;
   scrollbar-color: var(--secondary) var(--primary-darker);
+
+  /*
+    Allow normal one-finger scrolling but block pinch-zoom and
+    double-tap-to-zoom gestures on touch devices. Pair this with
+    the viewport meta tag (maximum-scale=1, user-scalable=no) —
+    this alone isn't enough on every browser.
+  */
+  touch-action: pan-x pan-y;
 }
 
 body { 
@@ -106,6 +114,8 @@ body {
 
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+
+  touch-action: pan-x pan-y;
  
 }
 html,
@@ -240,6 +250,22 @@ img {
 
 svg {
   flex-shrink: 0;
+}
+
+/*
+  Images are not selectable, draggable, or offered in the iOS
+  long-press "save/copy" callout. Text elsewhere on the page is left
+  fully selectable (no user-select rule on body), so Ctrl/Cmd+A only
+  picks up text — images are simply excluded from the selection.
+*/
+img,
+svg,
+video {
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 

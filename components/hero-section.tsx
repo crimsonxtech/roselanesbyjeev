@@ -6,6 +6,7 @@ import Image from "next/image"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dancing_Script } from "next/font/google"
+import { ZoomableLightboxImage } from "@/components/zoomable-lightbox-image"
 
 const dancingScript = Dancing_Script({
   subsets: ["latin"],
@@ -805,6 +806,7 @@ max-[560px]:[--hero-visual-size:none]
                 alt={HERO_IMAGES[0].alt}
                 width={HERO_IMAGES[0].width}
                 height={HERO_IMAGES[0].height}
+                draggable={false}
                 priority
                 sizes="(max-width: 560px) 64vw, (max-width: 720px) 60vw, 34vw"
                 className="
@@ -854,6 +856,7 @@ max-[560px]:[--hero-visual-size:none]
                 alt={HERO_IMAGES[1].alt}
                 width={HERO_IMAGES[1].width}
                 height={HERO_IMAGES[1].height}
+                draggable={false}
                 sizes="(max-width: 480px) 24vw, 10vw"
                 className="
                   block h-auto w-full
@@ -901,6 +904,7 @@ max-[560px]:[--hero-visual-size:none]
                 alt={HERO_IMAGES[2].alt}
                 width={HERO_IMAGES[2].width}
                 height={HERO_IMAGES[2].height}
+                draggable={false}
                 sizes="(max-width: 480px) 23vw, 10vw"
                 className="
                   block h-auto w-full
@@ -948,6 +952,7 @@ max-[560px]:[--hero-visual-size:none]
                 alt={HERO_IMAGES[3].alt}
                 width={HERO_IMAGES[3].width}
                 height={HERO_IMAGES[3].height}
+                draggable={false}
                 sizes="(max-width: 480px) 20vw, 9vw"
                 className="
                   block h-auto w-full
@@ -1114,13 +1119,15 @@ max-[560px]:[--hero-visual-size:none]
               w-full
               items-center
               justify-center
+              overflow-hidden
               px-8
               py-12
               sm:px-14
               sm:py-14
             "
           >
-            <Image
+            <ZoomableLightboxImage
+              key={HERO_IMAGES[lightboxIndex].src}
               src={HERO_IMAGES[lightboxIndex].src}
               alt={HERO_IMAGES[lightboxIndex].alt}
               width={1600}
