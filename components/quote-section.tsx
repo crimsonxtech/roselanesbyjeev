@@ -31,7 +31,7 @@ const glass =
 const glassBlur = `${glass} backdrop-blur-xl`;
 
 const inputClass =
-  "h-[54px] w-full rounded-[10px] border border-[var(--glass-border)] bg-[var(--input-bg)] px-4 text-[15px] font-medium text-[var(--cream)] outline-none transition-all duration-300 placeholder:text-[var(--placeholder)] focus:border-[var(--secondary-light)] focus:bg-[var(--input-focus-bg)] focus:ring-4 focus:ring-[var(--secondary)]/15";
+  "h-[54px] w-full min-w-0 max-w-full box-border rounded-[10px] border border-[var(--glass-border)] bg-[var(--input-bg)] px-4 text-[15px] font-medium text-[var(--cream)] outline-none transition-all duration-300 placeholder:text-[var(--placeholder)] focus:border-[var(--secondary-light)] focus:bg-[var(--input-focus-bg)] focus:ring-4 focus:ring-[var(--secondary)]/15";
 
 const chipBase =
   "inline-flex min-h-[28px] items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium leading-tight transition-all duration-200 sm:min-h-[34px] sm:px-3.5 sm:py-1.5 sm:text-xs";
@@ -306,6 +306,7 @@ export function QuoteSection() {
   const nameRef = React.useRef<HTMLInputElement>(null);
   const budgetTriggerRef = React.useRef<HTMLButtonElement>(null);
   const eventsSectionRef = React.useRef<HTMLDivElement>(null);
+  const customEventNameRefs = React.useRef<Record<number, HTMLInputElement | null>>({});
   const restoredRef = React.useRef(false);
   const dragStartYRef = React.useRef(0);
   const dragStartTimeRef = React.useRef(0);
@@ -694,20 +695,34 @@ export function QuoteSection() {
       return;
     }
 
-    const missingCustomName = events.some(
+    // Find the FIRST invalid custom event and scroll/focus its exact input.
+    const missingCustomEvent = events.find(
       (ev) => ev.isCustomType && !ev.customType.trim()
     );
 
-    if (missingCustomName) {
+    if (missingCustomEvent) {
       setEventsError(true);
       setFooterError(true);
       setFooterNote(
         "Please name your custom event before generating a quote."
       );
-      eventsSectionRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+
+      const input = customEventNameRefs.current[missingCustomEvent.id];
+
+      if (input) {
+        input.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest",
+        });
+        input.focus({ preventScroll: true });
+      } else {
+        eventsSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+
       return;
     }
 
@@ -1066,6 +1081,9 @@ export function QuoteSection() {
                       updateEvent(ev.id, { customType: value });
                       markEdited();
                     }}
+                    customNameRef={(node) => {
+                      customEventNameRefs.current[ev.id] = node;
+                    }}
                     onDateChange={(value) => {
                       updateEvent(ev.id, { date: value });
                       markEdited();
@@ -1386,6 +1404,7 @@ function EventCard({
   customServiceDraft,
   onTypeChange,
   onCustomTypeChange,
+  customNameRef,
   onDateChange,
   onVenueChange,
   onRemove,
@@ -1402,6 +1421,7 @@ function EventCard({
   customServiceDraft: string;
   onTypeChange: (value: string) => void;
   onCustomTypeChange: (value: string) => void;
+  customNameRef?: React.Ref<HTMLInputElement>;
   onDateChange: (value: string) => void;
   onVenueChange: (value: string) => void;
   onRemove: () => void;
@@ -1434,13 +1454,16 @@ function EventCard({
         <div
           className={
             event.isCustomType
-              ? "w-full min-w-0 sm:w-[30%] sm:shrink-0"
-              : "w-full min-w-0"
+              ? "w-full min-w-0 max-w-full sm:w-[30%] sm:shrink-0"
+              : "w-full min-w-0 max-w-full"
           }
         >
           <Field label="Event Type">
             <Select value={selectValue} onValueChange={onTypeChange}>
-              <SelectTrigger aria-label="Event type" className="truncate">
+              <SelectTrigger
+                aria-label="Event type"
+                className="w-full min-w-0 max-w-full truncate box-border"
+              >
                 <SelectValue className="truncate" />
               </SelectTrigger>
 
@@ -1459,10 +1482,11 @@ function EventCard({
         </div>
 
         {event.isCustomType && (
-          <div className="w-full min-w-0 sm:w-[70%]">
+          <div className="w-full min-w-0 max-w-full sm:w-[70%]">
             <Field label="Custom Event Name">
               <input
-                className={`${inputClass} h-[54px]`}
+                ref={customNameRef}
+                className={`${inputClass} h-[54px] min-w-0 max-w-full box-border`}
                 type="text"
                 placeholder="Name this event"
                 value={event.customType}
@@ -1477,10 +1501,10 @@ function EventCard({
       {/* Row 2 — Date and Venue stack full-width on mobile, share the
           row equally (50/50) from sm up. */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
-        <div className="w-full min-w-0 sm:w-1/2">
+        <div className="w-full min-w-0 max-w-full sm:w-1/2">
           <Field label="Date" optional>
             <input
-              className={`${inputClass} [color-scheme:dark] accent-[var(--secondary)]`}
+              className={`${inputClass} min-w-0 max-w-full box-border [color-scheme:dark] accent-[var(--secondary)]`}
               type="date"
               value={event.date}
               onChange={(e) => onDateChange(e.target.value)}
@@ -1489,10 +1513,10 @@ function EventCard({
           </Field>
         </div>
 
-        <div className="w-full min-w-0 sm:w-1/2">
+        <div className="w-full min-w-0 max-w-full sm:w-1/2">
           <Field label="Venue" optional>
             <input
-              className={inputClass}
+              className={`${inputClass} min-w-0 max-w-full box-border`}
               type="text"
               placeholder="Venue or location"
               value={event.venue}
