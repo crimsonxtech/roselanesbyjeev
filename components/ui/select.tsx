@@ -51,17 +51,18 @@ const SelectContent = React.forwardRef<
       )}
       {...props}
     >
-     <SelectPrimitive.Viewport
+<SelectPrimitive.Viewport
   className={cn(
-    "max-h-[min(24rem,var(--radix-select-content-available-height))] overflow-y-scroll overscroll-contain",
+    "max-h-[min(24rem,var(--radix-select-content-available-height))] overflow-y-auto overscroll-contain touch-pan-y",
     "[scrollbar-gutter:stable]",
     "[scrollbar-width:thin]",
     "[scrollbar-color:var(--secondary)_transparent]",
-    "[&::-webkit-scrollbar]:w-1.5",
+    "[&::-webkit-scrollbar]:w-2",
     "[&::-webkit-scrollbar-track]:bg-transparent",
     "[&::-webkit-scrollbar-thumb]:rounded-full",
     "[&::-webkit-scrollbar-thumb]:bg-[var(--secondary)]",
-    "[&::-webkit-scrollbar-thumb:hover]:bg-[var(--secondary-light)]"
+    "[&::-webkit-scrollbar-thumb:hover]:bg-[var(--secondary-light)]",
+    "[-webkit-overflow-scrolling:touch]"
   )}
 >
   {children}

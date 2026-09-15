@@ -720,6 +720,9 @@ const HEADER_STYLES = `
 
       width: min(280px, 80vw);
       height: 100dvh;
+        overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 
       box-sizing: border-box;
 
@@ -1282,24 +1285,35 @@ export default function SiteHeader() {
    * We additionally preserve/restore the existing inline overflow
    * so this component does not permanently modify page scrolling.
    */
-  useEffect(() => {
-    const body = document.body;
+useEffect(() => {
+  if (!isOpen) return;
 
-    if (isOpen) {
-      body.classList.add("nav-open");
+  const body = document.body;
+  const scrollY = window.scrollY;
 
-      const previousOverflow = body.style.overflow;
+  const previousPosition = body.style.position;
+  const previousTop = body.style.top;
+  const previousWidth = body.style.width;
+  const previousOverflow = body.style.overflow;
 
-      body.style.overflow = "hidden";
+  body.classList.add("nav-open");
 
-      return () => {
-        body.classList.remove("nav-open");
-        body.style.overflow = previousOverflow;
-      };
-    }
+  body.style.position = "fixed";
+  body.style.top = `-${scrollY}px`;
+  body.style.width = "100%";
+  body.style.overflow = "hidden";
 
+  return () => {
     body.classList.remove("nav-open");
-  }, [isOpen]);
+
+    body.style.position = previousPosition;
+    body.style.top = previousTop;
+    body.style.width = previousWidth;
+    body.style.overflow = previousOverflow;
+
+    window.scrollTo(0, scrollY);
+  };
+}, [isOpen]);
 
   /*
    * Keep the original visual state tied to the component itself.
