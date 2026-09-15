@@ -401,23 +401,6 @@ export function HeroSection() {
 
   /*
    * Lock page scrolling while the lightbox is open.
-   */
-  React.useEffect(() => {
-    if (lightboxIndex === null) return
-
-    const previousOverflow =
-      document.body.style.overflow
-
-    document.body.style.overflow = "hidden"
-
-    return () => {
-      document.body.style.overflow =
-        previousOverflow
-    }
-  }, [lightboxIndex])
-
-  /*
-   * Lock page scrolling while the lightbox is open.
    * Uses the same iOS-safe fixed-position scroll lock as the portfolio lightbox.
    */
   useBodyScrollLock(lightboxIndex !== null)
@@ -1087,11 +1070,11 @@ max-[560px]:[--hero-visual-size:none]
                 priority
                 sizes="100vw"
                 className="
-                  max-h-[calc(100vh-7rem)]
+                  max-h-[calc(100svh-7rem)]
                   max-w-[calc(100vw-4rem)]
                   w-auto rounded-[28px] object-contain
                   shadow-[0_24px_80px_rgba(0,0,0,.45)]
-                  sm:max-h-[calc(100vh-6rem)]
+                  sm:max-h-[calc(100svh-6rem)]
                   sm:max-w-[calc(100vw-8rem)]
                 "
               />

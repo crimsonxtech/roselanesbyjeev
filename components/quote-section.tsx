@@ -1111,7 +1111,7 @@ export function QuoteSection() {
   function getPanelStyle(): React.CSSProperties {
     const transition = isDragging
       ? "none"
-      : "top 480ms cubic-bezier(.32,.72,0,1), width 480ms cubic-bezier(.32,.72,0,1), max-width 480ms cubic-bezier(.32,.72,0,1), max-height 480ms cubic-bezier(.32,.72,0,1), border-radius 480ms cubic-bezier(.32,.72,0,1), transform 480ms cubic-bezier(.32,.72,0,1), opacity 320ms ease";
+      : "width 480ms cubic-bezier(.32,.72,0,1), max-width 480ms cubic-bezier(.32,.72,0,1), max-height 480ms cubic-bezier(.32,.72,0,1), border-radius 480ms cubic-bezier(.32,.72,0,1), transform 480ms cubic-bezier(.32,.72,0,1), opacity 320ms ease";
 
     if (mode === "expanded") {
       return {
@@ -1136,12 +1136,12 @@ export function QuoteSection() {
     return {
       position: "fixed",
       left: "50%",
-      top: "100%",
+      bottom: "calc(20px + env(safe-area-inset-bottom))",
       width: "calc(100% - 32px)",
       maxWidth: "420px",
       maxHeight: "76px",
       borderRadius: "999px",
-      transform: "translate(-50%, calc(-100% - 20px))",
+      transform: "translateX(-50%)",
       opacity: visible ? 1 : 0,
       pointerEvents: visible ? "auto" : "none",
       display: "flex",

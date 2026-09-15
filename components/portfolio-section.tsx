@@ -819,13 +819,13 @@ export function PortfolioSection() {
               priority
               sizes="100vw"
               className="
-                max-h-[calc(100vh-7rem)]
+                max-h-[calc(100svh-7rem)]
                 max-w-[calc(100vw-4rem)]
                 w-auto
                 rounded-[28px]
                 object-contain
                 shadow-[0_24px_80px_rgba(0,0,0,.45)]
-                sm:max-h-[calc(100vh-6rem)]
+                sm:max-h-[calc(100svh-6rem)]
                 sm:max-w-[calc(100vw-8rem)]
               "
             />
