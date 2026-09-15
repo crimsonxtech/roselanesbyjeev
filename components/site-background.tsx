@@ -78,46 +78,11 @@ export function SiteBackground() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 overflow-hidden"
+      className="site-background pointer-events-none"
       style={{
         zIndex: 0,
       }}
     >
-      {/* Background gradient */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `
-            radial-gradient(
-              circle at 15% 90%,
-              var(--primary-light) 0%,
-              transparent 45%
-            ),
-            radial-gradient(
-              circle at 85% 85%,
-              var(--secondary) 0%,
-              transparent 30%
-            ),
-            radial-gradient(
-              circle at 20% 15%,
-              var(--primary-light) 0%,
-              transparent 40%
-            ),
-            radial-gradient(
-              circle at 90% 10%,
-              var(--primary-dark) 0%,
-              transparent 45%
-            ),
-            linear-gradient(
-              340deg,
-              var(--primary-darkest) 0%,
-              var(--primary-darker) 45%,
-              var(--primary-darkest) 100%
-            )
-          `,
-        }}
-      />
-
       {/* Star field */}
       <div
         ref={fieldRef}

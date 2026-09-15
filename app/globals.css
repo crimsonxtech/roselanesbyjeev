@@ -49,6 +49,18 @@
   --font-display: "Cormorant Garamond", Georgia, serif;
   --font-body: "Manrope", Arial, Helvetica, sans-serif;
   --font-brand: "Luvee", cursive;
+
+  /*
+    This is deliberately shared by the document canvas and the fixed visual
+    layer below. Mobile browsers can briefly repaint the canvas while their
+    address/tab bars animate; matching the two prevents a burgundy flash.
+  */
+  --site-background:
+    radial-gradient(circle at 15% 90%, var(--primary-light) 0%, transparent 45%),
+    radial-gradient(circle at 85% 85%, var(--secondary) 0%, transparent 30%),
+    radial-gradient(circle at 20% 15%, var(--primary-light) 0%, transparent 40%),
+    radial-gradient(circle at 90% 10%, var(--primary-dark) 0%, transparent 45%),
+    linear-gradient(340deg, var(--primary-darkest) 0%, var(--primary-darker) 45%, var(--primary-darkest) 100%);
 }
 
 
@@ -92,6 +104,9 @@ html {
   scrollbar-width: thin;
   scrollbar-color: var(--secondary) var(--primary-darker);
 
+  /* Fallback canvas for transient mobile viewport repaints. */
+  background: var(--site-background);
+
   /*
     Allow normal one-finger scrolling but block pinch-zoom and
     double-tap-to-zoom gestures on touch devices. Pair this with
@@ -107,7 +122,9 @@ body {
 
   margin: 0;
 
-  background: var(--background);
+  /* The fixed background owns the visual; keeping this transparent avoids
+     exposing a different colour during mobile browser-chrome transitions. */
+  background: transparent;
   color: var(--foreground);
 
   font-family: var(--font-body);
@@ -273,53 +290,21 @@ video {
    PAGE BACKGROUND
    ========================================================= */
 
-.page-background {
+.page-background,
+.site-background {
   position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100lvh;
-  min-height: 100lvh;
+  /*
+   * Do not give this layer a vh/lvh/dvh height. Fixed inset sizing follows
+   * the fixed-position viewport, and the 1px overscan removes fractional
+   * rounding seams while Safari/Chrome animate their browser controls.
+   */
+  inset: -1px;
   overflow: hidden;
+  overflow: clip;
   pointer-events: none;
   isolation: isolate;
   z-index: -1;
-
-  background:
-    /* Bottom-left burgundy glow */
-    radial-gradient(
-      circle at 15% 90%,
-      var(--primary-light) 0%,
-      transparent 45%
-    ),
-
-    /* Bottom-right gold glow */
-    radial-gradient(
-      circle at 85% 85%,
-      var(--secondary) 0%,
-      transparent 30%
-    ),
-
-    /* Top-left burgundy glow */
-    radial-gradient(
-      circle at 20% 15%,
-      var(--primary-light) 0%,
-      transparent 40%
-    ),
-
-    /* Top-right dark burgundy glow */
-    radial-gradient(
-      circle at 90% 10%,
-      var(--primary-dark) 0%,
-      transparent 45%
-    ),
-
-    /* Base gradient */
-    linear-gradient(
-      340deg,
-      var(--primary-darkest) 0%,
-      var(--primary-darker) 45%,
-      var(--primary-darkest) 100%
-    );
+  background: var(--site-background);
 }
 
 

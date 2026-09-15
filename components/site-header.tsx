@@ -20,6 +20,12 @@ const HEADER_STYLES = `
     transition: top 450ms cubic-bezier(.22, 1, .36, 1);
   }
 
+  /* svh remains stable while Safari/Chrome hide or show browser chrome. */
+  @supports (height: 100svh) {
+    #siteHeader {
+      top: clamp(12px, 2svh, 18px);
+    }
+  }
   #siteHeader *,
   #siteHeader *::before,
   #siteHeader *::after {
@@ -1724,7 +1730,7 @@ useEffect(() => {
               className="mobile-nav-cta btn btn-primary"
               onClick={() => closeMenu(false)}
             >
-              Get a Quotee
+              Get a Quote
             </a>
           </aside>
         </nav>
