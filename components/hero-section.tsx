@@ -682,6 +682,9 @@ max-[560px]:[--hero-visual-size:none]
                   className="
                     !min-w-0
                     flex-1
+                    max-[720px]:!flex-1
+                    max-[720px]:!basis-0
+                    max-[720px]:!w-0
                     !border-[var(--secondary)]
                     !bg-[var(--secondary)]
                     !text-[var(--primary-darkest)]
@@ -710,7 +713,7 @@ max-[560px]:[--hero-visual-size:none]
                 <Button
                   asChild
                   variant="secondary"
-                  className="!min-w-0 flex-1"
+                  className="!min-w-0 flex-1 max-[720px]:!flex-1 max-[720px]:!basis-0 max-[720px]:!w-0"
                   style={
                     {
                       "--btn-padding-x": "clamp(10px, 6cqw, 34px)",
