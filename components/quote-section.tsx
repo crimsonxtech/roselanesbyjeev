@@ -434,6 +434,11 @@ export function QuoteSection() {
   const dragStartYRef = React.useRef(0);
   const dragStartTimeRef = React.useRef(0);
 
+  // Opening the sheet from the minimized quote should not steal focus.
+  // Otherwise mobile browsers immediately open the keyboard during the
+  // sheet's expand animation.
+  const openedFromMiniRef = React.useRef(false);
+
   /* ---------------- Scroll to generated quote summary ---------------- */
   React.useEffect(() => {
     if (!quoteGenerated || !summaryData || !isOpen) return;
@@ -563,7 +568,7 @@ export function QuoteSection() {
   useBodyScrollLock(isOpen, sheetRef);
 
   React.useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || openedFromMiniRef.current) return;
 
     const t = setTimeout(() => {
       nameRef.current?.focus({ preventScroll: true });
@@ -641,7 +646,8 @@ export function QuoteSection() {
     );
   }
 
-  function openModal() {
+  function openModal(fromMini = false) {
+    openedFromMiniRef.current = fromMini;
     setDragY(0);
     setIsOpen(true);
   }
@@ -1167,7 +1173,7 @@ export function QuoteSection() {
       >
         <div
           ref={sheetRef}
-          onClick={mode === "mini" ? openModal : undefined}
+          onClick={mode === "mini" ? () => openModal(true) : undefined}
           className={`relative flex w-full min-h-0 flex-1 flex-col overflow-hidden border bg-gradient-to-br from-[var(--primary)]/97 via-[var(--primary-dark)]/98 to-[var(--primary-darkest)]/99 shadow-[0_30px_80px_rgba(0,0,0,.48)] ${
             mode === "mini"
               ? "cursor-pointer border-[var(--secondary)]/55 transition-transform duration-300 ease-out hover:scale-x-[1.055] hover:scale-y-[1.022] hover:border-[var(--secondary-light)]/75 hover:shadow-[0_20px_55px_rgba(0,0,0,.55)]"

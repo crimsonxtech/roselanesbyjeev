@@ -7,6 +7,7 @@ import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dancing_Script } from "next/font/google"
 import { ZoomableLightboxImage } from "@/components/zoomable-lightbox-image"
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock"
 
 const dancingScript = Dancing_Script({
   subsets: ["latin"],
@@ -414,6 +415,12 @@ export function HeroSection() {
         previousOverflow
     }
   }, [lightboxIndex])
+
+  /*
+   * Lock page scrolling while the lightbox is open.
+   * Uses the same iOS-safe fixed-position scroll lock as the portfolio lightbox.
+   */
+  useBodyScrollLock(lightboxIndex !== null)
 
   /*
    * Keyboard controls:
@@ -987,192 +994,125 @@ max-[560px]:[--hero-visual-size:none]
         lightboxIndex !== null &&
         createPortal(
           <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Image viewer"
-          className="
-            fixed
-            inset-0
-            z-[999999]
-            flex
-            items-center
-            justify-center
-            bg-black/95
-            p-4
-            backdrop-blur-sm
-            sm:p-6
-            lg:p-10
-          "
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              closeLightbox()
-            }
-          }}
-        >
-          {/* SINGLE CLOSE CONTROL */}
-          <button
-            ref={closeButtonRef}
-            type="button"
-            onClick={closeLightbox}
-            aria-label="Close image viewer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Image viewer"
             className="
-              absolute
-              right-4
-              top-4
-              z-50
-              flex
-              size-11
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-white/15
-              bg-black/50
-              text-white
-              backdrop-blur-md
-              transition
-              hover:bg-white/10
-              focus-visible:outline-none
-              focus-visible:ring-2
-              focus-visible:ring-white/80
-              sm:right-6
-              sm:top-6
+              fixed inset-0 z-[999999]
+              flex items-center justify-center
+              bg-black/95 p-4 backdrop-blur-sm
+              sm:p-6 lg:p-10
             "
+            style={{ overscrollBehavior: "none" }}
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) {
+                closeLightbox()
+              }
+            }}
           >
-            <X className="size-5" />
-          </button>
-
-          {/* PREVIOUS */}
-          <button
-            type="button"
-            onClick={showPreviousImage}
-            aria-label="Previous image"
-            className="
-              absolute
-              left-3
-              top-1/2
-              z-40
-              flex
-              size-10
-              -translate-y-1/2
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-white/10
-              bg-black/35
-              text-2xl
-              text-white
-              backdrop-blur-md
-              transition
-              hover:bg-white/10
-              focus-visible:outline-none
-              focus-visible:ring-2
-              focus-visible:ring-white/80
-              sm:left-6
-              sm:size-11
-            "
-          >
-            ‹
-          </button>
-
-          {/* NEXT */}
-          <button
-            type="button"
-            onClick={showNextImage}
-            aria-label="Next image"
-            className="
-              absolute
-              right-3
-              top-1/2
-              z-40
-              flex
-              size-10
-              -translate-y-1/2
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-white/10
-              bg-black/35
-              text-2xl
-              text-white
-              backdrop-blur-md
-              transition
-              hover:bg-white/10
-              focus-visible:outline-none
-              focus-visible:ring-2
-              focus-visible:ring-white/80
-              sm:right-6
-              sm:size-11
-            "
-          >
-            ›
-          </button>
-
-          {/* IMAGE */}
-          <div
-            className="
-              relative
-              flex
-              h-full
-              w-full
-              items-center
-              justify-center
-              overflow-hidden
-              px-8
-              py-12
-              sm:px-14
-              sm:py-14
-            "
-          >
-            <ZoomableLightboxImage
-              key={HERO_IMAGES[lightboxIndex].src}
-              src={HERO_IMAGES[lightboxIndex].src}
-              alt={HERO_IMAGES[lightboxIndex].alt}
-              width={1600}
-              height={2000}
-              priority
-              sizes="100vw"
+            {/* SINGLE CLOSE CONTROL */}
+            <button
+              ref={closeButtonRef}
+              type="button"
+              onClick={closeLightbox}
+              aria-label="Close image viewer"
               className="
-                max-h-[calc(100vh-7rem)]
-                max-w-[calc(100vw-4rem)]
-                w-auto
-                rounded-[28px]
-                object-contain
-                shadow-[0_24px_80px_rgba(0,0,0,.45)]
-                sm:max-h-[calc(100vh-6rem)]
-                sm:max-w-[calc(100vw-8rem)]
+                absolute right-4 top-4 z-50
+                flex size-11 items-center justify-center
+                rounded-full border border-white/15 bg-black/50
+                text-white backdrop-blur-md transition
+                hover:bg-white/10
+                focus-visible:outline-none focus-visible:ring-2
+                focus-visible:ring-white/80
+                sm:right-6 sm:top-6
               "
-            />
-          </div>
+            >
+              <X className="size-5" />
+            </button>
 
-          {/* IMAGE COUNTER */}
-          <div
-            aria-live="polite"
-            className="
-              pointer-events-none
-              absolute
-              bottom-5
-              left-1/2
-              -translate-x-1/2
-              rounded-full
-              border
-              border-white/10
-              bg-black/45
-              px-3
-              py-1.5
-              text-xs
-              tracking-[.12em]
-              text-white/75
-              backdrop-blur-md
-            "
-          >
-            {lightboxIndex + 1} / {HERO_IMAGES.length}
-          </div>
-        </div>,
+            {/* PREVIOUS */}
+            <button
+              type="button"
+              onClick={showPreviousImage}
+              aria-label="Previous image"
+              className="
+                absolute left-3 top-1/2 z-40
+                flex size-10 -translate-y-1/2 items-center justify-center
+                rounded-full border border-white/10 bg-black/35
+                text-2xl text-white backdrop-blur-md transition
+                hover:bg-white/10
+                focus-visible:outline-none focus-visible:ring-2
+                focus-visible:ring-white/80
+                sm:left-6 sm:size-11
+              "
+            >
+              ‹
+            </button>
+
+            {/* NEXT */}
+            <button
+              type="button"
+              onClick={showNextImage}
+              aria-label="Next image"
+              className="
+                absolute right-3 top-1/2 z-40
+                flex size-10 -translate-y-1/2 items-center justify-center
+                rounded-full border border-white/10 bg-black/35
+                text-2xl text-white backdrop-blur-md transition
+                hover:bg-white/10
+                focus-visible:outline-none focus-visible:ring-2
+                focus-visible:ring-white/80
+                sm:right-6 sm:size-11
+              "
+            >
+              ›
+            </button>
+
+            {/* IMAGE */}
+            <div
+              className="
+                relative flex h-full w-full items-center justify-center
+                overflow-hidden px-8 py-12
+                sm:px-14 sm:py-14
+              "
+            >
+              <ZoomableLightboxImage
+                key={HERO_IMAGES[lightboxIndex].src}
+                src={HERO_IMAGES[lightboxIndex].src}
+                alt={HERO_IMAGES[lightboxIndex].alt}
+                width={HERO_IMAGES[lightboxIndex].width}
+                height={HERO_IMAGES[lightboxIndex].height}
+                onSwipePrev={showPreviousImage}
+                onSwipeNext={showNextImage}
+                priority
+                sizes="100vw"
+                className="
+                  max-h-[calc(100vh-7rem)]
+                  max-w-[calc(100vw-4rem)]
+                  w-auto rounded-[28px] object-contain
+                  shadow-[0_24px_80px_rgba(0,0,0,.45)]
+                  sm:max-h-[calc(100vh-6rem)]
+                  sm:max-w-[calc(100vw-8rem)]
+                "
+              />
+            </div>
+
+            {/* IMAGE COUNTER */}
+            <div
+              aria-live="polite"
+              className="
+                pointer-events-none absolute bottom-5 left-1/2
+                -translate-x-1/2 rounded-full border border-white/10
+                bg-black/45 px-3 py-1.5 text-xs tracking-[.12em]
+                text-white/75 backdrop-blur-md
+              "
+            >
+              {lightboxIndex + 1} / {HERO_IMAGES.length}
+            </div>
+          </div>,
           document.body,
         )}
+
     </>
   )
 }
