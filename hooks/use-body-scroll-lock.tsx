@@ -40,6 +40,23 @@ export function useBodyScrollLock(
     if (lockCount === 1) {
       savedScrollY = window.scrollY || window.pageYOffset || 0;
 
+      /*
+       * globals.css sets `html { overflow-y: scroll }` permanently, so a
+       * scrollbar track is always reserved even here. Hide it while
+       * locked, but compensate with matching padding-right on html so the
+       * document's clientWidth doesn't change — an uncompensated removal
+       * would shift all fixed-position centering (including the
+       * lightbox's own open/close flight animation) by the scrollbar's
+       * width for as long as the lock is active.
+       */
+      const scrollbarWidth = window.innerWidth - html.clientWidth;
+      savedHtmlOverflowY = html.style.overflowY;
+      savedHtmlPaddingRight = html.style.paddingRight;
+      html.style.overflowY = "hidden";
+      if (scrollbarWidth > 0) {
+        html.style.paddingRight = `${scrollbarWidth}px`;
+      }
+
       body.style.position = "fixed";
       body.style.top = `-${savedScrollY}px`;
       body.style.left = "0";
@@ -98,8 +115,16 @@ export function useBodyScrollLock(
         body.style.overflow = "";
         html.style.overscrollBehaviorY = "";
         (body.style as CSSStyleDeclaration).overscrollBehaviorY = "";
+        html.style.overflowY = savedHtmlOverflowY;
+        html.style.paddingRight = savedHtmlPaddingRight;
 
+        // The site enables smooth anchor scrolling globally. Unlocking a
+        // modal must restore its saved position immediately, otherwise the
+        // browser visibly scrolls from the top before the page settles.
+        const previousScrollBehavior = html.style.scrollBehavior;
+        html.style.scrollBehavior = "auto";
         window.scrollTo(0, savedScrollY);
+        html.style.scrollBehavior = previousScrollBehavior;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -110,3 +135,5 @@ export function useBodyScrollLock(
 // only the outermost open/close actually touches the DOM/scroll position.
 let lockCount = 0;
 let savedScrollY = 0;
+let savedHtmlOverflowY = "";
+let savedHtmlPaddingRight = "";

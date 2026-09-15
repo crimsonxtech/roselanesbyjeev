@@ -265,6 +265,12 @@ export function PortfolioSection() {
 
   const closeButtonRef =
     React.useRef<HTMLButtonElement>(null);
+  const thumbnailRefs = React.useRef(new Map<number, HTMLImageElement>());
+  const lightboxImageHostRef = React.useRef<HTMLDivElement>(null);
+  const animationInProgressRef = React.useRef(false);
+  const [isOpening, setIsOpening] = React.useState(false);
+  const [isClosing, setIsClosing] = React.useState(false);
+  const [backdropVisible, setBackdropVisible] = React.useState(false);
 
   const activeImage =
     activeIndex !== null
@@ -275,6 +281,187 @@ export function PortfolioSection() {
     setErroredIds((current) => ({ ...current, [id]: true }));
   }, []);
 
+  const animateImageBetweenRects = React.useCallback(
+    (
+      source: HTMLImageElement,
+      from: DOMRect,
+      to: DOMRect,
+      options: {
+        borderRadiusFrom?: string;
+        borderRadiusTo?: string;
+        /*
+         * When provided, a second clone loading this (higher quality) src is
+         * flown alongside the base clone and cross-faded in the moment it
+         * finishes loading — whether that happens mid-flight or slightly
+         * after landing. This removes the old "blurry thumb -> sharp image"
+         * snap: the swap is always a fade, never a hard cut.
+         */
+        crossfadeSrc?: string;
+        onArrive?: () => void;
+      },
+      onFinish: () => void,
+    ) => {
+      const {
+        borderRadiusFrom = "0px",
+        borderRadiusTo = "0px",
+        crossfadeSrc,
+        onArrive,
+      } = options;
+
+      const scaleX = to.width / from.width;
+      const scaleY = to.height / from.height;
+      const objectFit = getComputedStyle(source).objectFit || "contain";
+
+      const makeClone = (src: string) => {
+        const el = document.createElement("img");
+        el.src = src;
+        el.alt = "";
+        el.setAttribute("aria-hidden", "true");
+        Object.assign(el.style, {
+          position: "fixed",
+          top: `${from.top}px`,
+          left: `${from.left}px`,
+          width: `${from.width}px`,
+          height: `${from.height}px`,
+          margin: "0",
+          objectFit,
+          pointerEvents: "none",
+          transformOrigin: "top left",
+          willChange: "transform, opacity, border-radius",
+          zIndex: "1000002",
+        });
+        document.body.appendChild(el);
+        return el;
+      };
+
+      const baseSrc = source.currentSrc || source.src;
+      const baseClone = makeClone(baseSrc);
+
+      const needsCrossfade = Boolean(crossfadeSrc && crossfadeSrc !== baseSrc);
+      const hiResClone = needsCrossfade ? makeClone(crossfadeSrc!) : null;
+      if (hiResClone) hiResClone.style.opacity = "0";
+
+      const keyframes: Keyframe[] = [
+        {
+          transform: "translate3d(0, 0, 0) scale(1, 1)",
+          borderRadius: borderRadiusFrom,
+        },
+        {
+          transform: `translate3d(${to.left - from.left}px, ${
+            to.top - from.top
+          }px, 0) scale(${scaleX}, ${scaleY})`,
+          borderRadius: borderRadiusTo,
+        },
+      ];
+      const timing: KeyframeAnimationOptions = {
+        duration: 380,
+        easing: "cubic-bezier(.22, 1, .36, 1)",
+        fill: "forwards",
+      };
+
+      const flightAnimations = [baseClone.animate(keyframes, timing)];
+      if (hiResClone) flightAnimations.push(hiResClone.animate(keyframes, timing));
+
+      // Resolves once the hi-res clone has actually painted a frame (or
+      // immediately if there's nothing to cross-fade), capped so a slow /
+      // failed load can never stall the sequence indefinitely.
+      const hiResReady = new Promise<void>((resolve) => {
+        if (!hiResClone) {
+          resolve();
+          return;
+        }
+        const reveal = () => {
+          hiResClone.style.transition = "opacity 200ms ease-out";
+          hiResClone.style.opacity = "1";
+          window.setTimeout(resolve, 200);
+        };
+        if (hiResClone.complete && hiResClone.naturalWidth > 0) {
+          requestAnimationFrame(reveal);
+        } else {
+          hiResClone.addEventListener("load", reveal, { once: true });
+          hiResClone.addEventListener("error", () => resolve(), { once: true });
+          window.setTimeout(resolve, 900);
+        }
+      });
+
+      Promise.allSettled([
+        ...flightAnimations.map((animation) => animation.finished),
+        hiResReady,
+      ]).finally(() => {
+        onArrive?.();
+
+        const fadeOutTargets = hiResClone ? [hiResClone, baseClone] : [baseClone];
+        const fadeOuts = fadeOutTargets.map((el) =>
+          el.animate([{ opacity: 1 }, { opacity: 0 }], {
+            duration: 180,
+            easing: "ease-out",
+            fill: "forwards",
+          }).finished,
+        );
+
+        Promise.allSettled(fadeOuts).finally(() => {
+          baseClone.remove();
+          hiResClone?.remove();
+          onFinish();
+        });
+      });
+    },
+    [],
+  );
+
+  /*
+   * The ONLY formula for "how big does the lightbox image render."
+   *
+   * Must stay numerically identical to the lightbox host div's padding
+   * (px-8 py-12 sm:px-14 sm:py-14 below) since that padding is the sole
+   * constraint on the image's box — the image itself uses max-w-full /
+   * max-h-full, not its own viewport-relative max-w/h. Two independent
+   * formulas for the same box is exactly what caused the old
+   * misalignment/flicker: this animation's target rect and the real
+   * rendered box could silently drift apart whenever one was tweaked
+   * without the other.
+   */
+  /*
+   * The ONLY formula for "how big does the lightbox image render."
+   *
+   * Must stay numerically identical to the lightbox dialog's own padding
+   * (p-4 sm:p-6 lg:p-10 below) — that padding is the SOLE constraint on
+   * the image's box. The inner host div intentionally carries no padding
+   * of its own; a second padding source there is what caused the earlier
+   * bug where the flown clone landed at a different size than the real
+   * image (this formula only knew about one of the two paddings).
+   */
+  const getLightboxTargetRect = React.useCallback((source: DOMRect) => {
+    /*
+     * document.documentElement.clientWidth/clientHeight, NOT
+     * window.innerWidth/innerHeight. innerWidth includes the width of the
+     * permanent vertical scrollbar (html { overflow-y: scroll } in
+     * globals.css); the fixed-position dialog does not extend underneath
+     * that scrollbar, so centering against innerWidth silently assumes a
+     * wider box than what's actually on screen and drifts the "center"
+     * to the right by ~half the scrollbar's width. clientWidth already
+     * excludes it, matching both the dialog's real box and the coordinate
+     * system getBoundingClientRect() (used for the thumbnail) reports in.
+     */
+    const viewportWidth = document.documentElement.clientWidth;
+    const viewportHeight = document.documentElement.clientHeight;
+    const padding =
+      viewportWidth >= 1024 ? 80 : viewportWidth >= 640 ? 48 : 32;
+    const scale = Math.min(
+      (viewportWidth - padding) / source.width,
+      (viewportHeight - padding) / source.height,
+    );
+    const width = source.width * scale;
+    const height = source.height * scale;
+
+    return new DOMRect(
+      (viewportWidth - width) / 2,
+      (viewportHeight - height) / 2,
+      width,
+      height,
+    );
+  }, []);
+
   /*
    * Open lightbox.
    *
@@ -282,24 +469,124 @@ export function PortfolioSection() {
    * browser/device Back action can close the lightbox.
    */
   const openImage = React.useCallback((index: number) => {
-    if (index < 0 || index >= portfolioImages.length) {
+    if (
+      index < 0 ||
+      index >= portfolioImages.length ||
+      animationInProgressRef.current
+    ) {
       return;
     }
 
-    setActiveIndex(index);
+    const thumbnail = thumbnailRefs.current.get(index);
+    const targetImage = portfolioImages[index];
 
-    window.history.pushState(
+    const showLightboxBackdrop = () => {
+      setIsOpening(true);
+      setActiveIndex(index);
+
+      window.history.pushState(
+        {
+          ...window.history.state,
+          portfolioLightbox: true,
+        },
+        "",
+        window.location.href,
+      );
+
+      lightboxHistoryRef.current = true;
+      closingFromHistoryRef.current = false;
+
+      // Fade the backdrop in on the next frame rather than snapping to full
+      // opacity, so it darkens gently while the image is in flight.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setBackdropVisible(true));
+      });
+    };
+
+    if (!thumbnail) {
+      showLightboxBackdrop();
+      setIsOpening(false);
+      return;
+    }
+
+    animationInProgressRef.current = true;
+    const previousOpacity = thumbnail.style.opacity;
+    const sourceRect = thumbnail.getBoundingClientRect();
+    const sourceBorderRadius = getComputedStyle(thumbnail).borderRadius;
+    thumbnail.style.opacity = "0";
+    showLightboxBackdrop();
+
+    /*
+     * The target rect is computed analytically (viewport size + the
+     * lightbox host's fixed padding), not by measuring the live lightbox
+     * <img>. Measuring it was racy — it depends on React having committed
+     * the just-triggered state update AND the image having finished
+     * whatever layout pass determines its box — and any drift between that
+     * measurement and this formula (or between this formula and the real
+     * CSS) reads as a mid-flight jump / flicker on arrival. See the
+     * comment above getLightboxTargetRect: this formula IS the box, so
+     * there is nothing to race against and no fallback needed.
+     */
+    animateImageBetweenRects(
+      thumbnail,
+      sourceRect,
+      getLightboxTargetRect(sourceRect),
       {
-        ...window.history.state,
-        portfolioLightbox: true,
+        borderRadiusFrom: sourceBorderRadius,
+        borderRadiusTo: "0px",
+        crossfadeSrc: targetImage
+          ? imageUrl(targetImage.id, "display")
+          : undefined,
+        onArrive: () => setIsOpening(false),
       },
-      "",
-      window.location.href,
+      () => {
+        thumbnail.style.opacity = previousOpacity;
+        animationInProgressRef.current = false;
+      },
     );
+  }, [animateImageBetweenRects, getLightboxTargetRect]);
 
-    lightboxHistoryRef.current = true;
-    closingFromHistoryRef.current = false;
+  const finishClose = React.useCallback(() => {
+    animationInProgressRef.current = false;
+    setIsClosing(false);
+    setActiveIndex(null);
   }, []);
+
+  const beginCloseAnimation = React.useCallback(() => {
+    if (activeIndex === null || animationInProgressRef.current) {
+      return;
+    }
+
+    const image = lightboxImageHostRef.current?.querySelector("img");
+    const thumbnail = thumbnailRefs.current.get(activeIndex);
+
+    if (!image || !thumbnail) {
+      finishClose();
+      return;
+    }
+
+    animationInProgressRef.current = true;
+    setIsClosing(true);
+    setBackdropVisible(false);
+
+    const previousOpacity = thumbnail.style.opacity;
+    const targetBorderRadius = getComputedStyle(thumbnail).borderRadius;
+    thumbnail.style.opacity = "0";
+
+    animateImageBetweenRects(
+      image,
+      image.getBoundingClientRect(),
+      thumbnail.getBoundingClientRect(),
+      {
+        borderRadiusFrom: "0px",
+        borderRadiusTo: targetBorderRadius,
+      },
+      () => {
+        thumbnail.style.opacity = previousOpacity;
+        finishClose();
+      },
+    );
+  }, [activeIndex, animateImageBetweenRects, finishClose]);
 
   /*
    * Close lightbox.
@@ -310,19 +597,19 @@ export function PortfolioSection() {
    * popstate then performs the actual lightbox state cleanup.
    */
   const closeImage = React.useCallback(() => {
-    setActiveIndex((current) => {
-      if (current === null) return current;
+    if (activeIndex === null) {
+      return;
+    }
 
-      if (lightboxHistoryRef.current) {
-        closingFromHistoryRef.current = true;
-        lightboxHistoryRef.current = false;
-        window.history.back();
-        return current;
-      }
+    if (lightboxHistoryRef.current) {
+      closingFromHistoryRef.current = true;
+      lightboxHistoryRef.current = false;
+      window.history.back();
+      return;
+    }
 
-      return null;
-    });
-  }, []);
+    beginCloseAnimation();
+  }, [activeIndex, beginCloseAnimation]);
 
   /*
    * Native browser/device Back.
@@ -340,7 +627,7 @@ export function PortfolioSection() {
     const handlePopState = () => {
       lightboxHistoryRef.current = false;
       closingFromHistoryRef.current = false;
-      setActiveIndex(null);
+      beginCloseAnimation();
     };
 
     window.addEventListener("popstate", handlePopState);
@@ -348,7 +635,7 @@ export function PortfolioSection() {
     return () => {
       window.removeEventListener("popstate", handlePopState);
     };
-  }, []);
+  }, [beginCloseAnimation]);
 
   /*
    * Lock page scrolling while the lightbox is open.
@@ -550,6 +837,7 @@ export function PortfolioSection() {
                       hover:border-[var(--secondary-light)]
                       hover:shadow-[0_18px_40px_-12px_rgba(0,0,0,0.45)]
 
+                      focus:outline-none
                       focus-visible:outline-none
                       focus-visible:ring-2
                       focus-visible:ring-[var(--secondary-light)]
@@ -574,6 +862,13 @@ export function PortfolioSection() {
                         decoding="async"
                         draggable={false}
                         onError={() => markErrored(image.id)}
+                        ref={(element) => {
+                          if (element) {
+                            thumbnailRefs.current.set(index, element);
+                          } else {
+                            thumbnailRefs.current.delete(index);
+                          }
+                        }}
                         className="
                           block
                           h-auto
@@ -683,8 +978,14 @@ export function PortfolioSection() {
             backdrop-blur-sm
             sm:p-6
             lg:p-10
+            transition-opacity
+            duration-[380ms]
           "
-          style={{ overscrollBehavior: "none" }}
+          style={{
+            overscrollBehavior: "none",
+            opacity: isClosing || !backdropVisible ? 0 : 1,
+            pointerEvents: isClosing ? "none" : "auto",
+          }}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
               closeImage();
@@ -794,6 +1095,7 @@ export function PortfolioSection() {
 
           {/* IMAGE */}
           <div
+            ref={lightboxImageHostRef}
             className="
               relative
               flex
@@ -802,10 +1104,6 @@ export function PortfolioSection() {
               items-center
               justify-center
               overflow-hidden
-              px-8
-              py-12
-              sm:px-14
-              sm:py-14
             "
           >
             <ZoomableLightboxImage
@@ -818,15 +1116,15 @@ export function PortfolioSection() {
               onSwipeNext={showNext}
               priority
               sizes="100vw"
+              style={{ opacity: isOpening || isClosing ? 0 : 1 }}
               className="
-                max-h-[calc(100svh-7rem)]
-                max-w-[calc(100vw-4rem)]
+                max-h-full
+                max-w-full
                 w-auto
-                rounded-[28px]
                 object-contain
+                transition-opacity
+                duration-[240ms]
                 shadow-[0_24px_80px_rgba(0,0,0,.45)]
-                sm:max-h-[calc(100svh-6rem)]
-                sm:max-w-[calc(100vw-8rem)]
               "
             />
           </div>
