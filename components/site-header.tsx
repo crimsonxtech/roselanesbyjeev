@@ -497,8 +497,11 @@ const HEADER_STYLES = `
 
   @media (max-width: 860px) {
     #siteHeader {
-      /* Keep the header position stable while iOS Safari changes its visual viewport. */
+      /* Keep the header on a stable composited layer on iOS Safari. */
       top: 10px;
+      transform: translate3d(0, 0, 0);
+      -webkit-transform: translate3d(0, 0, 0);
+      transition: none;
     }
 
     #siteHeader .navbar {
