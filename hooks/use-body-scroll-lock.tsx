@@ -41,21 +41,14 @@ export function useBodyScrollLock(
       savedScrollY = window.scrollY || window.pageYOffset || 0;
 
       /*
-       * globals.css sets `html { overflow-y: scroll }` permanently, so a
-       * scrollbar track is always reserved even here. Hide it while
-       * locked, but compensate with matching padding-right on html so the
-       * document's clientWidth doesn't change — an uncompensated removal
-       * would shift all fixed-position centering (including the
-       * lightbox's own open/close flight animation) by the scrollbar's
-       * width for as long as the lock is active.
+       * Usually a no-op here: portfolio-section.tsx calls
+       * lockScrollbarReservation() itself, synchronously, before this
+       * effect ever runs (see that function's doc comment for why the
+       * timing matters). This call exists so OTHER, simpler consumers of
+       * this hook get the same scrollbar-hiding behavior automatically,
+       * without needing to know about the synchronous-timing subtlety.
        */
-      const scrollbarWidth = window.innerWidth - html.clientWidth;
-      savedHtmlOverflowY = html.style.overflowY;
-      savedHtmlPaddingRight = html.style.paddingRight;
-      html.style.overflowY = "hidden";
-      if (scrollbarWidth > 0) {
-        html.style.paddingRight = `${scrollbarWidth}px`;
-      }
+      lockScrollbarReservation();
 
       body.style.position = "fixed";
       body.style.top = `-${savedScrollY}px`;
@@ -115,8 +108,7 @@ export function useBodyScrollLock(
         body.style.overflow = "";
         html.style.overscrollBehaviorY = "";
         (body.style as CSSStyleDeclaration).overscrollBehaviorY = "";
-        html.style.overflowY = savedHtmlOverflowY;
-        html.style.paddingRight = savedHtmlPaddingRight;
+        unlockScrollbarReservation();
 
         // The site enables smooth anchor scrolling globally. Unlocking a
         // modal must restore its saved position immediately, otherwise the
@@ -135,5 +127,50 @@ export function useBodyScrollLock(
 // only the outermost open/close actually touches the DOM/scroll position.
 let lockCount = 0;
 let savedScrollY = 0;
+
+// A separate, dedicated counter for the scrollbar-reservation toggle below.
+// Kept independent of lockCount so it can be engaged eagerly/synchronously
+// (see lockScrollbarReservation) ahead of the React effect that normally
+// drives this hook, without disturbing that effect's own bookkeeping.
+let scrollbarLockCount = 0;
 let savedHtmlOverflowY = "";
 let savedHtmlPaddingRight = "";
+
+/**
+ * Hides the permanently-reserved page scrollbar (`html { overflow-y: scroll
+ * }` in globals.css) and compensates with matching padding-right so
+ * normal-flow content doesn't shift. Counter-based/idempotent, so it's safe
+ * to call this directly and eagerly, in addition to useBodyScrollLock below
+ * also calling it from its effect for the same logical lock.
+ *
+ * Calling this SYNCHRONOUSLY, before any code measures or computes against
+ * the viewport width, matters: position:fixed elements ignore this
+ * function's padding-right compensation (fixed elements size against the
+ * true viewport, not html's padding box), so the instant the scrollbar
+ * disappears, fixed content immediately grows into the freed space. Any
+ * viewport-width math computed before this runs (e.g. a FLIP animation's
+ * landing rect) will target the OLD, narrower width and land to the left
+ * of where fixed content actually ends up once this has taken effect.
+ */
+export function lockScrollbarReservation() {
+  scrollbarLockCount += 1;
+  if (scrollbarLockCount !== 1) return;
+
+  const html = document.documentElement;
+  const scrollbarWidth = window.innerWidth - html.clientWidth;
+  savedHtmlOverflowY = html.style.overflowY;
+  savedHtmlPaddingRight = html.style.paddingRight;
+  html.style.overflowY = "hidden";
+  if (scrollbarWidth > 0) {
+    html.style.paddingRight = `${scrollbarWidth}px`;
+  }
+}
+
+export function unlockScrollbarReservation() {
+  scrollbarLockCount = Math.max(0, scrollbarLockCount - 1);
+  if (scrollbarLockCount !== 0) return;
+
+  const html = document.documentElement;
+  html.style.overflowY = savedHtmlOverflowY;
+  html.style.paddingRight = savedHtmlPaddingRight;
+}

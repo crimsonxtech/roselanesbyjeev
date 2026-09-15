@@ -4,7 +4,11 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { ZoomableLightboxImage } from "@/components/zoomable-lightbox-image";
-import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
+import {
+  useBodyScrollLock,
+  lockScrollbarReservation,
+  unlockScrollbarReservation,
+} from "@/hooks/use-body-scroll-lock";
 
 const R2_BASE =
   "https://images.roselanesbyjeev.in/roselanesbyjeev/portfolio/gallery";
@@ -477,6 +481,16 @@ export function PortfolioSection() {
       return;
     }
 
+    /*
+     * Synchronous and eager, ahead of useBodyScrollLock's own effect
+     * (which won't fire until after this render commits and paints).
+     * getLightboxTargetRect below reads the viewport width, and that
+     * width changes the instant the scrollbar is hidden, so the hiding
+     * has to happen before that read, not after. See
+     * lockScrollbarReservation's doc comment.
+     */
+    lockScrollbarReservation();
+
     const thumbnail = thumbnailRefs.current.get(index);
     const targetImage = portfolioImages[index];
 
@@ -550,6 +564,8 @@ export function PortfolioSection() {
     animationInProgressRef.current = false;
     setIsClosing(false);
     setActiveIndex(null);
+    // Balances the eager lockScrollbarReservation() call in openImage.
+    unlockScrollbarReservation();
   }, []);
 
   const beginCloseAnimation = React.useCallback(() => {
