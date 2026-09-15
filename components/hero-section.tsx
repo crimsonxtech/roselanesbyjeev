@@ -682,6 +682,7 @@ max-[560px]:[--hero-visual-size:none]
                   className="
                     !min-w-0
                     flex-1
+                    hero-cta-button
                     max-[720px]:!flex-1
                     max-[720px]:!basis-0
                     max-[720px]:!w-0
@@ -713,7 +714,7 @@ max-[560px]:[--hero-visual-size:none]
                 <Button
                   asChild
                   variant="secondary"
-                  className="!min-w-0 flex-1 max-[720px]:!flex-1 max-[720px]:!basis-0 max-[720px]:!w-0"
+                  className="!min-w-0 flex-1 hero-cta-button max-[720px]:!flex-1 max-[720px]:!basis-0 max-[720px]:!w-0"
                   style={
                     {
                       "--btn-padding-x": "clamp(10px, 6cqw, 34px)",
@@ -968,6 +969,18 @@ max-[560px]:[--hero-visual-size:none]
 
                 50% {
                   transform: translateY(-10px);
+                }
+              }
+
+              /* At phone widths the two CTAs share one row. Scale the label
+                 and padding together so every pill keeps visible inset space
+                 instead of allowing the longer label to crowd its edges. */
+              @media (max-width: 720px) {
+                .hero-cta-button {
+                  --btn-padding-x: clamp(8px, 3.4cqw, 14px) !important;
+                  --btn-font-size: clamp(.52rem, 2.75cqw, .76rem) !important;
+                  --btn-letter-spacing: clamp(.01em, .3cqw, .07em) !important;
+                  --btn-min-height: clamp(42px, 12cqw, 54px) !important;
                 }
               }
             `,
