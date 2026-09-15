@@ -113,6 +113,9 @@ html {
   scrollbar-width: thin;
   scrollbar-color: var(--secondary) var(--primary-darker);
 
+  /* This canvas is visible in Safari display cutouts and during browser-chrome
+     animations, so it must be the custom artwork—not a flat fallback colour. */
+  background: yellow;
 
   /*
     Allow normal one-finger scrolling but block pinch-zoom and
@@ -137,6 +140,7 @@ body {
 
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  background: blue;
 
   touch-action: pan-x pan-y;
  
