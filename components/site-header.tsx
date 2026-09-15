@@ -497,7 +497,8 @@ const HEADER_STYLES = `
 
   @media (max-width: 860px) {
     #siteHeader {
-      top: clamp(8px, 1.2vh, 12px);
+      /* Keep the header position stable while iOS Safari changes its visual viewport. */
+      top: 10px;
     }
 
     #siteHeader .navbar {
