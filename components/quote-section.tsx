@@ -31,8 +31,40 @@ const glass =
 
 const glassBlur = `${glass} backdrop-blur-xl`;
 
-const inputClass =
-  "h-[54px] w-full min-w-0 max-w-full box-border rounded-[10px] border border-[var(--glass-border)] bg-[var(--input-bg)] px-4 text-[15px] font-medium text-[var(--cream)] outline-none transition-all duration-300 placeholder:text-[var(--placeholder)] focus:border-[var(--secondary-light)] focus:bg-[var(--input-focus-bg)] focus:ring-4 focus:ring-[var(--secondary)]/15";
+/* Base sizing/typography shared by every text control. Border + focus
+   ring colours are intentionally NOT in here so the idle and invalid
+   variants can own them without fighting each other on specificity. */
+const inputBase =
+  "h-[54px] w-full min-w-0 max-w-full box-border rounded-[10px] border bg-[var(--input-bg)] px-4 text-[15px] font-medium text-[var(--cream)] outline-none transition-all duration-300 placeholder:text-[var(--placeholder)] focus:bg-[var(--input-focus-bg)] focus:ring-4";
+
+const inputIdle =
+  "border-[var(--glass-border)] focus:border-[var(--secondary-light)] focus:ring-[var(--secondary)]/15";
+
+const inputInvalid =
+  "border-red-400/80 ring-2 ring-red-400/25 focus:border-red-400 focus:ring-red-400/25";
+
+/** Text-input classes for a given validity state. */
+function inputCls(invalid?: boolean) {
+  return `${inputBase} ${invalid ? inputInvalid : inputIdle}`;
+}
+
+/* Kept for the controls that never show a validation state. */
+const inputClass = inputCls(false);
+
+/* --- Safari / iOS <input type="date"> normalisation ---------------
+   WebKit sizes temporal inputs from their native shadow-DOM UI and
+   ignores `width: 100%`, so the field spills out of its flex/grid
+   parent (Chrome is unaffected). `appearance: none` plus an explicit
+   min-width: 0 makes it honour the track, and resetting the padding
+   and line-height on ::-webkit-datetime-edit brings its height back
+   in line with the Venue input beside it.
+------------------------------------------------------------------ */
+const dateInputFix =
+  "appearance-none [-webkit-appearance:none] overflow-hidden leading-[1.25] " +
+  "[&::-webkit-datetime-edit]:min-w-0 [&::-webkit-datetime-edit]:p-0 [&::-webkit-datetime-edit]:leading-[1.25] " +
+  "[&::-webkit-datetime-edit-fields-wrapper]:min-w-0 [&::-webkit-datetime-edit-fields-wrapper]:p-0 " +
+  "[&::-webkit-date-and-time-value]:m-0 [&::-webkit-date-and-time-value]:min-w-0 [&::-webkit-date-and-time-value]:text-left " +
+  "[&::-webkit-calendar-picker-indicator]:m-0 [&::-webkit-calendar-picker-indicator]:shrink-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer";
 
 const chipBase =
   "inline-flex min-h-[28px] items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium leading-tight transition-all duration-200 sm:min-h-[34px] sm:px-3.5 sm:py-1.5 sm:text-xs";
@@ -157,6 +189,62 @@ function formatDate(iso: string) {
 }
 
 /* ==========================================================
+   VALIDATION — one pure validator per field.
+
+   Each returns an error string or undefined. Keeping them pure
+   means the same functions drive blur-time checks, live re-checks
+   while correcting, and the submit-time sweep, so a field can
+   never disagree with itself.
+   ========================================================== */
+
+type DetailField = "name" | "phone" | "email" | "budget";
+
+/* Order matters: it decides which field gets focus on submit. */
+const DETAIL_FIELDS: DetailField[] = ["name", "phone", "email", "budget"];
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/;
+
+function validateName(value: string) {
+  const v = value.trim();
+  if (!v) return "Please enter your full name.";
+  if (v.length < 2) return "Name looks too short.";
+  return undefined;
+}
+
+function validatePhone(value: string) {
+  const v = value.trim();
+  if (!v) return "Please enter your phone number.";
+  const digits = v.replace(/\D/g, "");
+  if (digits.length < 10 || digits.length > 15)
+    return "Please enter a valid phone number.";
+  return undefined;
+}
+
+function validateEmail(value: string) {
+  const v = value.trim();
+  if (!v) return "Please enter your email address.";
+  if (!EMAIL_RE.test(v)) return "Please enter a valid email address.";
+  return undefined;
+}
+
+function validateBudget(value: string) {
+  if (!value) return "Please select your budget range.";
+  return undefined;
+}
+
+const DETAIL_VALIDATORS: Record<
+  DetailField,
+  (value: string) => string | undefined
+> = {
+  name: validateName,
+  phone: validatePhone,
+  email: validateEmail,
+  budget: validateBudget,
+};
+
+type DetailErrors = Partial<Record<DetailField, string>>;
+
+/* ==========================================================
    FIELD — same label treatment as the contact form
    ========================================================== */
 
@@ -164,18 +252,24 @@ function Field({
   label,
   htmlFor,
   optional,
+  error,
+  errorId,
   children,
 }: {
   label: string;
   htmlFor?: string;
   optional?: boolean;
+  error?: string;
+  errorId?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <label
         htmlFor={htmlFor}
-        className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--secondary)]"
+        className={`text-[11px] font-bold uppercase tracking-[0.14em] ${
+          error ? "text-red-300" : "text-[var(--secondary)]"
+        }`}
       >
         {label}
         {optional && (
@@ -184,7 +278,18 @@ function Field({
           </span>
         )}
       </label>
+
       {children}
+
+      {error && (
+        <p
+          id={errorId}
+          role="alert"
+          className="text-[11px] font-medium leading-snug text-red-300"
+        >
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -271,8 +376,15 @@ export function QuoteSection() {
   const [phone, setPhone] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [budget, setBudget] = React.useState<string>("");
-  const [budgetError, setBudgetError] = React.useState(false);
   const [message, setMessage] = React.useState("");
+
+  /* One error slot per field, plus a flag for "the user has tried to
+     submit at least once". Before that first attempt a field is only
+     checked on blur, so nobody gets shouted at mid-typing. After it,
+     every keystroke re-checks, which lets the outline clear the moment
+     the value becomes valid. */
+  const [detailErrors, setDetailErrors] = React.useState<DetailErrors>({});
+  const [submitAttempted, setSubmitAttempted] = React.useState(false);
 
   // ---- Section 2: Events ----
   const [events, setEvents] = React.useState<EventItem[]>([newEvent()]);
@@ -282,7 +394,9 @@ export function QuoteSection() {
   const [customServiceDraft, setCustomServiceDraft] = React.useState<
     Record<number, string>
   >({});
-  const [eventsError, setEventsError] = React.useState(false);
+  const [invalidServiceEventId, setInvalidServiceEventId] = React.useState<
+    number | null
+  >(null);
   const [invalidCustomEventId, setInvalidCustomEventId] = React.useState<
     number | null
   >(null);
@@ -309,12 +423,32 @@ export function QuoteSection() {
   const successRef = React.useRef<HTMLDivElement>(null);
   const sheetRef = React.useRef<HTMLDivElement>(null);
   const nameRef = React.useRef<HTMLInputElement>(null);
+  const phoneRef = React.useRef<HTMLInputElement>(null);
+  const emailRef = React.useRef<HTMLInputElement>(null);
   const budgetTriggerRef = React.useRef<HTMLButtonElement>(null);
   const eventsSectionRef = React.useRef<HTMLDivElement>(null);
+  const summaryRef = React.useRef<HTMLDivElement>(null);
   const customEventNameRefs = React.useRef<Record<number, HTMLInputElement | null>>({});
+  const eventCardRefs = React.useRef<Record<number, HTMLDivElement | null>>({});
   const restoredRef = React.useRef(false);
   const dragStartYRef = React.useRef(0);
   const dragStartTimeRef = React.useRef(0);
+
+  /* ---------------- Scroll to generated quote summary ---------------- */
+  React.useEffect(() => {
+    if (!quoteGenerated || !summaryData || !isOpen) return;
+
+    // Wait for the summary to be mounted and laid out before scrolling.
+    const frame = requestAnimationFrame(() => {
+      summaryRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+        inline: "nearest",
+      });
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [quoteGenerated, summaryData, isOpen]);
 
   /* ---------------- Restore / persist a draft session ---------------- */
 
@@ -440,6 +574,61 @@ export function QuoteSection() {
     };
   }, [isOpen]);
 
+  /* ---------------- Per-field validation ---------------- */
+
+  const detailValues: Record<DetailField, string> = {
+    name,
+    phone,
+    email,
+    budget,
+  };
+
+  const detailRefs: Record<
+    DetailField,
+    React.RefObject<HTMLElement | null>
+  > = {
+    name: nameRef,
+    phone: phoneRef,
+    email: emailRef,
+    budget: budgetTriggerRef,
+  };
+
+  /** Run one field's validator and store (or clear) its message. */
+  function runFieldCheck(field: DetailField, value: string) {
+    const message = DETAIL_VALIDATORS[field](value);
+
+    setDetailErrors((prev) => {
+      if (prev[field] === message) return prev;
+      const next = { ...prev };
+      if (message) next[field] = message;
+      else delete next[field];
+      return next;
+    });
+
+    return message;
+  }
+
+  /** Blur is the first moment a field is allowed to complain. */
+  function handleFieldBlur(field: DetailField) {
+    runFieldCheck(field, detailValues[field]);
+  }
+
+  /**
+   * Typing only re-validates a field that is already flagged (or once
+   * the user has hit Generate). That's the standard "validate late,
+   * correct early" pattern: no error appears while you're still
+   * filling a field in, but it disappears as soon as you fix it.
+   */
+  function handleFieldChange(
+    field: DetailField,
+    value: string,
+    setter: (value: string) => void
+  ) {
+    setter(value);
+    markEdited();
+    if (submitAttempted || detailErrors[field]) runFieldCheck(field, value);
+  }
+
   /* ---------------- Helpers ---------------- */
 
   function markEdited() {
@@ -523,10 +712,11 @@ export function QuoteSection() {
     setPhone("");
     setEmail("");
     setBudget("");
-    setBudgetError(false);
+    setDetailErrors({});
+    setSubmitAttempted(false);
     setMessage("");
     setEvents([newEvent()]);
-    setEventsError(false);
+    setInvalidServiceEventId(null);
     setInvalidCustomEventId(null);
     setAddOns([]);
     setQuoteGenerated(false);
@@ -542,6 +732,13 @@ export function QuoteSection() {
 
   function addEvent() {
     setEvents((prev) => [...prev, newEvent()]);
+    /*
+     * A brand-new event has no services yet, so any quote already on
+     * screen is now incomplete. Without this the summary stayed valid,
+     * the footer button stayed on "Send Request", and the new empty
+     * event was never checked.
+     */
+    markEdited();
   }
 
   function removeEvent(id: number) {
@@ -549,6 +746,7 @@ export function QuoteSection() {
       prev.length <= 1 ? prev : prev.filter((ev) => ev.id !== id)
     );
     setInvalidCustomEventId((current) => (current === id ? null : current));
+    setInvalidServiceEventId((current) => (current === id ? null : current));
     markEdited();
   }
 
@@ -584,7 +782,7 @@ export function QuoteSection() {
         };
       })
     );
-    setEventsError(false);
+    setInvalidServiceEventId((current) => (current === id ? null : current));
     markEdited();
   }
 
@@ -637,7 +835,7 @@ export function QuoteSection() {
 
     setCustomServiceDraft((prev) => ({ ...prev, [id]: "" }));
     setCustomServiceOpen((prev) => ({ ...prev, [id]: false }));
-    setEventsError(false);
+    setInvalidServiceEventId((current) => (current === id ? null : current));
     markEdited();
   }
 
@@ -687,27 +885,46 @@ export function QuoteSection() {
 
   /* ---------------- Generate / send ---------------- */
 
-  function generateQuote() {
-    if (!name.trim() || !phone.trim() || !email.trim()) {
-      setFooterError(true);
-      setFooterNote(
-        "Please fill in your name, email, and phone number first."
-      );
-      nameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      nameRef.current?.focus({ preventScroll: true });
-      return;
+  /**
+   * Validate the whole form. Returns true only when every rule passes.
+   *
+   * This is the single gate the quote has to pass through — both
+   * "Generate Quote" and "Send Request" call it, so a quote can never
+   * be sent against a summary that has gone stale.
+   */
+  function validateQuote(): boolean {
+    setSubmitAttempted(true);
+
+    /*
+     * Check every detail field in one sweep rather than bailing out at
+     * the first failure. Each invalid field gets its own message and
+     * its own red outline; only the focus goes to the first one.
+     */
+    const nextErrors: DetailErrors = {};
+
+    for (const field of DETAIL_FIELDS) {
+      const message = DETAIL_VALIDATORS[field](detailValues[field]);
+      if (message) nextErrors[field] = message;
     }
 
-    if (!budget) {
-      setBudgetError(true);
+    setDetailErrors(nextErrors);
+
+    const invalidFields = DETAIL_FIELDS.filter((f) => nextErrors[f]);
+
+    if (invalidFields.length > 0) {
+      const firstInvalid = invalidFields[0];
+
       setFooterError(true);
-      setFooterNote("Please select your budget range.");
-      budgetTriggerRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-      budgetTriggerRef.current?.focus();
-      return;
+      setFooterNote(
+        invalidFields.length === 1
+          ? nextErrors[firstInvalid]!
+          : `Please correct the ${invalidFields.length} highlighted fields above.`
+      );
+
+      const target = detailRefs[firstInvalid].current;
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+      target?.focus({ preventScroll: true });
+      return false;
     }
 
     // Find the FIRST invalid custom event and scroll/focus its exact input.
@@ -738,49 +955,89 @@ export function QuoteSection() {
         });
       }
 
-      return;
+      return false;
     }
 
-    const hasServices = events.some((ev) => ev.services.length > 0);
+    /*
+     * Every event has to carry at least one service — an event with an
+     * empty service list would produce a meaningless line on the quote.
+     * Flag the first offender and take the user straight to that card.
+     */
+    const eventWithoutServices = events.find((ev) => ev.services.length === 0);
 
-    if (!hasServices) {
-      setEventsError(true);
+    if (eventWithoutServices) {
+      setInvalidServiceEventId(eventWithoutServices.id);
       setFooterError(true);
       setFooterNote(
-        "Add at least one service to an event to generate a quote."
+        events.length > 1
+          ? `Add at least one service to "${eventLabel(eventWithoutServices)}".`
+          : "Add at least one service to generate a quote."
       );
-      eventsSectionRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-      return;
+
+      const card = eventCardRefs.current[eventWithoutServices.id];
+
+      if (card) {
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else {
+        eventsSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+
+      return false;
     }
 
-    const lines: SummaryLine[] = events
-      .filter((ev) => ev.services.length > 0)
-      .map((ev) => ({
-        label: eventLabel(ev),
-        date: ev.date,
-        venue: ev.venue.trim(),
-        services: ev.services.map((s) => ({ name: s.name, qty: s.qty })),
-      }));
+    return true;
+  }
 
-    const data: SummaryData = {
+  /** Build the summary from the current state. Only safe after validateQuote(). */
+  function buildSummary(): SummaryData {
+    const lines: SummaryLine[] = events.map((ev) => ({
+      label: eventLabel(ev),
+      date: ev.date,
+      venue: ev.venue.trim(),
+      services: ev.services.map((s) => ({ name: s.name, qty: s.qty })),
+    }));
+
+    return {
       lines,
       addOns: addOns.map((a) => ({ name: a.name, qty: a.qty })),
       budget,
     };
+  }
+
+  function generateQuote() {
+    if (!validateQuote()) return;
+
+    const data = buildSummary();
 
     setSummaryData(data);
     setQuoteGenerated(true);
     setFooterError(false);
-    setBudgetError(false);
-    setEventsError(false);
+    setDetailErrors({});
+    setInvalidServiceEventId(null);
     setFooterNote("Quote generated — send it to us directly.");
   }
 
   async function confirmQuote() {
     if (!quoteGenerated || !summaryData) return;
+
+    /*
+     * Second gate. The summary is a snapshot, so if anything changed
+     * since it was built (a new empty event, a cleared field) it must
+     * not be sent. Re-validating here means the rules hold even if
+     * some future edit forgets to invalidate the summary.
+     */
+    if (!validateQuote()) {
+      setQuoteGenerated(false);
+      setSummaryData(null);
+      return;
+    }
+
+    /* Rebuild from current state so what is sent is what is on screen. */
+    const data = buildSummary();
+    setSummaryData(data);
 
     setSending(true);
     setFooterError(false);
@@ -796,8 +1053,8 @@ export function QuoteSection() {
           email: email.trim(),
           budget,
           message: message.trim(),
-          events: summaryData.lines,
-          addOns: summaryData.addOns,
+          events: data.lines,
+          addOns: data.addOns,
         }),
       });
 
@@ -976,86 +1233,125 @@ export function QuoteSection() {
 
               <div className="mb-6 flex flex-col gap-4">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Full Name" htmlFor="quote-name">
+                  <Field
+                    label="Full Name"
+                    htmlFor="quote-name"
+                    error={detailErrors.name}
+                    errorId="quote-name-error"
+                  >
                     <input
                       ref={nameRef}
-                      className={inputClass}
+                      className={inputCls(Boolean(detailErrors.name))}
                       type="text"
                       id="quote-name"
                       placeholder="Your full name"
                       autoComplete="name"
                       value={name}
-                      onChange={(e) => {
-                        setName(e.target.value);
-                        markEdited();
-                      }}
+                      aria-invalid={Boolean(detailErrors.name)}
+                      aria-describedby={
+                        detailErrors.name ? "quote-name-error" : undefined
+                      }
+                      onBlur={() => handleFieldBlur("name")}
+                      onChange={(e) =>
+                        handleFieldChange("name", e.target.value, setName)
+                      }
                     />
                   </Field>
 
-                  <Field label="Phone" htmlFor="quote-phone">
+                  <Field
+                    label="Phone"
+                    htmlFor="quote-phone"
+                    error={detailErrors.phone}
+                    errorId="quote-phone-error"
+                  >
                     <input
-                      className={inputClass}
+                      ref={phoneRef}
+                      className={inputCls(Boolean(detailErrors.phone))}
                       type="tel"
                       id="quote-phone"
                       placeholder="+91 XXXXX XXXXX"
                       autoComplete="tel"
                       inputMode="tel"
                       value={phone}
-                      onChange={(e) => {
-                        setPhone(e.target.value);
-                        markEdited();
-                      }}
+                      aria-invalid={Boolean(detailErrors.phone)}
+                      aria-describedby={
+                        detailErrors.phone ? "quote-phone-error" : undefined
+                      }
+                      onBlur={() => handleFieldBlur("phone")}
+                      onChange={(e) =>
+                        handleFieldChange("phone", e.target.value, setPhone)
+                      }
                     />
                   </Field>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-[2.5fr_1.5fr]">
-                  <Field label="Email" htmlFor="quote-email">
+                  <Field
+                    label="Email"
+                    htmlFor="quote-email"
+                    error={detailErrors.email}
+                    errorId="quote-email-error"
+                  >
                     <input
-                      className={inputClass}
+                      ref={emailRef}
+                      className={inputCls(Boolean(detailErrors.email))}
                       type="email"
                       id="quote-email"
                       placeholder="Your email address"
                       autoComplete="email"
                       value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        markEdited();
-                      }}
+                      aria-invalid={Boolean(detailErrors.email)}
+                      aria-describedby={
+                        detailErrors.email ? "quote-email-error" : undefined
+                      }
+                      onBlur={() => handleFieldBlur("email")}
+                      onChange={(e) =>
+                        handleFieldChange("email", e.target.value, setEmail)
+                      }
                     />
                   </Field>
 
-                  <Field label="Budget Range" htmlFor="quote-budget">
-                    <Select
-                      value={budget}
-                      onValueChange={(value) => {
-                        setBudget(value);
-                        setBudgetError(false);
-                        markEdited();
-                      }}
-                    >
-                      <SelectTrigger
-                        ref={budgetTriggerRef}
-                        id="quote-budget"
-                        aria-label="Budget range"
-                        aria-invalid={budgetError}
-                        className={
-                          budgetError
-                            ? "border-red-400/70 focus:ring-red-400/20"
-                            : undefined
-                        }
+                  <Field
+                    label="Budget Range"
+                    htmlFor="quote-budget"
+                    error={detailErrors.budget}
+                    errorId="quote-budget-error"
+                  >
+                    <div className="w-full min-w-0 max-w-full [&>button]:!box-border [&>button]:!flex [&>button]:!h-[54px] [&>button]:!w-full [&>button]:!min-w-0 [&>button]:!max-w-full">
+                      <Select
+                        value={budget}
+                        onValueChange={(value) => {
+                          setBudget(value);
+                          markEdited();
+                          runFieldCheck("budget", value);
+                        }}
                       >
-                        <SelectValue placeholder="Select your budget" />
-                      </SelectTrigger>
+                        <SelectTrigger
+  ref={budgetTriggerRef}
+  id="quote-budget"
+  aria-label="Budget range"
+  aria-invalid={Boolean(detailErrors.budget)}
+  aria-describedby={
+    detailErrors.budget ? "quote-budget-error" : undefined
+  }
+  className={`w-full min-w-0 max-w-full box-border ${
+    detailErrors.budget
+      ? "border-red-400/70 focus:ring-red-400/20"
+      : ""
+  }`}
+>
+  <SelectValue placeholder="Select your budget" />
+</SelectTrigger>
 
-                      <SelectContent>
-                        {BUDGET_OPTIONS.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                        <SelectContent>
+                          {BUDGET_OPTIONS.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </Field>
                 </div>
 
@@ -1078,17 +1374,16 @@ export function QuoteSection() {
                 <QuoteSectionHeading step={2}>Your Events</QuoteSectionHeading>
               </div>
 
-              <div
-                className={`mb-4 flex flex-col gap-3.5 ${
-                  eventsError
-                    ? "rounded-[16px] ring-2 ring-red-400/50"
-                    : ""
-                }`}
-              >
-                {events.map((ev) => (
+              <div className="mb-4 flex flex-col gap-3.5">
+                {events.map((ev, index) => (
                   <EventCard
                     key={ev.id}
                     event={ev}
+                    index={index}
+                    cardRef={(node) => {
+                      eventCardRefs.current[ev.id] = node;
+                    }}
+                    hasServiceError={invalidServiceEventId === ev.id}
                     removable={events.length > 1}
                     customServiceOpen={Boolean(customServiceOpen[ev.id])}
                     customServiceDraft={customServiceDraft[ev.id] || ""}
@@ -1167,7 +1462,10 @@ export function QuoteSection() {
 
               {/* ================= SECTION 4 — SUMMARY ================= */}
               {quoteGenerated && summaryData && (
-                <div className="mt-2 border-t border-[var(--cream)]/[0.07] pt-6">
+                <div
+                  ref={summaryRef}
+                  className="mt-2 border-t border-[var(--cream)]/[0.07] pt-6"
+                >
                   <QuoteSectionHeading step={4}>
                     Quote Summary
                   </QuoteSectionHeading>
@@ -1356,9 +1654,9 @@ export function QuoteSection() {
         e.stopPropagation();
         deleteSession();
       }}
-      className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[var(--cream)]/25 text-[var(--cream)]/70 transition-colors hover:border-red-300/65 hover:text-red-200"
+      className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[var(--cream)]/25 text-[var(--cream)]/70 transition-colors hover:border-red-300/65 hover:text-red-200"
     >
-      <Trash2 className="size-3.5" />
+      <Trash2 className="size-5" />
     </button>
   </div>
 )}
@@ -1419,6 +1717,9 @@ function QuoteSectionHeading({
 
 function EventCard({
   event,
+  index,
+  cardRef,
+  hasServiceError,
   removable,
   customServiceOpen,
   customServiceDraft,
@@ -1437,6 +1738,9 @@ function EventCard({
   onAddCustomService,
 }: {
   event: EventItem;
+  index: number;
+  cardRef?: (node: HTMLDivElement | null) => void;
+  hasServiceError?: boolean;
   removable: boolean;
   customServiceOpen: boolean;
   customServiceDraft: string;
@@ -1457,62 +1761,90 @@ function EventCard({
   const selectValue = event.isCustomType ? CUSTOM_EVENT_VALUE : event.type;
 
   return (
-    <div className="relative rounded-[16px] border border-[var(--secondary)]/20 bg-black/[0.22] p-4 transition-colors hover:border-[var(--secondary)]/32 sm:p-5">
-      {removable && (
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label="Remove event"
-          className="absolute right-3 top-3 z-10 flex size-7 shrink-0 items-center justify-center rounded-full border border-[var(--secondary)]/25 bg-black/20 text-[var(--cream)]/55 transition-colors hover:border-[var(--secondary-light)]/60 hover:bg-[var(--secondary)]/10 hover:text-[var(--secondary-light)]"
-        >
-          <X className="size-3.5" />
-        </button>
-      )}
+    <div
+      ref={cardRef}
+      className={`rounded-[16px] border bg-black/[0.22] p-4 transition-colors sm:p-5 ${
+        hasServiceError
+          ? "border-red-400/70 ring-2 ring-red-400/25"
+          : "border-[var(--secondary)]/20 hover:border-[var(--secondary)]/32"
+      }`}
+    >
+      {/*
+        Card header. The remove button has its own row rather than being
+        absolutely positioned over the first field. The old approach
+        needed right-padding on that row to avoid an overlap, which is
+        what kept Event Type and the custom-name input narrower than
+        Date and Venue below. With the button here, no field row carries
+        any padding and they all span the card edge to edge.
+      */}
+      <div className="mb-3 flex min-h-[28px] items-center justify-between gap-3">
+        <span className="text-[.62rem] font-semibold uppercase tracking-[0.13em] text-[var(--cream)]/55">
+          Event {index + 1}
+        </span>
 
-      {/* Row 1 — Event Type. Stacks full-width on mobile; from sm up,
-          when the custom-event input opens, the select shrinks to 30%
-          and the name field takes the remaining 70%. */}
-      <div className={`mb-3 flex flex-col gap-2 sm:flex-row ${removable ? "pr-10" : ""}`}>
-        <div
-          className={
-            event.isCustomType
-              ? "w-full min-w-0 max-w-full sm:w-[30%] sm:shrink-0"
-              : "w-full min-w-0 max-w-full"
-          }
-        >
+        {removable && (
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label={`Remove event ${index + 1}`}
+            className="flex size-7 shrink-0 items-center justify-center rounded-full border border-[var(--secondary)]/25 bg-black/20 text-[var(--cream)]/55 transition-colors hover:border-[var(--secondary-light)]/60 hover:bg-[var(--secondary)]/10 hover:text-[var(--secondary-light)]"
+          >
+            <X className="size-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Row 1 — Event Type, and the custom-name input when it applies.
+          Both are their own full-width row. */}
+      <div className="mb-3 flex w-full min-w-0 flex-col gap-3">
+        <div className="w-full min-w-0 max-w-full">
           <Field label="Event Type">
-            <Select value={selectValue} onValueChange={onTypeChange}>
-              <SelectTrigger
-                aria-label="Event type"
-                className="w-full min-w-0 max-w-full truncate box-border"
-              >
-                <SelectValue className="truncate" />
-              </SelectTrigger>
+            {/*
+              The trigger is wrapped so the width is forced from the
+              parent. shadcn's SelectTrigger ships with `w-fit` baked
+              into its own class list; passing `w-full` down relies on
+              tailwind-merge stripping it, which silently fails if the
+              component spreads className in the wrong order. A child
+              selector emits real `!important` CSS, so it wins either
+              way.
+            */}
+            <div className="w-full min-w-0 max-w-full [&>button]:!box-border [&>button]:!flex [&>button]:!h-[54px] [&>button]:!w-full [&>button]:!min-w-0 [&>button]:!max-w-full">
+              <Select value={selectValue} onValueChange={onTypeChange}>
+                <SelectTrigger
+  aria-label="Event type"
+  className="w-full min-w-0 max-w-full truncate box-border"
+>
+  <SelectValue className="truncate" />
+</SelectTrigger>
 
-              <SelectContent>
-                {EVENT_TYPES.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
+                <SelectContent>
+                  {EVENT_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value={CUSTOM_EVENT_VALUE}>
+                    + Add Custom Event
                   </SelectItem>
-                ))}
-                <SelectItem value={CUSTOM_EVENT_VALUE}>
-                  + Add Custom Event
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                </SelectContent>
+              </Select>
+            </div>
           </Field>
         </div>
 
         {event.isCustomType && (
-          <div className="w-full min-w-0 max-w-full sm:w-[70%]">
-            <Field label="Custom Event Name">
+          <div className="w-full min-w-0 max-w-full">
+            <Field
+              label="Custom Event Name"
+              error={
+                isCustomNameInvalid
+                  ? "Please name this event."
+                  : undefined
+              }
+            >
               <input
                 ref={customNameRef}
-                className={`${inputClass} h-[54px] min-w-0 max-w-full box-border ${
-                  isCustomNameInvalid
-                    ? "border-red-400/70 ring-2 ring-red-400/30 focus:ring-red-400/25"
-                    : ""
-                }`}
+                className={inputCls(isCustomNameInvalid)}
                 type="text"
                 placeholder="Name this event"
                 value={event.customType}
@@ -1531,7 +1863,7 @@ function EventCard({
         <div className="w-full min-w-0 max-w-full sm:w-1/2">
           <Field label="Date" optional>
             <input
-              className={`${inputClass} min-w-0 max-w-full box-border [color-scheme:dark] accent-[var(--secondary)]`}
+              className={`${inputClass} ${dateInputFix} [color-scheme:dark] accent-[var(--secondary)]`}
               type="date"
               value={event.date}
               onChange={(e) => onDateChange(e.target.value)}
@@ -1612,8 +1944,15 @@ function EventCard({
 
       <div className="flex flex-col gap-1.5">
         {event.services.length === 0 ? (
-          <div className="text-[.78rem] text-[var(--cream)]/40">
-            No services selected yet.
+          <div
+            role={hasServiceError ? "alert" : undefined}
+            className={`text-[.78rem] ${
+              hasServiceError ? "text-red-300" : "text-[var(--cream)]/40"
+            }`}
+          >
+            {hasServiceError
+              ? "Pick at least one service for this event."
+              : "No services selected yet."}
           </div>
         ) : (
           event.services.map((s) => (
