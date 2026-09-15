@@ -106,12 +106,15 @@ const CUSTOM_EVENT_VALUE = "__custom__";
 
 const SERVICE_CATALOG = [
   "Traditional Photography",
-  "Traditional Videography",
-  "Drone Coverage",
-  "Cinematic Videography",
-  "Candid Photography",
   "LED Wall",
+
+  "Traditional Videography",
   "Instant Reels",
+  
+  "Candid Photography",
+  "Drone Coverage",
+  
+  "Cinematic Videography",
 ];
 
 const ADDON_CATALOG = [
@@ -1375,6 +1378,8 @@ export function QuoteSection() {
                 </Field>
               </div>
 
+              <QuoteSectionDivider />
+
               {/* ================= SECTION 2 — YOUR EVENTS ================= */}
               <div ref={eventsSectionRef}>
                 <QuoteSectionHeading step={2}>Your Events</QuoteSectionHeading>
@@ -1444,6 +1449,8 @@ export function QuoteSection() {
                 + Add Another Event
               </button>
 
+              <QuoteSectionDivider />
+
 <div className="pt-4">
   {/* ================= SECTION 3 — ADD-ONS ================= */}
   <QuoteSectionHeading step={3} optional>
@@ -1466,69 +1473,168 @@ export function QuoteSection() {
                 />
               </div>
 
-              {/* ================= SECTION 4 — SUMMARY ================= */}
-              {quoteGenerated && summaryData && (
-                <div
-                  ref={summaryRef}
-                  className="mt-2 border-t border-[var(--cream)]/[0.07] pt-6"
-                >
-                  <QuoteSectionHeading step={4}>
-                    Quote Summary
-                  </QuoteSectionHeading>
+              {quoteGenerated && summaryData && <QuoteSectionDivider />}
 
-                  <div className="flex flex-col gap-2.5">
-                    {summaryData.budget && (
-                      <div className="rounded-[10px] border border-[var(--secondary)]/16 bg-black/20 px-4 py-2.5 text-[.8rem] text-[var(--cream)]/85">
-                        Budget: {summaryData.budget}
-                      </div>
-                    )}
+{/* ================= SECTION 4 — SUMMARY ================= */}
+{quoteGenerated && summaryData && (
+  <div
+    ref={summaryRef}
+    className="mt-2 border-t border-[var(--cream)]/[0.09] pt-7"
+  >
+    <QuoteSectionHeading step={4}>
+      Quote Summary
+    </QuoteSectionHeading>
 
-                    {summaryData.lines.map((line, i) => (
-                      <div
-                        key={i}
-                        className="rounded-[10px] border border-[var(--secondary)]/16 bg-black/[0.18] px-4 py-3.5"
-                      >
-                        <div className="mb-1.5 text-[.86rem] font-semibold text-[var(--secondary-light)]">
-                          {line.label}
-                          {line.date ? ` — ${formatDate(line.date)}` : ""}
-                          {line.venue ? ` · ${line.venue}` : ""}
-                        </div>
-                        {line.services.map((s) => (
-                          <div
-                            key={s.name}
-                            className="py-0.5 text-[.78rem] text-[var(--cream)]/80"
-                          >
-                            {s.name}
-                            {s.qty > 1 ? ` × ${s.qty}` : ""}
-                          </div>
-                        ))}
-                      </div>
-                    ))}
+    <div className="mt-5 flex flex-col gap-5">
+      {/* BUDGET */}
+      {summaryData.budget && (
+        <div className="relative overflow-hidden rounded-[14px] border border-[var(--secondary)]/35 bg-[var(--secondary)]/[0.07] px-5 py-4">
+          <div className="absolute left-0 top-0 h-full w-[2px] bg-[var(--secondary)]" />
 
-                    {summaryData.addOns.length > 0 && (
-                      <div className="rounded-[10px] border border-[var(--secondary)]/16 bg-black/[0.18] px-4 py-3.5">
-                        <div className="mb-1.5 text-[.86rem] font-semibold text-[var(--secondary-light)]">
-                          Add-ons
-                        </div>
-                        {summaryData.addOns.map((a) => (
-                          <div
-                            key={a.name}
-                            className="py-0.5 text-[.78rem] text-[var(--cream)]/80"
-                          >
-                            {a.name}
-                            {a.qty > 1 ? ` × ${a.qty}` : ""}
-                          </div>
-                        ))}
-                      </div>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="mb-1 text-[.6rem] font-medium uppercase tracking-[0.16em] text-[var(--secondary-light)]">
+                Selected Budget
+              </p>
+              <p className="text-[.95rem] font-medium tracking-[0.01em] text-[var(--cream)]">
+                {summaryData.budget}
+              </p>
+            </div>
+
+            <div
+              aria-hidden="true"
+              className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[var(--secondary)]/30 text-[var(--secondary-light)]"
+            >
+              <span className="font-serif text-[1rem]">₹</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EVENTS */}
+      {summaryData.lines.length > 0 && (
+        <div>
+          <div className="mb-3 flex items-center gap-3">
+            <span className="text-[.6rem] font-semibold uppercase tracking-[0.16em] text-[var(--cream)]/55">
+              Events
+            </span>
+            <div className="h-px flex-1 bg-[var(--cream)]/[0.08]" />
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {summaryData.lines.map((line, i) => (
+              <div
+                key={i}
+                className="rounded-[14px] border border-[var(--secondary)]/18 bg-black/[0.16] px-5 py-4"
+              >
+                {/* Event heading */}
+                <div className="mb-3 flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <h4 className="text-[.9rem] font-semibold tracking-[0.01em] text-[var(--cream)]">
+                      {line.label}
+                    </h4>
+
+                    {(line.date || line.venue) && (
+                      <p className="mt-1 text-[.7rem] leading-[1.5] text-[var(--cream)]/65">
+                        {line.date ? formatDate(line.date) : ""}
+                        {line.date && line.venue ? "  ·  " : ""}
+                        {line.venue || ""}
+                      </p>
                     )}
                   </div>
 
-                  <p className="mt-4 text-[.68rem] leading-[1.6] text-[var(--cream)]/60">
-                    This is a preliminary quote request. Final pricing will
-                    be confirmed after reviewing your requirements.
-                  </p>
+                  <span className="shrink-0 text-[.58rem] font-medium uppercase tracking-[0.12em] text-[var(--secondary-light)]/75">
+                    Event {i + 1}
+                  </span>
                 </div>
-              )}
+
+                {/* Services */}
+                {/* SERVICES */}
+{line.services.length > 0 && (
+  <div className="border-t border-[var(--cream)]/[0.07] pt-3">
+    <p className="mb-1.5 text-[.57rem] font-medium uppercase tracking-[0.14em] text-[var(--cream)]/45">
+      Coverage
+    </p>
+
+    <div className="flex flex-col">
+      {line.services.map((s, serviceIndex) => (
+        <div
+          key={s.name}
+          className={`flex items-center justify-between gap-4 py-2.5 ${
+            serviceIndex !== line.services.length - 1
+              ? "border-b border-[var(--cream)]/[0.055]"
+              : ""
+          }`}
+        >
+          <span className="min-w-0 text-[.76rem] text-[var(--cream)]/90">
+            {s.name}
+          </span>
+
+          {s.qty > 1 && (
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-[var(--secondary)]/30 bg-[var(--secondary)]/[0.06] text-[.62rem] font-medium text-[var(--secondary-light)]">
+              {s.qty}
+            </span>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+{/* ADD-ONS */}
+{summaryData.addOns.length > 0 && (
+  <div>
+    <div className="mb-3 flex items-center gap-3">
+      <span className="text-[.6rem] font-semibold uppercase tracking-[0.16em] text-[var(--cream)]/55">
+        Add-ons
+      </span>
+      <div className="h-px flex-1 bg-[var(--cream)]/[0.08]" />
+    </div>
+
+    <div className="rounded-[14px] border border-[var(--secondary)]/18 bg-black/[0.16] px-5">
+      <div className="flex flex-col">
+        {summaryData.addOns.map((a, index) => (
+          <div
+            key={a.name}
+            className={`flex items-center justify-between gap-4 py-3 ${
+              index !== summaryData.addOns.length - 1
+                ? "border-b border-[var(--cream)]/[0.055]"
+                : ""
+            }`}
+          >
+            <span className="min-w-0 text-[.76rem] text-[var(--cream)]/90">
+              {a.name}
+            </span>
+
+            {a.qty > 1 && (
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-[var(--secondary)]/30 bg-[var(--secondary)]/[0.06] text-[.62rem] font-medium text-[var(--secondary-light)]">
+                {a.qty}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+)}
+    </div>
+
+    {/* NOTE */}
+    <div className="mt-6 flex gap-3 border-t border-[var(--cream)]/[0.07] pt-4">
+      <div className="mt-[4px] h-2 w-2 shrink-0 rounded-full bg-[var(--secondary)]" />
+
+      <p className="text-[.7rem] leading-[1.65] text-[var(--cream)]/70">
+        This is a preliminary quote request. Final pricing will be
+        confirmed after reviewing your requirements.
+      </p>
+    </div>
+  </div>
+)}
             </div>
 
             {/* FOOTER */}
@@ -1686,6 +1792,22 @@ export function QuoteSection() {
 }
 
 export default QuoteSection;
+
+/* ==========================================================
+   SECTION DIVIDER
+   ========================================================== */
+
+function QuoteSectionDivider() {
+  return (
+    <div
+      aria-hidden="true"
+      className="mx-auto my-7 h-[2px] w-4/5 bg-[var(--secondary)]"
+      style={{
+        clipPath: "polygon(0 50%, 2% 0, 98% 0, 100% 50%, 98% 100%, 2% 100%)",
+      }}
+    />
+  );
+}
 
 /* ==========================================================
    QUOTE SECTION HEADING

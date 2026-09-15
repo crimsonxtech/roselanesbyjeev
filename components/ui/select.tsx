@@ -51,23 +51,21 @@ const SelectContent = React.forwardRef<
       )}
       {...props}
     >
-      <SelectPrimitive.ScrollUpButton className="flex items-center justify-center py-1 text-[var(--secondary-light)]">
-        <ChevronDown
-          className="size-4 rotate-180"
-          aria-hidden="true"
-        />
-      </SelectPrimitive.ScrollUpButton>
-
-      <SelectPrimitive.Viewport>
-        {children}
-      </SelectPrimitive.Viewport>
-
-      <SelectPrimitive.ScrollDownButton className="flex items-center justify-center py-1 text-[var(--secondary-light)]">
-        <ChevronDown
-          className="size-4"
-          aria-hidden="true"
-        />
-      </SelectPrimitive.ScrollDownButton>
+     <SelectPrimitive.Viewport
+  className={cn(
+    "max-h-[min(24rem,var(--radix-select-content-available-height))] overflow-y-scroll overscroll-contain",
+    "[scrollbar-gutter:stable]",
+    "[scrollbar-width:thin]",
+    "[scrollbar-color:var(--secondary)_transparent]",
+    "[&::-webkit-scrollbar]:w-1.5",
+    "[&::-webkit-scrollbar-track]:bg-transparent",
+    "[&::-webkit-scrollbar-thumb]:rounded-full",
+    "[&::-webkit-scrollbar-thumb]:bg-[var(--secondary)]",
+    "[&::-webkit-scrollbar-thumb:hover]:bg-[var(--secondary-light)]"
+  )}
+>
+  {children}
+</SelectPrimitive.Viewport>
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
 ));
