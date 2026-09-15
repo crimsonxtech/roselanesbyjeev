@@ -104,8 +104,9 @@ html {
   scrollbar-width: thin;
   scrollbar-color: var(--secondary) var(--primary-darker);
 
-  /* Fallback canvas for transient mobile viewport repaints. */
-  background: var(--site-background);
+  /* Safari uses the document canvas in display cutouts and while its browser
+     controls animate. It must be the brand primary, never the browser white. */
+  background: var(--primary);
 
   /*
     Allow normal one-finger scrolling but block pinch-zoom and
@@ -122,9 +123,9 @@ body {
 
   margin: 0;
 
-  /* The fixed background owns the visual; keeping this transparent avoids
-     exposing a different colour during mobile browser-chrome transitions. */
-  background: transparent;
+  /* Matches the Safari safe-area/browser-chrome colour if the fixed layer is
+     temporarily being resized. */
+  background: var(--primary);
   color: var(--foreground);
 
   font-family: var(--font-body);
@@ -294,11 +295,18 @@ video {
 .site-background {
   position: fixed;
   /*
-   * Do not give this layer a vh/lvh/dvh height. Fixed inset sizing follows
-   * the fixed-position viewport, and the 1px overscan removes fractional
-   * rounding seams while Safari/Chrome animate their browser controls.
+   * `dvh` tracks the live visual viewport as Safari/Chrome browser controls
+   * expand and collapse. `vh` is retained as the fallback for old browsers.
+   * Avoid `lvh`: it is the larger, toolbar-hidden viewport and is the source
+   * of the observed mobile gap.
    */
-  inset: -1px;
+  top: 0;
+  right: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100svh;
   overflow: hidden;
   overflow: clip;
   pointer-events: none;
