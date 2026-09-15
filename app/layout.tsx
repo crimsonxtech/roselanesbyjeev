@@ -14,7 +14,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#831132",
+  /* Safari browser UI cannot show a gradient; use the artwork's dark top tone
+     so the status/search chrome blends into the page rather than appearing
+     as a separate bright strip. */
+  themeColor: "#5c0c24",
 };
 
 export default function RootLayout({

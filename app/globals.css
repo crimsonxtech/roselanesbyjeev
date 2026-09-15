@@ -297,15 +297,20 @@ video {
   /*
    * Use the largest viewport from first paint. This stays behind both the
    * expanded and collapsed browser controls, so a fast scroll cannot expose
-   * a resizing gap. `vh` remains the fallback for older browsers.
+   * a resizing gap. Extend through display-cutout safe areas as well. `vh`
+   * remains the fallback for older browsers.
    */
-  top: 0;
-  right: 0;
-  left: 0;
-  width: 100%;
+  top: calc(0px - env(safe-area-inset-top, 0px));
+  right: calc(0px - env(safe-area-inset-right, 0px));
+  left: calc(0px - env(safe-area-inset-left, 0px));
+  width: calc(
+    100% + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px)
+  );
   height: 100vh;
   height: 100lvh;
-  min-height: 100lvh;
+  min-height: calc(
+    100lvh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
+  );
   overflow: hidden;
   overflow: clip;
   pointer-events: none;
