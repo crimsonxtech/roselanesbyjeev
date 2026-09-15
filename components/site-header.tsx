@@ -1319,7 +1319,18 @@ useEffect(() => {
     body.style.width = previousWidth;
     body.style.overflow = previousOverflow;
 
+    /*
+     * The document has `scroll-behavior: smooth`. Restoring a menu lock with
+     * a plain `scrollTo` would therefore animate from the top of the page,
+     * then the selected menu link would begin a second animation. Temporarily
+     * opt out so the next link animation starts at the user's real position.
+     */
+    const root = document.documentElement;
+    const previousScrollBehavior = root.style.scrollBehavior;
+
+    root.style.scrollBehavior = "auto";
     window.scrollTo(0, scrollY);
+    root.style.scrollBehavior = previousScrollBehavior;
   };
 }, [isOpen]);
 
