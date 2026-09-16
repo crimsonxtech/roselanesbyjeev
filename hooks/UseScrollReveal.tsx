@@ -5,8 +5,10 @@ import { useEffect } from "react";
 /**
  * Scroll-reveal hook. Mount this ONCE, high in your tree (e.g. root layout
  * or a top-level <Providers> component). It observes every element in the
- * DOM with a `data-reveal` attribute and adds `.is-visible` when it scrolls
- * into view, matching the CSS in styles.css.
+ * DOM with a `data-reveal` attribute and sets `data-revealed="true"` when it
+ * scrolls into view, matching the CSS in styles.css. A data-attribute (not a
+ * class) is used so the revealed state survives React re-renders of
+ * interactive elements that also carry `data-reveal`.
  *
  * Usage on any element, anywhere in your app:
  *   <div data-reveal>...</div>
@@ -55,7 +57,7 @@ export function useScrollReveal() {
     const revealAllImmediately = () => {
       document
         .querySelectorAll<HTMLElement>("[data-reveal]")
-        .forEach((el) => el.classList.add("is-visible"));
+        .forEach((el) => el.setAttribute("data-revealed", "true"));
     };
 
     /**
@@ -87,7 +89,7 @@ export function useScrollReveal() {
         el.style.setProperty("--reveal-delay", `${delay}ms`);
       }
 
-      el.classList.add("is-visible");
+      el.setAttribute("data-revealed", "true");
     };
 
     const applyGroupStagger = (scope: ParentNode) => {
@@ -125,7 +127,7 @@ export function useScrollReveal() {
       applyGroupStagger(root);
 
       queryIncludingSelf(root, "[data-reveal]").forEach((el) => {
-        if (!el.classList.contains("is-visible")) {
+        if (el.getAttribute("data-revealed") !== "true") {
           observer?.observe(el);
         }
       });

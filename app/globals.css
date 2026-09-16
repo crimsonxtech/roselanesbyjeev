@@ -355,7 +355,7 @@ main > section {
 
 /* =========================================================
    SCROLL REVEAL
-   The provider observes `[data-reveal]` and adds `.is-visible` once an
+   The provider observes `[data-reveal]` and sets `data-revealed="true"` once an
    element enters the viewport. Keep this styling centralized so every
    existing marker uses the same subtle motion without changing its layout.
    ========================================================= */
@@ -369,7 +369,18 @@ main > section {
   will-change: opacity, transform;
 }
 
-[data-reveal].is-visible {
+/*
+  Revealed state is tracked with a plain data-attribute (not a class).
+  Several data-reveal targets are also interactive elements whose
+  className is re-rendered by React on click (e.g. the About/Contact
+  cards toggling an "active" state). React fully replaces the
+  className attribute on re-render, which would silently strip a
+  class added imperatively by the IntersectionObserver below and make
+  the element "vanish" again on the very first click. Attributes that
+  React doesn't manage are left alone across re-renders, so this
+  survives clicks/state changes safely.
+*/
+[data-reveal][data-revealed="true"] {
   opacity: 1;
   transform: translate3d(0, 0, 0);
   will-change: auto;
