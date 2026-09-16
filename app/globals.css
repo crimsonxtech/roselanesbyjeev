@@ -121,11 +121,6 @@ html {
   */
   touch-action: pan-x pan-y;
 }
-html {
-  background: var(--site-background);
-  background-attachment: fixed;
-  background-size: 100% 100lvh;
-}
 body { 
   min-width: 320px;
   min-height: 100%;
@@ -134,9 +129,10 @@ body {
 
   /* Covers every document pixel with the same artwork while the independent
      fixed layer is composited by mobile browsers. */
-  background: var(--primary);
+    background: var(--site-background);
+  background-attachment: fixed;
+  background-size: 100% 100lvh;
   color: var(--foreground);
-
   font-family: var(--font-body);
 
   -webkit-font-smoothing: antialiased;
