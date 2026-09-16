@@ -115,7 +115,7 @@ html {
 
   /* This canvas is visible in Safari display cutouts and during browser-chrome
      animations, so it must be the custom artwork—not a flat fallback colour. */
-  background: yellow;
+  background: var(--site-background) var(--primary);
 
   /*
     Allow normal one-finger scrolling but block pinch-zoom and
@@ -134,13 +134,13 @@ body {
 
   /* Covers every document pixel with the same artwork while the independent
      fixed layer is composited by mobile browsers. */
+  background: var(--site-background) var(--primary);
   color: var(--foreground);
 
   font-family: var(--font-body);
 
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  background: blue;
 
   touch-action: pan-x pan-y;
  
@@ -303,30 +303,32 @@ video {
 .page-background,
 .site-background {
   position: fixed;
-
-  top: calc(-1 * env(safe-area-inset-top));
-  right: 0;
-  bottom: calc(-1 * env(safe-area-inset-bottom));
-  left: 0;
-
-  width: 100%;
-  height: auto;
-
-  min-height: calc(
-    100vh +
-    env(safe-area-inset-top) +
-    env(safe-area-inset-bottom)
+  /*
+   * Use the largest viewport from first paint. This stays behind both the
+   * expanded and collapsed browser controls, so a fast scroll cannot expose
+   * a resizing gap. Extend through display-cutout safe areas as well. `vh`
+   * remains the fallback for older browsers.
+   */
+  top: calc(0px - env(safe-area-inset-top, 0px));
+  right: calc(0px - env(safe-area-inset-right, 0px));
+  left: calc(0px - env(safe-area-inset-left, 0px));
+  width: calc(
+    100% + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px)
   );
-
+  height: 100vh;
+  height: 100lvh;
+  min-height: calc(
+    100lvh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
+  );
   overflow: hidden;
   overflow: clip;
-
   pointer-events: none;
   isolation: isolate;
-  z-index: 0;
-
+  z-index: -1;
   background: var(--site-background);
 }
+
+
 /* =========================================================
    MAIN CONTENT
    ========================================================= */
