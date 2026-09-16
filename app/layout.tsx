@@ -28,7 +28,6 @@ export default function RootLayout({
       <body>
         <DisableInteractions />
         <CustomCursor />
-        <ScrollRevealProvider />
         {children}
       </body>
     </html>
