@@ -806,7 +806,7 @@ export default function Footer() {
             >
               <span>Made &amp; managed by</span>
               <span className="footer-credit-brand">
-                Pixtack
+                Pixtack hi sonu 
               </span>
             </a>
           </div>
