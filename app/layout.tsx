@@ -29,7 +29,14 @@ export default function RootLayout({
         <DisableInteractions />
         <CustomCursor />
         <ScrollRevealProvider />
-        {children}
+        {/*
+          The ONLY element that actually scrolls. html/body are pinned to
+          exactly one viewport and never move (see globals.css) — this div
+          carries all real page scrolling instead, which is what makes the
+          background immune to Safari's toolbar-resize animation and
+          overscroll bounce: there's nothing behind it to expose.
+        */}
+        <div id="scroll-root">{children}</div>
       </body>
     </html>
   );

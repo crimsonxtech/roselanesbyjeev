@@ -5,15 +5,11 @@ import * as React from "react";
 /**
  * Locks page scroll while `active` is true — safe for iOS Safari.
  *
- * `body.style.overflow = "hidden"` alone does NOT stop scrolling on iOS
- * Safari: the page can still be dragged via touch (rubber-band/bounce),
- * and because Safari's address bar grows/shrinks as you scroll, the
- * layout viewport height changes mid-gesture and briefly reveals the
- * page underneath a fixed-position overlay.
- *
- * This hook uses the standard workaround: freeze the body in place with
+ * All real scrolling happens inside `#scroll-root` (see layout.tsx),
+ * not on `window`/`body` — those are pinned to one viewport and never
+ * scroll. So locking now means: freeze `#scroll-root` in place with
  * `position: fixed` (so there is nothing left to scroll or reflow), and
- * restore the exact scroll position on unlock. It also blocks stray
+ * restore its exact scroll position on unlock. It also blocks stray
  * `touchmove` events anywhere outside an allowed scrollable region, as a
  * second line of defense against overscroll chaining.
  *
@@ -33,12 +29,15 @@ export function useBodyScrollLock(
   React.useEffect(() => {
     if (!active) return;
 
-    const { body, documentElement: html } = document;
+    const scrollRoot = document.getElementById("scroll-root");
+    const html = document.documentElement;
+
+    if (!scrollRoot) return;
 
     lockCount += 1;
 
     if (lockCount === 1) {
-      savedScrollY = window.scrollY || window.pageYOffset || 0;
+      savedScrollY = scrollRoot.scrollTop || 0;
 
       /*
        * Usually a no-op here: portfolio-section.tsx calls
@@ -50,18 +49,18 @@ export function useBodyScrollLock(
        */
       lockScrollbarReservation();
 
-      body.style.position = "fixed";
-      body.style.top = `-${savedScrollY}px`;
-      body.style.left = "0";
-      body.style.right = "0";
-      body.style.width = "100%";
-      body.style.overflow = "hidden";
+      scrollRoot.style.position = "fixed";
+      scrollRoot.style.top = `-${savedScrollY}px`;
+      scrollRoot.style.left = "0";
+      scrollRoot.style.right = "0";
+      scrollRoot.style.width = "100%";
+      scrollRoot.style.overflow = "hidden";
 
       // Defense in depth: stop overscroll/rubber-band chaining even if
-      // something manages to move outside the fixed body (e.g. during
-      // the brief window while Safari animates its toolbar).
+      // something manages to move outside the fixed scroll root (e.g.
+      // during the brief window while Safari animates its toolbar).
       html.style.overscrollBehaviorY = "none";
-      (body.style as CSSStyleDeclaration).overscrollBehaviorY = "none";
+      (scrollRoot.style as CSSStyleDeclaration).overscrollBehaviorY = "none";
     }
 
     const preventBackgroundTouchMove = (event: TouchEvent) => {
@@ -100,23 +99,23 @@ export function useBodyScrollLock(
       lockCount = Math.max(0, lockCount - 1);
 
       if (lockCount === 0) {
-        body.style.position = "";
-        body.style.top = "";
-        body.style.left = "";
-        body.style.right = "";
-        body.style.width = "";
-        body.style.overflow = "";
+        scrollRoot.style.position = "";
+        scrollRoot.style.top = "";
+        scrollRoot.style.left = "";
+        scrollRoot.style.right = "";
+        scrollRoot.style.width = "";
+        scrollRoot.style.overflow = "";
         html.style.overscrollBehaviorY = "";
-        (body.style as CSSStyleDeclaration).overscrollBehaviorY = "";
+        (scrollRoot.style as CSSStyleDeclaration).overscrollBehaviorY = "";
         unlockScrollbarReservation();
 
         // The site enables smooth anchor scrolling globally. Unlocking a
         // modal must restore its saved position immediately, otherwise the
         // browser visibly scrolls from the top before the page settles.
-        const previousScrollBehavior = html.style.scrollBehavior;
-        html.style.scrollBehavior = "auto";
-        window.scrollTo(0, savedScrollY);
-        html.style.scrollBehavior = previousScrollBehavior;
+        const previousScrollBehavior = scrollRoot.style.scrollBehavior;
+        scrollRoot.style.scrollBehavior = "auto";
+        scrollRoot.scrollTop = savedScrollY;
+        scrollRoot.style.scrollBehavior = previousScrollBehavior;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -133,36 +132,39 @@ let savedScrollY = 0;
 // (see lockScrollbarReservation) ahead of the React effect that normally
 // drives this hook, without disturbing that effect's own bookkeeping.
 let scrollbarLockCount = 0;
-let savedHtmlOverflowY = "";
-let savedHtmlPaddingRight = "";
+let savedScrollRootOverflowY = "";
+let savedScrollRootPaddingRight = "";
 
 /**
- * Hides the permanently-reserved page scrollbar (`html { overflow-y: scroll
- * }` in globals.css) and compensates with matching padding-right so
- * normal-flow content doesn't shift. Counter-based/idempotent, so it's safe
- * to call this directly and eagerly, in addition to useBodyScrollLock below
- * also calling it from its effect for the same logical lock.
+ * Hides #scroll-root's own scrollbar and compensates with matching
+ * padding-right so normal-flow content doesn't shift. Counter-based/
+ * idempotent, so it's safe to call this directly and eagerly, in
+ * addition to useBodyScrollLock above also calling it from its effect
+ * for the same logical lock.
  *
- * Calling this SYNCHRONOUSLY, before any code measures or computes against
- * the viewport width, matters: position:fixed elements ignore this
- * function's padding-right compensation (fixed elements size against the
- * true viewport, not html's padding box), so the instant the scrollbar
- * disappears, fixed content immediately grows into the freed space. Any
- * viewport-width math computed before this runs (e.g. a FLIP animation's
- * landing rect) will target the OLD, narrower width and land to the left
- * of where fixed content actually ends up once this has taken effect.
+ * Calling this SYNCHRONOUSLY, before any code measures or computes
+ * against the viewport width, matters: position:fixed elements ignore
+ * this function's padding-right compensation (fixed elements size
+ * against the true viewport, not #scroll-root's padding box), so the
+ * instant the scrollbar disappears, fixed content immediately grows
+ * into the freed space. Any viewport-width math computed before this
+ * runs (e.g. a FLIP animation's landing rect) will target the OLD,
+ * narrower width and land to the left of where fixed content actually
+ * ends up once this has taken effect.
  */
 export function lockScrollbarReservation() {
   scrollbarLockCount += 1;
   if (scrollbarLockCount !== 1) return;
 
-  const html = document.documentElement;
-  const scrollbarWidth = window.innerWidth - html.clientWidth;
-  savedHtmlOverflowY = html.style.overflowY;
-  savedHtmlPaddingRight = html.style.paddingRight;
-  html.style.overflowY = "hidden";
+  const scrollRoot = document.getElementById("scroll-root");
+  if (!scrollRoot) return;
+
+  const scrollbarWidth = scrollRoot.offsetWidth - scrollRoot.clientWidth;
+  savedScrollRootOverflowY = scrollRoot.style.overflowY;
+  savedScrollRootPaddingRight = scrollRoot.style.paddingRight;
+  scrollRoot.style.overflowY = "hidden";
   if (scrollbarWidth > 0) {
-    html.style.paddingRight = `${scrollbarWidth}px`;
+    scrollRoot.style.paddingRight = `${scrollbarWidth}px`;
   }
 }
 
@@ -170,7 +172,9 @@ export function unlockScrollbarReservation() {
   scrollbarLockCount = Math.max(0, scrollbarLockCount - 1);
   if (scrollbarLockCount !== 0) return;
 
-  const html = document.documentElement;
-  html.style.overflowY = savedHtmlOverflowY;
-  html.style.paddingRight = savedHtmlPaddingRight;
+  const scrollRoot = document.getElementById("scroll-root");
+  if (!scrollRoot) return;
+
+  scrollRoot.style.overflowY = savedScrollRootOverflowY;
+  scrollRoot.style.paddingRight = savedScrollRootPaddingRight;
 }
