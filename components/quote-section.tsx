@@ -1728,7 +1728,7 @@ export function QuoteSection() {
             </p>
 
             <a
-              href="https://www.instagram.com/theroselanesbyjeev/"
+              href="https://www.instagram.com/roselanes_by_jeev/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-[.76rem] uppercase tracking-[0.12em] text-[var(--secondary-light)] hover:underline"

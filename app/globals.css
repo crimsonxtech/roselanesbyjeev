@@ -303,12 +303,6 @@ video {
 .page-background,
 .site-background {
   position: fixed;
-  /*
-   * Use the largest viewport from first paint. This stays behind both the
-   * expanded and collapsed browser controls, so a fast scroll cannot expose
-   * a resizing gap. Extend through display-cutout safe areas as well. `vh`
-   * remains the fallback for older browsers.
-   */
   top: calc(0px - env(safe-area-inset-top, 0px));
   right: calc(0px - env(safe-area-inset-right, 0px));
   left: calc(0px - env(safe-area-inset-left, 0px));
@@ -316,9 +310,10 @@ video {
     100% + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px)
   );
   height: 100vh;
+  height: 100svh;
   height: 100lvh;
   min-height: calc(
-    100lvh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
+    100svh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
   );
   overflow: hidden;
   overflow: clip;
@@ -327,7 +322,6 @@ video {
   z-index: -1;
   background: var(--site-background);
 }
-
 
 /* =========================================================
    MAIN CONTENT
