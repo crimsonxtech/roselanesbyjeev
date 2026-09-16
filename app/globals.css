@@ -99,24 +99,36 @@
    ========================================================= */
 
 /*
-  html/body are pinned to exactly one viewport and NEVER scroll.
-  All real scrolling happens inside #scroll-root (see below). This is
-  what actually fixes the Safari gap: there is nothing behind the
-  content for the toolbar-resize animation or the rubber-band overscroll
-  to expose, because html/body never move and are sized to the viewport
-  once, not to document content height.
+  Reverted to normal document scrolling on html/body — window-driven
+  scroll events are relied on elsewhere (site-header.tsx's "scrolled"
+  state, its scrollToHash nav, Safari's own toolbar collapse), so the
+  scroller needs to stay `window`, not a wrapper div.
+
+  The Safari gap is instead addressed the way that's compatible with
+  window scrolling: html/body use a FLAT color sampled from the
+  gradient's own dark edge tone, not the full gradient. A flat color
+  can never visibly "repeat" or misalign no matter what Safari's
+  toolbar or overscroll bounce does mid-scroll — it only needs to be
+  close enough in tone to be invisible when briefly exposed. The actual
+  gradient art still lives on .site-background (a fixed, viewport-
+  pinned layer, see PAGE BACKGROUND below) which is what's normally
+  visible; this flat color only shows in the rare edge-of-frame flash.
 */
 
-html,
-body {
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
-  overflow: hidden;
-}
-
 html {
-  /* Firefox scrollbar (kept for any nested non-#scroll-root scroll areas) */
+  width: 100%;
+  min-height: 100%;
+
+  /* Keep scrollbar space permanently reserved */
+  overflow-y: scroll;
+
+  /* Smooth anchor scrolling */
+  scroll-behavior: smooth;
+
+  /* Prevent anchored content from hiding behind fixed UI */
+  scroll-padding-top: 0;
+
+  /* Firefox scrollbar */
   scrollbar-width: thin;
   scrollbar-color: var(--secondary) var(--primary-darker);
 
@@ -128,17 +140,22 @@ html {
   */
   touch-action: pan-x pan-y;
 
-  /* Painted once, pinned to the viewport, never scrolled or resized by
-     content — this is the canvas visible in Safari's display-cutout
-     area and during any browser-chrome animation. */
-  background: var(--site-background);
+  /* Flat fallback tone — see comment above. */
+  background: var(--primary-darker);
+
+  /* Stop rubber-band bounce chaining so the flat fallback is exposed
+     as rarely as possible in the first place. */
+  overscroll-behavior-y: none;
 }
 
 body {
   min-width: 320px;
+  min-height: 100%;
+
   margin: 0;
 
-  background: var(--site-background);
+  /* Same flat fallback tone as html, for the same reason. */
+  background: var(--primary-darker);
   color: var(--foreground);
 
   font-family: var(--font-body);
@@ -147,31 +164,14 @@ body {
   text-rendering: optimizeLegibility;
 
   touch-action: pan-x pan-y;
+  overscroll-behavior-y: none;
 }
 
-/*
-  #scroll-root is the ONLY element that actually scrolls. It wraps all
-  page content (see layout.tsx) and is sized to the dynamic viewport so
-  it tracks Safari's toolbar show/hide smoothly, independent of html/body.
-*/
-#scroll-root {
-  position: relative;
+html,
+body {
   width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  overflow-y: scroll;
+  max-width: 100%;
   overflow-x: hidden;
-
-  -webkit-overflow-scrolling: touch;
-
-  /* Smooth anchor scrolling now lives here, not on html */
-  scroll-behavior: smooth;
-  scroll-padding-top: 0;
-
-  /* Contain rubber-band bounce to this element instead of chaining to
-     a parent that has nothing behind it anyway, but this keeps the
-     bounce feel local/predictable. */
-  overscroll-behavior-y: contain;
 }
 
 /* =========================================================
@@ -239,22 +239,22 @@ html.custom-cursor * {
    SCROLLBAR
    ========================================================= */
 
-/* Chrome / Edge / Safari — targets #scroll-root, the only scroller now */
+/* Chrome / Edge / Safari */
 
-#scroll-root::-webkit-scrollbar {
+::-webkit-scrollbar {
   width: 8px;
 }
 
-#scroll-root::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: var(--primary-darker);
 }
 
-#scroll-root::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background: var(--secondary);
   border-radius: 10px;
 }
 
-#scroll-root::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
   background: var(--white);
 }
 
@@ -322,13 +322,6 @@ video {
    PAGE BACKGROUND
    ========================================================= */
 
-/*
-  Still position:fixed and still pinned to the viewport — fixed
-  positioning is relative to the viewport regardless of which ancestor
-  actually scrolls, as long as no ancestor has a transform/filter. It
-  now sits behind content that scrolls inside #scroll-root instead of
-  html/body, but nothing else about this rule needs to change.
-*/
 .page-background,
 .site-background {
   position: fixed;
@@ -539,11 +532,11 @@ textarea:-webkit-autofill:active {
    reflow, no shift in anything measured while the lightbox is animating.
    ============================================================ */
 
-html.lightbox-scrollbar-hidden #scroll-root {
+html.lightbox-scrollbar-hidden {
   scrollbar-color: transparent transparent;
 }
 
-html.lightbox-scrollbar-hidden #scroll-root::-webkit-scrollbar-thumb {
+html.lightbox-scrollbar-hidden::-webkit-scrollbar-thumb {
   background: transparent;
 }
 
