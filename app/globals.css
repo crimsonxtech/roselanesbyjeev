@@ -52,10 +52,8 @@
 
   /*
     This is deliberately shared by the document canvas and the fixed visual
-    layer below. html/body never scroll (see DOCUMENT below), so this paints
-    exactly once, pinned to the viewport — there's nothing for Safari's
-    toolbar animation or overscroll bounce to expose behind it, and no
-    scrolling means no risk of the gradient repeating/tiling.
+    layer below. Mobile browsers can briefly repaint the canvas while their
+    address/tab bars animate; matching the two prevents a burgundy flash.
   */
   --site-background:
     radial-gradient(circle at 15% 90%, var(--primary-light) 0%, transparent 45%),
@@ -98,23 +96,6 @@
    DOCUMENT
    ========================================================= */
 
-/*
-  Reverted to normal document scrolling on html/body — window-driven
-  scroll events are relied on elsewhere (site-header.tsx's "scrolled"
-  state, its scrollToHash nav, Safari's own toolbar collapse), so the
-  scroller needs to stay `window`, not a wrapper div.
-
-  The Safari gap is instead addressed the way that's compatible with
-  window scrolling: html/body use a FLAT color sampled from the
-  gradient's own dark edge tone, not the full gradient. A flat color
-  can never visibly "repeat" or misalign no matter what Safari's
-  toolbar or overscroll bounce does mid-scroll — it only needs to be
-  close enough in tone to be invisible when briefly exposed. The actual
-  gradient art still lives on .site-background (a fixed, viewport-
-  pinned layer, see PAGE BACKGROUND below) which is what's normally
-  visible; this flat color only shows in the rare edge-of-frame flash.
-*/
-
 html {
   width: 100%;
   min-height: 100%;
@@ -132,6 +113,10 @@ html {
   scrollbar-width: thin;
   scrollbar-color: var(--secondary) var(--primary-darker);
 
+  /* This canvas is visible in Safari display cutouts and during browser-chrome
+     animations, so it must be the custom artwork—not a flat fallback colour. */
+  background: var(--primary);
+
   /*
     Allow normal one-finger scrolling but block pinch-zoom and
     double-tap-to-zoom gestures on touch devices. Pair this with
@@ -139,23 +124,17 @@ html {
     this alone isn't enough on every browser.
   */
   touch-action: pan-x pan-y;
-
-  /* Flat fallback tone — see comment above. */
-  background: var(--primary-darker);
-
-  /* Stop rubber-band bounce chaining so the flat fallback is exposed
-     as rarely as possible in the first place. */
-  overscroll-behavior-y: none;
 }
 
-body {
+body { 
   min-width: 320px;
   min-height: 100%;
 
   margin: 0;
 
-  /* Same flat fallback tone as html, for the same reason. */
-  background: var(--primary-darker);
+  /* Covers every document pixel with the same artwork while the independent
+     fixed layer is composited by mobile browsers. */
+  background: var(--primary);
   color: var(--foreground);
 
   font-family: var(--font-body);
@@ -164,9 +143,8 @@ body {
   text-rendering: optimizeLegibility;
 
   touch-action: pan-x pan-y;
-  overscroll-behavior-y: none;
+ 
 }
-
 html,
 body {
   width: 100%;
@@ -325,6 +303,12 @@ video {
 .page-background,
 .site-background {
   position: fixed;
+  /*
+   * Use the largest viewport from first paint. This stays behind both the
+   * expanded and collapsed browser controls, so a fast scroll cannot expose
+   * a resizing gap. Extend through display-cutout safe areas as well. `vh`
+   * remains the fallback for older browsers.
+   */
   top: calc(0px - env(safe-area-inset-top, 0px));
   right: calc(0px - env(safe-area-inset-right, 0px));
   left: calc(0px - env(safe-area-inset-left, 0px));
@@ -332,10 +316,9 @@ video {
     100% + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px)
   );
   height: 100vh;
-  height: 100svh;
   height: 100lvh;
   min-height: calc(
-    100svh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
+    100lvh + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
   );
   overflow: hidden;
   overflow: clip;
@@ -344,6 +327,7 @@ video {
   z-index: -1;
   background: var(--site-background);
 }
+
 
 /* =========================================================
    MAIN CONTENT
@@ -527,9 +511,9 @@ textarea:-webkit-autofill:active {
 /* ============================================================
    Lightbox Open — Scrollbar Thumb
    Hides only the scrollbar's thumb while the portfolio lightbox is
-   open. The track stays reserved (#scroll-root keeps overflow-y:
-   scroll at all times), so this never changes the page's width — no
-   reflow, no shift in anything measured while the lightbox is animating.
+   open. The track stays reserved (html keeps overflow-y: scroll at
+   all times), so this never changes the page's width — no reflow,
+   no shift in anything measured while the lightbox is animating.
    ============================================================ */
 
 html.lightbox-scrollbar-hidden {
