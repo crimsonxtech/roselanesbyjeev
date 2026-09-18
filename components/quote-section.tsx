@@ -118,12 +118,9 @@ const SERVICE_CATALOG = [
 ];
 
 const ADDON_CATALOG = [
-  "Extra Photographer",
-  "Extra Videographer",
-  "Photo Album",
-  "Framed Prints",
-  "Same-Day Edit",
-  "Extra Hour Coverage",
+  "⁠albums",
+"⁠extra cinematic trailer edit video’s ",
+"⁠extra coverage of event"
 ];
 
 /* ==========================================================
