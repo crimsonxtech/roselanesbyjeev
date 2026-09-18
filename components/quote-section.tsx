@@ -118,9 +118,9 @@ const SERVICE_CATALOG = [
 ];
 
 const ADDON_CATALOG = [
-  "⁠albums",
-"⁠extra cinematic trailer edit video’s ",
-"⁠extra coverage of event"
+  "⁠Albums",
+"⁠Extra Cinematic Trailer Edited video ",
+"⁠Extra Coverage of Event"
 ];
 
 /* ==========================================================
