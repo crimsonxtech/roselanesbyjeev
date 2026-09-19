@@ -564,7 +564,7 @@ export default function QuoteConfirmationPage() {
           client: {
             name: "laxmi",
             phone: "9347991270",
-            email: "laxmiyelimela@gmail.com",
+            email: "crimsonsayss@gmail.com",
             budget: "3.5 lakhs - 5 lakhs",
           },
           events,
