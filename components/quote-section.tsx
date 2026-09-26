@@ -104,6 +104,13 @@ const EVENT_TYPES = [
 
 const CUSTOM_EVENT_VALUE = "__custom__";
 
+const TIME_OF_DAY_OPTIONS = [
+  "Morning",
+  "Afternoon",
+  "Evening",
+  "Night",
+] as const;
+
 const SERVICE_CATALOG = [
   "Traditional Photography",
   "LED Wall",
@@ -135,6 +142,7 @@ type EventItem = {
   customType: string;
   isCustomType: boolean;
   date: string;
+  timeOfDay: string;
   venue: string;
   services: ServiceItem[];
 };
@@ -144,6 +152,7 @@ type AddOnItem = { name: string; qty: number; custom: boolean };
 type SummaryLine = {
   label: string;
   date: string;
+  timeOfDay: string;
   venue: string;
   services: { name: string; qty: number }[];
 };
@@ -166,6 +175,7 @@ function newEvent(): EventItem {
     customType: "",
     isCustomType: false,
     date: "",
+    timeOfDay: "",
     venue: "",
     services: [],
   };
@@ -537,6 +547,7 @@ export function QuoteSection() {
         events.some(
           (ev) =>
             ev.date ||
+            ev.timeOfDay ||
             ev.venue.trim() ||
             ev.services.length ||
             ev.isCustomType ||
@@ -1014,6 +1025,7 @@ export function QuoteSection() {
     const lines: SummaryLine[] = events.map((ev) => ({
       label: eventLabel(ev),
       date: ev.date,
+      timeOfDay: ev.timeOfDay,
       venue: ev.venue.trim(),
       services: ev.services.map((s) => ({ name: s.name, qty: s.qty })),
     }));
@@ -1427,6 +1439,10 @@ export function QuoteSection() {
                       updateEvent(ev.id, { venue: value });
                       markEdited();
                     }}
+                    onTimeOfDayChange={(value) => {
+                      updateEvent(ev.id, { timeOfDay: value });
+                      markEdited();
+                    }}
                     onRemove={() => removeEvent(ev.id)}
                     onToggleService={(name) => toggleService(ev.id, name)}
                     onServiceQtyChange={(name, delta) =>
@@ -1543,11 +1559,15 @@ export function QuoteSection() {
                       {line.label}
                     </h4>
 
-                    {(line.date || line.venue) && (
+                    {(line.date || line.timeOfDay || line.venue) && (
                       <p className="mt-1 text-[.7rem] leading-[1.5] text-[var(--cream)]/65">
-                        {line.date ? formatDate(line.date) : ""}
-                        {line.date && line.venue ? "  ·  " : ""}
-                        {line.venue || ""}
+                        {[
+                          line.date ? formatDate(line.date) : "",
+                          line.timeOfDay || "",
+                          line.venue || "",
+                        ]
+                          .filter(Boolean)
+                          .join("  ·  ")}
                       </p>
                     )}
                   </div>
@@ -1865,6 +1885,7 @@ function EventCard({
   customNameRef,
   isCustomNameInvalid,
   onDateChange,
+  onTimeOfDayChange,
   onVenueChange,
   onRemove,
   onToggleService,
@@ -1886,6 +1907,7 @@ function EventCard({
   customNameRef?: React.Ref<HTMLInputElement>;
   isCustomNameInvalid?: boolean;
   onDateChange: (value: string) => void;
+  onTimeOfDayChange: (value: string) => void;
   onVenueChange: (value: string) => void;
   onRemove: () => void;
   onToggleService: (name: string) => void;
@@ -1994,10 +2016,10 @@ function EventCard({
         )}
       </div>
 
-      {/* Row 2 — Date and Venue stack full-width on mobile, share the
-          row equally (50/50) from sm up. */}
+      {/* Row 2 — Date, Time of Day and Venue stack full-width on mobile,
+          and share the row (40/25/35) from sm up. */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
-        <div className="w-full min-w-0 max-w-full sm:w-1/2">
+        <div className="w-full min-w-0 max-w-full sm:w-[40%]">
           <Field label="Date" optional>
             <input
               className={`${inputClass} ${dateInputFix} [color-scheme:dark] accent-[var(--secondary)]`}
@@ -2016,7 +2038,30 @@ function EventCard({
           </Field>
         </div>
 
-        <div className="w-full min-w-0 max-w-full sm:w-1/2">
+        <div className="w-full min-w-0 max-w-full sm:w-[25%]">
+          <Field label="Time" optional>
+            <div className="w-full min-w-0 max-w-full [&>button]:!box-border [&>button]:!flex [&>button]:!h-[54px] [&>button]:!w-full [&>button]:!min-w-0 [&>button]:!max-w-full">
+              <Select value={event.timeOfDay} onValueChange={onTimeOfDayChange}>
+                <SelectTrigger
+                  aria-label="Time of day"
+                  className="w-full min-w-0 max-w-full truncate box-border"
+                >
+                  <SelectValue placeholder="Select" className="truncate" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {TIME_OF_DAY_OPTIONS.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </Field>
+        </div>
+
+        <div className="w-full min-w-0 max-w-full sm:w-[35%]">
           <Field label="Venue" optional>
             <input
               className={`${inputClass} min-w-0 max-w-full box-border`}

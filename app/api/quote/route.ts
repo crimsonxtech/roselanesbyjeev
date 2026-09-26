@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { prisma } from "@/lib/prisma";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -14,6 +15,7 @@ type ServiceItem = {
 type EventItem = {
   label: string;
   date: string;
+  timeOfDay: string;
   venue: string;
   services: ServiceItem[];
 };
@@ -130,6 +132,7 @@ function validateQuote(body: unknown): QuoteRequest {
 
     const label = text(item.label);
     const date = text(item.date);
+    const timeOfDay = text(item.timeOfDay);
     const venue = text(item.venue);
 
     if (!label) {
@@ -154,6 +157,10 @@ function validateQuote(body: unknown): QuoteRequest {
 
     if (date.length > 100) {
       throw new Error(`Event ${eventIndex + 1} date is invalid.`);
+    }
+
+    if (timeOfDay.length > 50) {
+      throw new Error(`Event ${eventIndex + 1} time of day is invalid.`);
     }
 
     if (venue.length > 250) {
@@ -197,6 +204,7 @@ function validateQuote(body: unknown): QuoteRequest {
     return {
       label,
       date,
+      timeOfDay,
       venue,
       services,
     };
@@ -241,6 +249,48 @@ function validateQuote(body: unknown): QuoteRequest {
     events,
     addOns,
   };
+}
+
+function renderEventMetaCellsInternal(event: EventItem): string {
+  const cells = [
+    { label: "Date", value: event.date },
+    ...(event.timeOfDay ? [{ label: "Time of Day", value: event.timeOfDay }] : []),
+    { label: "Venue", value: event.venue },
+  ];
+
+  const width = `${100 / cells.length}%`;
+
+  return cells
+    .map(
+      (cell, i) => `
+        <td style="
+          width:${width};
+          padding:0 ${i === cells.length - 1 ? 0 : 10}px 14px ${
+        i === 0 ? 0 : 10
+      }px;
+          vertical-align:top;
+        ">
+          <div style="
+            font-family:Arial,sans-serif;
+            font-size:11px;
+            text-transform:uppercase;
+            letter-spacing:1.2px;
+            color:#8a6d58;
+            margin-bottom:5px;
+          ">
+            ${cell.label}
+          </div>
+          <div style="
+            font-family:Arial,sans-serif;
+            font-size:14px;
+            color:#3f0a18;
+          ">
+            ${escapeHtml(cell.value)}
+          </div>
+        </td>
+      `
+    )
+    .join("");
 }
 
 function renderEventForInternal(event: EventItem, index: number): string {
@@ -301,53 +351,7 @@ function renderEventForInternal(event: EventItem, index: number): string {
           style="border-collapse:collapse;"
         >
           <tr>
-            <td style="
-              width:50%;
-              padding:0 10px 14px 0;
-              vertical-align:top;
-            ">
-              <div style="
-                font-family:Arial,sans-serif;
-                font-size:11px;
-                text-transform:uppercase;
-                letter-spacing:1.2px;
-                color:#8a6d58;
-                margin-bottom:5px;
-              ">
-                Date
-              </div>
-              <div style="
-                font-family:Arial,sans-serif;
-                font-size:14px;
-                color:#3f0a18;
-              ">
-                ${escapeHtml(event.date)}
-              </div>
-            </td>
-
-            <td style="
-              width:50%;
-              padding:0 0 14px 10px;
-              vertical-align:top;
-            ">
-              <div style="
-                font-family:Arial,sans-serif;
-                font-size:11px;
-                text-transform:uppercase;
-                letter-spacing:1.2px;
-                color:#8a6d58;
-                margin-bottom:5px;
-              ">
-                Venue
-              </div>
-              <div style="
-                font-family:Arial,sans-serif;
-                font-size:14px;
-                color:#3f0a18;
-              ">
-                ${escapeHtml(event.venue)}
-              </div>
-            </td>
+            ${renderEventMetaCellsInternal(event)}
           </tr>
         </table>
 
@@ -404,6 +408,48 @@ function renderEventForInternal(event: EventItem, index: number): string {
   `;
 }
 
+function renderEventMetaCellsClient(event: EventItem): string {
+  const cells = [
+    { label: "Date", value: event.date },
+    ...(event.timeOfDay ? [{ label: "Time of Day", value: event.timeOfDay }] : []),
+    { label: "Venue", value: event.venue },
+  ];
+
+  const width = `${100 / cells.length}%`;
+
+  return cells
+    .map(
+      (cell, i) => `
+        <td style="
+          width:${width};
+          padding:0 ${i === cells.length - 1 ? 0 : 10}px 14px ${
+        i === 0 ? 0 : 10
+      }px;
+          vertical-align:top;
+        ">
+          <div style="
+            font-family:Arial,sans-serif;
+            font-size:10px;
+            text-transform:uppercase;
+            letter-spacing:1.1px;
+            color:#8a6d58;
+            margin-bottom:4px;
+          ">
+            ${cell.label}
+          </div>
+          <div style="
+            font-family:Arial,sans-serif;
+            font-size:14px;
+            color:#3f0a18;
+          ">
+            ${escapeHtml(cell.value)}
+          </div>
+        </td>
+      `
+    )
+    .join("");
+}
+
 function renderEventForClient(event: EventItem, index: number): string {
   const services = event.services
     .map(
@@ -453,53 +499,7 @@ function renderEventForClient(event: EventItem, index: number): string {
         style="border-collapse:collapse;"
       >
         <tr>
-          <td style="
-            width:50%;
-            padding:0 10px 14px 0;
-            vertical-align:top;
-          ">
-            <div style="
-              font-family:Arial,sans-serif;
-              font-size:10px;
-              text-transform:uppercase;
-              letter-spacing:1.1px;
-              color:#8a6d58;
-              margin-bottom:4px;
-            ">
-              Date
-            </div>
-            <div style="
-              font-family:Arial,sans-serif;
-              font-size:14px;
-              color:#3f0a18;
-            ">
-              ${escapeHtml(event.date)}
-            </div>
-          </td>
-
-          <td style="
-            width:50%;
-            padding:0 0 14px 10px;
-            vertical-align:top;
-          ">
-            <div style="
-              font-family:Arial,sans-serif;
-              font-size:10px;
-              text-transform:uppercase;
-              letter-spacing:1.1px;
-              color:#8a6d58;
-              margin-bottom:4px;
-            ">
-              Venue
-            </div>
-            <div style="
-              font-family:Arial,sans-serif;
-              font-size:14px;
-              color:#3f0a18;
-            ">
-              ${escapeHtml(event.venue)}
-            </div>
-          </td>
+          ${renderEventMetaCellsClient(event)}
         </tr>
       </table>
 
@@ -939,7 +939,9 @@ function clientEmailHtml(quote: QuoteRequest): string {
           line-height:1.7;
         ">
           Our team will review your event requirements and get back to you
-          within 24 hours.
+          within 24 hours. Please keep an eye on your inbox for a follow-up
+          email from us with your personalised quotation and final budget
+          once the review is complete.
         </div>
       </div>
 
@@ -1120,11 +1122,47 @@ export async function POST(request: Request) {
     }
 
     const quote = validateQuote(body);
+        let savedQuote;
+    try {
+      savedQuote = await prisma.quote.create({
+        data: {
+          name: quote.name,
+          phone: quote.phone,
+          email: quote.email,
+          budget: quote.budget,
+          message: quote.message || null,
+          events: {
+            create: quote.events.map((event) => ({
+              label: event.label,
+              date: event.date,
+              timeOfDay: event.timeOfDay || null,
+              venue: event.venue,
+              services: {
+                create: event.services.map((s) => ({
+                  name: s.name,
+                  qty: s.qty,
+                })),
+              },
+            })),
+          },
+          addOns: {
+            create: (quote.addOns || []).map((a) => ({
+              name: a.name,
+              qty: a.qty,
+            })),
+          },
+        },
+      });
+    } catch (dbError) {
+      console.error("Failed to save quote to database:", dbError);
+      // Don't block email sending on a DB failure — we still want the
+      // client to get their quote request through either way.
+    }
 
     const internalSubject = `New Quote Request — ${quote.name}`;
 
     const clientSubject =
-      "We Received Your Quote Request — Roselanes by Jeev";
+      "We've Received Your Request — Your Quotation Is On Its Way";
 
     /*
      * Send both emails independently.

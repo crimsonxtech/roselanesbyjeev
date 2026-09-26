@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { prisma } from "@/lib/prisma";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = "Roselanes by Jeev <contact@roselanesbyjeev.in>";
@@ -24,6 +25,7 @@ type AddOnItem = {
 };
 
 type Body = {
+  quoteId?: string;
   client: {
     name: string;
     phone: string;
@@ -184,6 +186,15 @@ const html = `
             <div style="margin-top:5px;font:36px Georgia,serif;color:#831132;">${money(body.price)}</div>
           </div>
 
+          <!-- EVENTS -->
+          <h2 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:25px;line-height:1.3;font-weight:700;color:#2b0510;">
+            Your Event Details
+          </h2>
+
+          ${renderEvents(events)}
+
+          ${renderAddOns(body.addOns || [])}
+
           <!-- DELIVERABLES -->
           <h2 style="margin:32px 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:25px;line-height:1.3;font-weight:700;color:#2b0510;">
             Deliverables
@@ -260,6 +271,7 @@ const html = `
     const result = await resend.emails.send({
       from: FROM_EMAIL,
       to: [body.client.email],
+      bcc: ["roselanesbyjeev@gmail.com"],
       subject: "Quotation — Roselanes by Jeev",
       html,
     });
@@ -269,6 +281,21 @@ const html = `
         { success: false, error: result.error.message || "Resend failed." },
         { status: 502 },
       );
+    }
+
+    if (body.quoteId) {
+      try {
+        await prisma.quote.update({
+          where: { id: body.quoteId },
+          data: { confirmationSentAt: new Date() },
+        });
+      } catch (dbError) {
+        // The email (with its cc to roselanesbyjeev@gmail.com) already went
+        // out — don't fail the request over this, but log it, since it means
+        // the dashboard's "email pending" badge will keep showing even
+        // though the quote was sent.
+        console.error("Failed to stamp confirmationSentAt:", dbError);
+      }
     }
 
     return NextResponse.json({ success: true, id: result.data?.id });

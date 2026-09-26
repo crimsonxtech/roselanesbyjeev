@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---- Quote data ----
+
+enum QuoteStatus {
+  NEW
+  WAITLISTED
+  REJECTED
+  ACCEPTED
+  CONFIRMED
+  IN_PROGRESS
+  FINISHED
+}
+
+enum EventProductionStage {
+  NOT_STARTED
+  SHOOTING_SCHEDULED
+  SHOT
+  EDITING
+  EDITED
+  DELIVERED
+}
+
+model Quote {
+  id        String      @id @default(cuid())
+  name      String
+  phone     String
+  email     String
+  budget    String
+  message   String?
+  status    QuoteStatus @default(NEW)
+  createdAt DateTime    @default(now())
+
+  // Pricing (set when moving to ACCEPTED)
+  price              Int?
+  discount           Int?
+  finalTotal         Int?
+  termsAndConditions String?
+
+  // Rejection
+  rejectedAt           DateTime?
+  rejectionEmailSentAt DateTime?
+
+  // Confirmation flow
+  confirmationSentAt         DateTime?
+  confirmationToken          String?   @unique
+  confirmationTokenExpiresAt DateTime?
+  confirmedAt                DateTime?
+  clientDeclinedAt           DateTime?
+
+  events QuoteEvent[]
+  addOns QuoteAddOn[]
+
+  @@index([confirmationToken])
+}
+
+model QuoteEvent {
+  id        String               @id @default(cuid())
+  quoteId   String
+  quote     Quote                @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  label     String
+  date      String
+  timeOfDay String?
+  venue     String
+
+  productionStage EventProductionStage @default(NOT_STARTED)
+
+  services QuoteEventService[]
+}
+
+model QuoteEventService {
+  id      String     @id @default(cuid())
+  eventId String
+  event   QuoteEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name    String
+  qty     Int
+}
+
+model QuoteAddOn {
+  id      String @id @default(cuid())
+  quoteId String
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  name    String
+  qty     Int
+}
+
+// ---- Better Auth (unchanged) ----
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
