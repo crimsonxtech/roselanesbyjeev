@@ -43,6 +43,7 @@ export type QuoteMinAggregateOutputType = {
   name: string | null
   phone: string | null
   email: string | null
+  additionalEmail: string | null
   budget: string | null
   message: string | null
   status: $Enums.QuoteStatus | null
@@ -65,6 +66,7 @@ export type QuoteMaxAggregateOutputType = {
   name: string | null
   phone: string | null
   email: string | null
+  additionalEmail: string | null
   budget: string | null
   message: string | null
   status: $Enums.QuoteStatus | null
@@ -87,6 +89,7 @@ export type QuoteCountAggregateOutputType = {
   name: number
   phone: number
   email: number
+  additionalEmail: number
   budget: number
   message: number
   status: number
@@ -123,6 +126,7 @@ export type QuoteMinAggregateInputType = {
   name?: true
   phone?: true
   email?: true
+  additionalEmail?: true
   budget?: true
   message?: true
   status?: true
@@ -145,6 +149,7 @@ export type QuoteMaxAggregateInputType = {
   name?: true
   phone?: true
   email?: true
+  additionalEmail?: true
   budget?: true
   message?: true
   status?: true
@@ -167,6 +172,7 @@ export type QuoteCountAggregateInputType = {
   name?: true
   phone?: true
   email?: true
+  additionalEmail?: true
   budget?: true
   message?: true
   status?: true
@@ -276,6 +282,7 @@ export type QuoteGroupByOutputType = {
   name: string
   phone: string
   email: string
+  additionalEmail: string | null
   budget: string
   message: string | null
   status: $Enums.QuoteStatus
@@ -321,6 +328,7 @@ export type QuoteWhereInput = {
   name?: Prisma.StringFilter<"Quote"> | string
   phone?: Prisma.StringFilter<"Quote"> | string
   email?: Prisma.StringFilter<"Quote"> | string
+  additionalEmail?: Prisma.StringNullableFilter<"Quote"> | string | null
   budget?: Prisma.StringFilter<"Quote"> | string
   message?: Prisma.StringNullableFilter<"Quote"> | string | null
   status?: Prisma.EnumQuoteStatusFilter<"Quote"> | $Enums.QuoteStatus
@@ -345,6 +353,7 @@ export type QuoteOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  additionalEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   budget?: Prisma.SortOrder
   message?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -373,6 +382,7 @@ export type QuoteWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"Quote"> | string
   phone?: Prisma.StringFilter<"Quote"> | string
   email?: Prisma.StringFilter<"Quote"> | string
+  additionalEmail?: Prisma.StringNullableFilter<"Quote"> | string | null
   budget?: Prisma.StringFilter<"Quote"> | string
   message?: Prisma.StringNullableFilter<"Quote"> | string | null
   status?: Prisma.EnumQuoteStatusFilter<"Quote"> | $Enums.QuoteStatus
@@ -396,6 +406,7 @@ export type QuoteOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  additionalEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   budget?: Prisma.SortOrder
   message?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -426,6 +437,7 @@ export type QuoteScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"Quote"> | string
   phone?: Prisma.StringWithAggregatesFilter<"Quote"> | string
   email?: Prisma.StringWithAggregatesFilter<"Quote"> | string
+  additionalEmail?: Prisma.StringNullableWithAggregatesFilter<"Quote"> | string | null
   budget?: Prisma.StringWithAggregatesFilter<"Quote"> | string
   message?: Prisma.StringNullableWithAggregatesFilter<"Quote"> | string | null
   status?: Prisma.EnumQuoteStatusWithAggregatesFilter<"Quote"> | $Enums.QuoteStatus
@@ -448,6 +460,7 @@ export type QuoteCreateInput = {
   name: string
   phone: string
   email: string
+  additionalEmail?: string | null
   budget: string
   message?: string | null
   status?: $Enums.QuoteStatus
@@ -472,6 +485,7 @@ export type QuoteUncheckedCreateInput = {
   name: string
   phone: string
   email: string
+  additionalEmail?: string | null
   budget: string
   message?: string | null
   status?: $Enums.QuoteStatus
@@ -496,6 +510,7 @@ export type QuoteUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  additionalEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   budget?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumQuoteStatusFieldUpdateOperationsInput | $Enums.QuoteStatus
@@ -520,6 +535,7 @@ export type QuoteUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  additionalEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   budget?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumQuoteStatusFieldUpdateOperationsInput | $Enums.QuoteStatus
@@ -544,6 +560,7 @@ export type QuoteCreateManyInput = {
   name: string
   phone: string
   email: string
+  additionalEmail?: string | null
   budget: string
   message?: string | null
   status?: $Enums.QuoteStatus
@@ -566,6 +583,7 @@ export type QuoteUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  additionalEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   budget?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumQuoteStatusFieldUpdateOperationsInput | $Enums.QuoteStatus
@@ -588,6 +606,7 @@ export type QuoteUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  additionalEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   budget?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumQuoteStatusFieldUpdateOperationsInput | $Enums.QuoteStatus
@@ -610,6 +629,7 @@ export type QuoteCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  additionalEmail?: Prisma.SortOrder
   budget?: Prisma.SortOrder
   message?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -638,6 +658,7 @@ export type QuoteMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  additionalEmail?: Prisma.SortOrder
   budget?: Prisma.SortOrder
   message?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -660,6 +681,7 @@ export type QuoteMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  additionalEmail?: Prisma.SortOrder
   budget?: Prisma.SortOrder
   message?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -749,6 +771,7 @@ export type QuoteCreateWithoutEventsInput = {
   name: string
   phone: string
   email: string
+  additionalEmail?: string | null
   budget: string
   message?: string | null
   status?: $Enums.QuoteStatus
@@ -772,6 +795,7 @@ export type QuoteUncheckedCreateWithoutEventsInput = {
   name: string
   phone: string
   email: string
+  additionalEmail?: string | null
   budget: string
   message?: string | null
   status?: $Enums.QuoteStatus
@@ -811,6 +835,7 @@ export type QuoteUpdateWithoutEventsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  additionalEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   budget?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumQuoteStatusFieldUpdateOperationsInput | $Enums.QuoteStatus
@@ -834,6 +859,7 @@ export type QuoteUncheckedUpdateWithoutEventsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  additionalEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   budget?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumQuoteStatusFieldUpdateOperationsInput | $Enums.QuoteStatus
@@ -857,6 +883,7 @@ export type QuoteCreateWithoutAddOnsInput = {
   name: string
   phone: string
   email: string
+  additionalEmail?: string | null
   budget: string
   message?: string | null
   status?: $Enums.QuoteStatus
@@ -880,6 +907,7 @@ export type QuoteUncheckedCreateWithoutAddOnsInput = {
   name: string
   phone: string
   email: string
+  additionalEmail?: string | null
   budget: string
   message?: string | null
   status?: $Enums.QuoteStatus
@@ -919,6 +947,7 @@ export type QuoteUpdateWithoutAddOnsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  additionalEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   budget?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumQuoteStatusFieldUpdateOperationsInput | $Enums.QuoteStatus
@@ -942,6 +971,7 @@ export type QuoteUncheckedUpdateWithoutAddOnsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  additionalEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   budget?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumQuoteStatusFieldUpdateOperationsInput | $Enums.QuoteStatus
@@ -1005,6 +1035,7 @@ export type QuoteSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   name?: boolean
   phone?: boolean
   email?: boolean
+  additionalEmail?: boolean
   budget?: boolean
   message?: boolean
   status?: boolean
@@ -1030,6 +1061,7 @@ export type QuoteSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   name?: boolean
   phone?: boolean
   email?: boolean
+  additionalEmail?: boolean
   budget?: boolean
   message?: boolean
   status?: boolean
@@ -1052,6 +1084,7 @@ export type QuoteSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   name?: boolean
   phone?: boolean
   email?: boolean
+  additionalEmail?: boolean
   budget?: boolean
   message?: boolean
   status?: boolean
@@ -1074,6 +1107,7 @@ export type QuoteSelectScalar = {
   name?: boolean
   phone?: boolean
   email?: boolean
+  additionalEmail?: boolean
   budget?: boolean
   message?: boolean
   status?: boolean
@@ -1091,7 +1125,7 @@ export type QuoteSelectScalar = {
   clientDeclinedAt?: boolean
 }
 
-export type QuoteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "phone" | "email" | "budget" | "message" | "status" | "createdAt" | "price" | "discount" | "finalTotal" | "termsAndConditions" | "rejectedAt" | "rejectionEmailSentAt" | "confirmationSentAt" | "confirmationToken" | "confirmationTokenExpiresAt" | "confirmedAt" | "clientDeclinedAt", ExtArgs["result"]["quote"]>
+export type QuoteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "phone" | "email" | "additionalEmail" | "budget" | "message" | "status" | "createdAt" | "price" | "discount" | "finalTotal" | "termsAndConditions" | "rejectedAt" | "rejectionEmailSentAt" | "confirmationSentAt" | "confirmationToken" | "confirmationTokenExpiresAt" | "confirmedAt" | "clientDeclinedAt", ExtArgs["result"]["quote"]>
 export type QuoteInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   events?: boolean | Prisma.Quote$eventsArgs<ExtArgs>
   addOns?: boolean | Prisma.Quote$addOnsArgs<ExtArgs>
@@ -1111,6 +1145,7 @@ export type $QuotePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     name: string
     phone: string
     email: string
+    additionalEmail: string | null
     budget: string
     message: string | null
     status: $Enums.QuoteStatus
@@ -1555,6 +1590,7 @@ export interface QuoteFieldRefs {
   readonly name: Prisma.FieldRef<"Quote", 'String'>
   readonly phone: Prisma.FieldRef<"Quote", 'String'>
   readonly email: Prisma.FieldRef<"Quote", 'String'>
+  readonly additionalEmail: Prisma.FieldRef<"Quote", 'String'>
   readonly budget: Prisma.FieldRef<"Quote", 'String'>
   readonly message: Prisma.FieldRef<"Quote", 'String'>
   readonly status: Prisma.FieldRef<"Quote", 'QuoteStatus'>

@@ -1060,6 +1060,7 @@ export const QuoteScalarFieldEnum = {
   name: 'name',
   phone: 'phone',
   email: 'email',
+  additionalEmail: 'additionalEmail',
   budget: 'budget',
   message: 'message',
   status: 'status',

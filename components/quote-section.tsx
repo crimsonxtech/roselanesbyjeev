@@ -232,13 +232,23 @@ function getTodayLocalIso() {
    never disagree with itself.
    ========================================================== */
 
-type DetailField = "name" | "phone" | "email" | "budget";
+type DetailField =
+  | "name"
+  | "phone"
+  | "email"
+  | "budget"
+  | "extraEmail";
 
 /* Order matters: it decides which field gets focus on submit. */
-const DETAIL_FIELDS: DetailField[] = ["name", "phone", "email", "budget"];
+const DETAIL_FIELDS: DetailField[] = [
+  "name",
+  "phone",
+  "email",
+  "budget",
+  "extraEmail",
+];
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/;
-
 function validateName(value: string) {
   const v = value.trim();
   if (!v) return "Please enter your full name.";
@@ -267,14 +277,30 @@ function validateBudget(value: string) {
   return undefined;
 }
 
+/* Optional extra email. Empty is fine; if filled it must be valid and
+   differ from the main email. */
+function validateExtraEmail(
+  value: string,
+  all: Record<DetailField, string>,
+) {
+  const v = value.trim();
+  if (!v) return undefined;
+  if (!EMAIL_RE.test(v)) return "Please enter a valid email address.";
+  if (v.toLowerCase() === all.email.trim().toLowerCase()) {
+    return "This is the same as your main email.";
+  }
+  return undefined;
+}
+
 const DETAIL_VALIDATORS: Record<
   DetailField,
-  (value: string) => string | undefined
+  (value: string, all: Record<DetailField, string>) => string | undefined
 > = {
   name: validateName,
   phone: validatePhone,
   email: validateEmail,
   budget: validateBudget,
+  extraEmail: validateExtraEmail,
 };
 
 type DetailErrors = Partial<Record<DetailField, string>>;
@@ -410,6 +436,8 @@ export function QuoteSection() {
   const [name, setName] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [email, setEmail] = React.useState("");
+  const [showExtraEmail, setShowExtraEmail] = React.useState(false);
+  const [extraEmail, setExtraEmail] = React.useState("");
   const [budget, setBudget] = React.useState<string>("");
   const [message, setMessage] = React.useState("");
 
@@ -462,6 +490,7 @@ export function QuoteSection() {
   const phoneRef = React.useRef<HTMLInputElement>(null);
   const emailRef = React.useRef<HTMLInputElement>(null);
   const budgetTriggerRef = React.useRef<HTMLButtonElement>(null);
+  const extraEmailRef = React.useRef<HTMLInputElement>(null);
   const eventsSectionRef = React.useRef<HTMLDivElement>(null);
   const summaryRef = React.useRef<HTMLDivElement>(null);
   const customEventNameRefs = React.useRef<Record<number, HTMLInputElement | null>>({});
@@ -507,6 +536,8 @@ export function QuoteSection() {
       if (saved.name) setName(saved.name);
       if (saved.phone) setPhone(saved.phone);
       if (saved.email) setEmail(saved.email);
+      if (saved.showExtraEmail || saved.extraEmail) setShowExtraEmail(true);
+      if (saved.extraEmail) setExtraEmail(saved.extraEmail);
       if (saved.budget) setBudget(saved.budget);
       if (saved.message) setMessage(saved.message);
 
@@ -537,12 +568,32 @@ export function QuoteSection() {
     try {
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ name, phone, email, budget, message, events, addOns })
+        JSON.stringify({
+          name,
+          phone,
+          email,
+          showExtraEmail,
+          extraEmail,
+          budget,
+          message,
+          events,
+          addOns,
+        })
       );
     } catch {
       // Storage may be unavailable (private browsing, quota, etc).
     }
-  }, [name, phone, email, budget, message, events, addOns]);
+  }, [
+    name,
+    phone,
+    email,
+    showExtraEmail,
+    extraEmail,
+    budget,
+    message,
+    events,
+    addOns,
+  ]);
 
   /* ---------------- Derived sheet mode ----------------
      A single element morphs between three visual states instead
@@ -557,6 +608,7 @@ export function QuoteSection() {
     return Boolean(
       name.trim() ||
         email.trim() ||
+        extraEmail.trim() ||
         phone.trim() ||
         budget ||
         message.trim() ||
@@ -626,6 +678,7 @@ export function QuoteSection() {
     phone,
     email,
     budget,
+    extraEmail,
   };
 
   const detailRefs: Record<
@@ -636,11 +689,20 @@ export function QuoteSection() {
     phone: phoneRef,
     email: emailRef,
     budget: budgetTriggerRef,
+    extraEmail: extraEmailRef,
   };
 
   /** Run one field's validator and store (or clear) its message. */
-  function runFieldCheck(field: DetailField, value: string) {
-    const message = DETAIL_VALIDATORS[field](value);
+  function runFieldCheck(
+    field: DetailField,
+    value: string,
+    overrides: Partial<Record<DetailField, string>> = {},
+  ) {
+    const message = DETAIL_VALIDATORS[field](value, {
+      ...detailValues,
+      ...overrides,
+      [field]: value,
+    });
 
     setDetailErrors((prev) => {
       if (prev[field] === message) return prev;
@@ -672,6 +734,33 @@ export function QuoteSection() {
     setter(value);
     markEdited();
     if (submitAttempted || detailErrors[field]) runFieldCheck(field, value);
+  }
+
+  /* ---------------- Phone + additional email ---------------- */
+
+  function openExtraEmail() {
+    setShowExtraEmail(true);
+    markEdited();
+    requestAnimationFrame(() => extraEmailRef.current?.focus());
+  }
+
+  function removeExtraEmail() {
+    setShowExtraEmail(false);
+    setExtraEmail("");
+    setDetailErrors((prev) => {
+      const next = { ...prev };
+      delete next.extraEmail;
+      return next;
+    });
+    markEdited();
+  }
+
+  function handleExtraEmailChange(value: string) {
+    setExtraEmail(value);
+    markEdited();
+    if (submitAttempted || detailErrors.extraEmail) {
+      runFieldCheck("extraEmail", value);
+    }
   }
 
   /* ---------------- Helpers ---------------- */
@@ -757,6 +846,8 @@ export function QuoteSection() {
     setName("");
     setPhone("");
     setEmail("");
+    setShowExtraEmail(false);
+    setExtraEmail("");
     setBudget("");
     setDetailErrors({});
     setSubmitAttempted(false);
@@ -952,7 +1043,7 @@ export function QuoteSection() {
     const nextErrors: DetailErrors = {};
 
     for (const field of DETAIL_FIELDS) {
-      const message = DETAIL_VALIDATORS[field](detailValues[field]);
+      const message = DETAIL_VALIDATORS[field](detailValues[field], detailValues);
       if (message) nextErrors[field] = message;
     }
 
@@ -1123,6 +1214,7 @@ export function QuoteSection() {
           name: name.trim(),
           phone: phone.trim(),
           email: email.trim(),
+          additionalEmail: extraEmail.trim(),
           budget,
           message: message.trim(),
           events: data.lines,
@@ -1376,9 +1468,10 @@ export function QuoteSection() {
                       ref={emailRef}
                       className={inputCls(Boolean(detailErrors.email))}
                       type="email"
+                      name="email"
                       id="quote-email"
                       placeholder="Your email address"
-                      autoComplete="email"
+                      autoComplete="section-main email"
                       value={email}
                       aria-invalid={Boolean(detailErrors.email)}
                       aria-describedby={
@@ -1434,6 +1527,55 @@ export function QuoteSection() {
                     </div>
                   </Field>
                 </div>
+
+                {showExtraEmail ? (
+                  <div className="grid gap-4 sm:grid-cols-[2.5fr_1.5fr]">
+                    <Field
+                      label="Additional Email"
+                      htmlFor="quote-extra-email"
+                      optional
+                      error={detailErrors.extraEmail}
+                      errorId="quote-extra-email-error"
+                    >
+                      <div className="relative w-full min-w-0">
+                        <input
+                          ref={extraEmailRef}
+                          className={`${inputCls(Boolean(detailErrors.extraEmail))} pr-12`}
+                          type="email"
+                          name="additional-email"
+                          id="quote-extra-email"
+                          placeholder="Another email address"
+                          autoComplete="section-additional email"
+                          value={extraEmail}
+                          aria-invalid={Boolean(detailErrors.extraEmail)}
+                          aria-describedby={
+                            detailErrors.extraEmail ? "quote-extra-email-error" : undefined
+                          }
+                          onBlur={() => handleFieldBlur("extraEmail")}
+                          onChange={(e) => handleExtraEmailChange(e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={removeExtraEmail}
+                          aria-label="Remove additional email"
+                          className="absolute right-3 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-[var(--cream)]/55 transition-colors hover:bg-[var(--secondary)]/10 hover:text-[var(--secondary-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--secondary-light)]/60"
+                        >
+                          <X className="size-4" />
+                        </button>
+                      </div>
+                    </Field>
+                  </div>
+                ) : (
+<div className="-mt-2 pl-4">
+  <button
+    type="button"
+    onClick={openExtraEmail}
+    className="!p-0 !text-[14px] !font-medium !text-[var(--cream)]/50 transition-colors hover:!text-[var(--secondary-light)] !italic"
+  >
+    + Add another email
+  </button>
+</div>
+                )}
 
                 <Field label="Additional Notes" htmlFor="quote-message" optional>
                   <textarea

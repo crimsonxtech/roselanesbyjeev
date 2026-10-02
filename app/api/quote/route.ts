@@ -29,6 +29,7 @@ type QuoteRequest = {
   name: string;
   phone: string;
   email: string;
+  additionalEmail?: string | null;
   budget: string;
   message?: string;
   events: EventItem[];
@@ -74,6 +75,21 @@ function validateQuote(body: unknown): QuoteRequest {
   const email = text(data.email).toLowerCase();
   const budget = text(data.budget);
   const message = text(data.message);
+  const additionalEmail = text(data.additionalEmail).toLowerCase();
+
+if (additionalEmail) {
+  if (!isValidEmail(additionalEmail)) {
+    throw new Error("Please enter a valid additional email address.");
+  }
+
+  if (additionalEmail === email) {
+    throw new Error("Additional email must be different from the main email.");
+  }
+
+  if (additionalEmail.length > 254) {
+    throw new Error("Additional email address is too long.");
+  }
+}
 
   if (!name) {
     throw new Error("Name is required.");
@@ -244,6 +260,7 @@ function validateQuote(body: unknown): QuoteRequest {
     name,
     phone,
     email,
+    additionalEmail: additionalEmail || null,
     budget,
     message,
     events,
@@ -716,6 +733,31 @@ function internalEmailHtml(quote: QuoteRequest): string {
             </td>
           </tr>
 
+          ${
+            quote.additionalEmail
+              ? `
+          <tr>
+            <td style="
+              padding:9px 0;
+              color:#8a6d58;
+              font-size:12px;
+              text-transform:uppercase;
+              letter-spacing:.8px;
+            ">
+              Additional Email
+            </td>
+            <td style="
+              padding:9px 0;
+              color:#3f0a18;
+              font-size:14px;
+            ">
+              ${escapeHtml(quote.additionalEmail)}
+            </td>
+          </tr>
+          `
+              : ""
+          }
+
           <tr>
             <td style="
               padding:9px 0;
@@ -1129,6 +1171,7 @@ export async function POST(request: Request) {
           name: quote.name,
           phone: quote.phone,
           email: quote.email,
+          additionalEmail: quote.additionalEmail,
           budget: quote.budget,
           message: quote.message || null,
           events: {
@@ -1186,7 +1229,7 @@ export async function POST(request: Request) {
 
       resend.emails.send({
         from: FROM_EMAIL,
-        to: [quote.email],
+        to: [quote.email, ...(quote.additionalEmail ? [quote.additionalEmail] : [])],
         replyTo: INTERNAL_EMAIL,
         subject: clientSubject,
         html: clientEmailHtml(quote),

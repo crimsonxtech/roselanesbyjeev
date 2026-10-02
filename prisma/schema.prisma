@@ -29,14 +29,15 @@ enum EventProductionStage {
 }
 
 model Quote {
-  id        String      @id @default(cuid())
-  name      String
-  phone     String
-  email     String
-  budget    String
-  message   String?
-  status    QuoteStatus @default(NEW)
-  createdAt DateTime    @default(now())
+  id              String      @id @default(cuid())
+  name            String
+  phone           String
+  email           String
+  additionalEmail String?
+  budget          String
+  message         String?
+  status          QuoteStatus @default(NEW)
+  createdAt       DateTime    @default(now())
 
   // Pricing (set when moving to ACCEPTED)
   price              Int?

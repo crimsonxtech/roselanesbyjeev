@@ -72,6 +72,7 @@ type QuoteEditDraft = {
   name: string;
   phone: string;
   email: string;
+  additionalEmail: string;
   budget: string;
   message: string;
   events: DraftEvent[];
@@ -83,6 +84,7 @@ function makeDraft(quote: QuoteWithRelations): QuoteEditDraft {
     name: quote.name,
     phone: quote.phone,
     email: quote.email,
+    additionalEmail: quote.additionalEmail ?? "",
     budget: quote.budget,
     message: quote.message ?? "",
     events: quote.events.map((ev) => ({
@@ -333,11 +335,12 @@ function removeAddOn(index: number) {
         body: JSON.stringify({
           quoteId: quote.id,
           client: {
-            name: quote.name,
-            phone: quote.phone,
-            email: quote.email,
-            budget: quote.budget,
-          },
+  name: quote.name,
+  phone: quote.phone,
+  email: quote.email,
+  additionalEmail: quote.additionalEmail,
+  budget: quote.budget,
+},
           events: quote.events.map((ev) => ({
             id: ev.id,
             label: ev.label,
@@ -392,9 +395,22 @@ function removeAddOn(index: number) {
               {editing ? "Edit Request" : quote.name}
             </h2>
             {!editing && (
-              <p className="text-[.78rem] text-[var(--cream)]/60">
-                {quote.email} · {quote.phone}
-              </p>
+              <div className="space-y-0.5 text-[.78rem] text-[var(--cream)]/60">
+                <p>
+                  <span className="text-[var(--cream)]/40">Email:</span>{" "}
+                  {quote.email}
+                </p>
+                {quote.additionalEmail && (
+                  <p>
+                    <span className="text-[var(--cream)]/40">Additional:</span>{" "}
+                    {quote.additionalEmail}
+                  </p>
+                )}
+                <p>
+                  <span className="text-[var(--cream)]/40">Phone:</span>{" "}
+                  {quote.phone}
+                </p>
+              </div>
             )}
           </div>
 
@@ -439,18 +455,29 @@ function removeAddOn(index: number) {
                     placeholder="Phone"
                   />
                   <input
-                    className={inputClass}
-                    type="email"
-                    value={draft.email}
-                    onChange={(e) => setDraft({ ...draft, email: e.target.value })}
-                    placeholder="Email"
-                  />
-                  <input
-                    className={inputClass}
-                    value={draft.budget}
-                    onChange={(e) => setDraft({ ...draft, budget: e.target.value })}
-                    placeholder="Budget"
-                  />
+  className={inputClass}
+  type="email"
+  value={draft.email}
+  onChange={(e) => setDraft({ ...draft, email: e.target.value })}
+  placeholder="Email"
+/>
+
+<input
+  className={inputClass}
+  type="email"
+  value={draft.additionalEmail}
+  onChange={(e) =>
+    setDraft({ ...draft, additionalEmail: e.target.value })
+  }
+  placeholder="Additional email"
+/>
+
+<input
+  className={inputClass}
+  value={draft.budget}
+  onChange={(e) => setDraft({ ...draft, budget: e.target.value })}
+  placeholder="Budget"
+/>
                 </div>
 
                 <textarea

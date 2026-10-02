@@ -26,12 +26,13 @@ type AddOnItem = {
 
 type Body = {
   quoteId?: string;
-  client: {
-    name: string;
-    phone: string;
-    email: string;
-    budget: string;
-  };
+client: {
+  name: string;
+  phone: string;
+  email: string;
+  additionalEmail?: string;
+  budget: string;
+};
   events: EventItem[];
   addOns: AddOnItem[];
   price: number;
@@ -161,6 +162,43 @@ export async function POST(request: Request) {
       services: Array.isArray(event.services) ? event.services : [],
     }));
 
+    let additionalEmail = String(body.client.additionalEmail || "").trim().toLowerCase();
+
+    if (body.quoteId) {
+      try {
+        const savedQuote = await prisma.quote.findUnique({
+          where: { id: body.quoteId },
+          select: { email: true, additionalEmail: true },
+        });
+
+        if (savedQuote) {
+          // The database is authoritative after an admin edit.
+          additionalEmail =
+            String(savedQuote.additionalEmail || "").trim().toLowerCase();
+        }
+      } catch (dbError) {
+        console.error("Failed to load saved quote email recipients:", dbError);
+      }
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (additionalEmail) {
+      if (!emailPattern.test(additionalEmail)) {
+        return NextResponse.json(
+          { success: false, error: "Invalid additional email address." },
+          { status: 400 }
+        );
+      }
+
+      if (additionalEmail === body.client.email.trim().toLowerCase()) {
+        return NextResponse.json(
+          { success: false, error: "Additional email must be different from the main email." },
+          { status: 400 }
+        );
+      }
+    }
+
 const html = `
   <!doctype html>
   <html>
@@ -270,7 +308,10 @@ const html = `
 
     const result = await resend.emails.send({
       from: FROM_EMAIL,
-      to: [body.client.email],
+      to: [
+        body.client.email.trim().toLowerCase(),
+        ...(additionalEmail ? [additionalEmail] : []),
+      ],
       bcc: ["roselanesbyjeev@gmail.com"],
       subject: "Quotation — Roselanes by Jeev",
       html,
