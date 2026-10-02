@@ -89,6 +89,7 @@ const BUDGET_OPTIONS = [
 ] as const;
 
 const EVENT_TYPES = [
+  "Select an event",
   "Wedding",
   "Pre-Wedding",
   "Bride ceremony",
@@ -125,9 +126,9 @@ const SERVICE_CATALOG = [
 ];
 
 const ADDON_CATALOG = [
-  "⁠Albums",
-"⁠Extra Cinematic Trailer Edited video ",
-"⁠Extra Coverage of Event"
+  "Albums",
+  "Extra Cinematic Trailer Edited Video",
+  "Extra Coverage of Event",
 ];
 
 /* ==========================================================
@@ -142,6 +143,7 @@ type EventItem = {
   customType: string;
   isCustomType: boolean;
   date: string;
+  dateInvalid?: boolean;
   timeOfDay: string;
   venue: string;
   services: ServiceItem[];
@@ -171,7 +173,7 @@ const nextId = () => uid++;
 function newEvent(): EventItem {
   return {
     id: nextId(),
-    type: EVENT_TYPES[0],
+    type: "Select an event",
     customType: "",
     isCustomType: false,
     date: "",
@@ -189,13 +191,24 @@ function eventLabel(ev: EventItem) {
 
 function formatDate(iso: string) {
   if (!iso) return "";
-  const d = new Date(`${iso}T00:00:00`);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  const [year, month, day] = iso.split("-");
+  if (!year || !month || !day) return iso;
+  return `${day}/${month}/${year}`;
+}
+
+const MAX_YEARS_AHEAD = 5;
+
+/** Returns an error message for an ISO (YYYY-MM-DD) event date, or "". */
+function validateEventDate(iso: string) {
+  if (iso < getTodayLocalIso()) return "Please enter a date from today onward.";
+  if (iso > getMaxDateIso()) {
+    return `Please enter a date within the next ${MAX_YEARS_AHEAD} years.`;
+  }
+  return "";
+}
+
+function getMaxDateIso() {
+  return `${new Date().getFullYear() + MAX_YEARS_AHEAD}-12-31`;
 }
 
 /* Date inputs use YYYY-MM-DD. Build it in the visitor's local timezone rather
@@ -422,6 +435,7 @@ export function QuoteSection() {
   const [invalidCustomEventId, setInvalidCustomEventId] = React.useState<
     number | null
   >(null);
+  const [invalidEventTypeId, setInvalidEventTypeId] = React.useState<number | null>(null);
 
   // ---- Section 3: Add-ons ----
   const [addOns, setAddOns] = React.useState<AddOnItem[]>([]);
@@ -501,6 +515,9 @@ export function QuoteSection() {
           saved.events.map((ev: Partial<EventItem>) => ({
             ...newEvent(),
             ...ev,
+            type: ev.type || "Select an event",
+            date: ev.date && ev.date >= getTodayLocalIso() ? ev.date : "",
+            dateInvalid: false,
             id: nextId(),
           }))
         );
@@ -551,7 +568,7 @@ export function QuoteSection() {
             ev.venue.trim() ||
             ev.services.length ||
             ev.isCustomType ||
-            ev.type !== EVENT_TYPES[0]
+            ev.type !== "Select an event"
         )
     );
   }
@@ -747,6 +764,7 @@ export function QuoteSection() {
     setEvents([newEvent()]);
     setInvalidServiceEventId(null);
     setInvalidCustomEventId(null);
+    setInvalidEventTypeId(null);
     setAddOns([]);
     setQuoteGenerated(false);
     setSummaryData(null);
@@ -775,6 +793,7 @@ export function QuoteSection() {
       prev.length <= 1 ? prev : prev.filter((ev) => ev.id !== id)
     );
     setInvalidCustomEventId((current) => (current === id ? null : current));
+    setInvalidEventTypeId((current) => (current === id ? null : current));
     setInvalidServiceEventId((current) => (current === id ? null : current));
     markEdited();
   }
@@ -792,6 +811,7 @@ export function QuoteSection() {
       updateEvent(id, { isCustomType: false, type: value });
     }
     setInvalidCustomEventId((current) => (current === id ? null : current));
+    setInvalidEventTypeId((current) => (current === id ? null : current));
     markEdited();
   }
 
@@ -953,6 +973,28 @@ export function QuoteSection() {
       const target = detailRefs[firstInvalid].current;
       target?.scrollIntoView({ behavior: "smooth", block: "center" });
       target?.focus({ preventScroll: true });
+      return false;
+    }
+
+    // Event type is required; date, time, venue and notes are intentionally optional.
+    const missingEventType = events.find((ev) => ev.type === "Select an event" && !ev.isCustomType);
+
+    if (missingEventType) {
+      setInvalidEventTypeId(missingEventType.id);
+      setFooterError(true);
+      setFooterNote("Please select an event type before generating a quote.");
+      const card = eventCardRefs.current[missingEventType.id];
+      card?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return false;
+    }
+
+    const invalidEventDate = events.find((ev) => ev.dateInvalid);
+
+    if (invalidEventDate) {
+      setFooterError(true);
+      setFooterNote("Please enter a valid event date from today onward.");
+      const card = eventCardRefs.current[invalidEventDate.id];
+      card?.scrollIntoView({ behavior: "smooth", block: "center" });
       return false;
     }
 
@@ -1177,6 +1219,14 @@ export function QuoteSection() {
 
   const overlay = (
     <>
+      <style>{`
+        @keyframes quoteAddEventPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(210,184,133,0), 0 0 0 rgba(210,184,133,0); }
+          45% { box-shadow: 0 0 0 5px rgba(210,184,133,.07), 0 0 22px rgba(210,184,133,.18); }
+        }
+        .quote-add-event-pulse { animation: quoteAddEventPulse 3.6s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) { .quote-add-event-pulse { animation: none; } }
+      `}</style>
       <div
         aria-hidden="true"
         onClick={undefined}
@@ -1391,11 +1441,21 @@ export function QuoteSection() {
                     id="quote-message"
                     placeholder="Tell us anything important about your event..."
                     value={message}
+                    maxLength={800}
                     onChange={(e) => {
-                      setMessage(e.target.value);
+                      const value = e.target.value;
+                      const words = value.trim() ? value.trim().split(/\s+/) : [];
+                      if (words.length > 100) return;
+                      setMessage(value);
                       markEdited();
                     }}
                   />
+                  <div className="flex items-center justify-between gap-3 text-[10px] text-[var(--cream)]/45">
+                    <span>Maximum 100 words or 800 characters.</span>
+                    <span className={message.length >= 760 ? "text-[var(--secondary-light)]" : ""}>
+                      {message.length}/800
+                    </span>
+                  </div>
                 </Field>
               </div>
 
@@ -1428,11 +1488,12 @@ export function QuoteSection() {
                       markEdited();
                     }}
                     isCustomNameInvalid={invalidCustomEventId === ev.id}
+                    isEventTypeInvalid={invalidEventTypeId === ev.id}
                     customNameRef={(node) => {
                       customEventNameRefs.current[ev.id] = node;
                     }}
-                    onDateChange={(value) => {
-                      updateEvent(ev.id, { date: value });
+                    onDateChange={(value, invalid = false) => {
+                      updateEvent(ev.id, { date: value, dateInvalid: invalid });
                       markEdited();
                     }}
                     onVenueChange={(value) => {
@@ -1469,9 +1530,12 @@ export function QuoteSection() {
               <button
                 type="button"
                 onClick={addEvent}
-                className="mb-7 w-full rounded-[12px] border border-dashed border-[var(--secondary)]/34 py-2.5 text-[.7rem] font-medium uppercase tracking-[0.09em] text-[var(--secondary-light)] transition-colors hover:border-[var(--secondary-light)]/65 hover:bg-[var(--secondary)]/5"
+                className="quote-add-event-pulse mb-7 w-full rounded-[14px] border border-[var(--secondary)]/65 bg-[var(--secondary)]/[0.06] py-3 text-[.7rem] font-semibold uppercase tracking-[0.1em] text-[var(--secondary-light)] shadow-[0_0_0_rgba(210,184,133,0)] transition-all duration-300 hover:border-[var(--secondary-light)] hover:bg-[var(--secondary)]/[0.11] hover:shadow-[0_0_28px_rgba(210,184,133,.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--secondary-light)]/60"
               >
-                + Add Another Event
+                <span className="inline-flex items-center gap-2">
+                  <Plus className="size-3.5" />
+                  Add Another Event
+                </span>
               </button>
 
               <QuoteSectionDivider />
@@ -1884,6 +1948,7 @@ function EventCard({
   onCustomTypeChange,
   customNameRef,
   isCustomNameInvalid,
+  isEventTypeInvalid,
   onDateChange,
   onTimeOfDayChange,
   onVenueChange,
@@ -1906,7 +1971,8 @@ function EventCard({
   onCustomTypeChange: (value: string) => void;
   customNameRef?: React.Ref<HTMLInputElement>;
   isCustomNameInvalid?: boolean;
-  onDateChange: (value: string) => void;
+  isEventTypeInvalid?: boolean;
+  onDateChange: (value: string, invalid?: boolean) => void;
   onTimeOfDayChange: (value: string) => void;
   onVenueChange: (value: string) => void;
   onRemove: () => void;
@@ -1918,6 +1984,41 @@ function EventCard({
   onAddCustomService: () => void;
 }) {
   const selectValue = event.isCustomType ? CUSTOM_EVENT_VALUE : event.type;
+  /* The date field is a native <input type="date">: the browser provides
+     independent dd / mm / yyyy segments, the cursor, Backspace handling, the
+     calendar picker, mobile keyboards and accessibility. We keep the raw
+     value locally (so a rejected past date stays visible next to its error)
+     and only pass valid dates up to the form. */
+  const [dateValue, setDateValue] = React.useState(event.date);
+  const [dateError, setDateError] = React.useState("");
+  const dateId = `event-date-${event.id}`;
+
+  React.useEffect(() => {
+    if (!event.date) return;
+    setDateValue((prev) => (prev === event.date ? prev : event.date));
+    setDateError("");
+  }, [event.date]);
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setDateValue(value);
+
+    if (!value) {
+      setDateError("");
+      onDateChange("", false);
+      return;
+    }
+
+    const error = validateEventDate(value);
+    if (error) {
+      setDateError(error);
+      onDateChange("", true);
+      return;
+    }
+
+    setDateError("");
+    onDateChange(value, false);
+  };
 
   return (
     <div
@@ -1957,7 +2058,7 @@ function EventCard({
           Both are their own full-width row. */}
       <div className="mb-3 flex w-full min-w-0 flex-col gap-3">
         <div className="w-full min-w-0 max-w-full">
-          <Field label="Event Type">
+          <Field label="Event Type" error={isEventTypeInvalid ? "Please select an event type." : undefined}>
             {/*
               The trigger is wrapped so the width is forced from the
               parent. shadcn's SelectTrigger ships with `w-fit` baked
@@ -1971,7 +2072,7 @@ function EventCard({
               <Select value={selectValue} onValueChange={onTypeChange}>
                 <SelectTrigger
   aria-label="Event type"
-  className="w-full min-w-0 max-w-full truncate box-border"
+  className={`w-full min-w-0 max-w-full truncate box-border ${isEventTypeInvalid ? "border-red-400/70 ring-2 ring-red-400/20" : ""}`}
 >
   <SelectValue className="truncate" />
 </SelectTrigger>
@@ -2020,20 +2121,26 @@ function EventCard({
           and share the row (40/25/35) from sm up. */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
         <div className="w-full min-w-0 max-w-full sm:w-[40%]">
-          <Field label="Date" optional>
+          <Field
+            label="Date"
+            htmlFor={dateId}
+            optional
+            errorId={`${dateId}-error`}
+            error={
+              dateError ||
+              (event.dateInvalid ? "Please enter a date from today onward." : undefined)
+            }
+          >
             <input
-              className={`${inputClass} ${dateInputFix} [color-scheme:dark] accent-[var(--secondary)]`}
+              id={dateId}
               type="date"
+              className={`${inputCls(Boolean(dateError || event.dateInvalid))} ${dateInputFix} [color-scheme:dark]`}
+              value={dateValue}
               min={getTodayLocalIso()}
-              value={event.date}
-              onChange={(e) => {
-                const value = e.target.value;
-
-                onDateChange(
-                  value && value < getTodayLocalIso() ? "" : value,
-                );
-              }}
-              aria-label="Event date"
+              max={getMaxDateIso()}
+              onChange={handleDateChange}
+              aria-invalid={Boolean(dateError || event.dateInvalid)}
+              aria-describedby={dateError ? `${dateId}-error` : undefined}
             />
           </Field>
         </div>
