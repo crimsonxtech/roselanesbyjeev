@@ -55,6 +55,8 @@ export const ModelName = {
   QuoteEvent: 'QuoteEvent',
   QuoteEventService: 'QuoteEventService',
   QuoteAddOn: 'QuoteAddOn',
+  Testimonial: 'Testimonial',
+  PortfolioImage: 'PortfolioImage',
   User: 'User',
   Session: 'Session',
   Account: 'Account',
@@ -134,6 +136,36 @@ export const QuoteAddOnScalarFieldEnum = {
 } as const
 
 export type QuoteAddOnScalarFieldEnum = (typeof QuoteAddOnScalarFieldEnum)[keyof typeof QuoteAddOnScalarFieldEnum]
+
+
+export const TestimonialScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  rating: 'rating',
+  review: 'review',
+  imageUrl: 'imageUrl',
+  imageKey: 'imageKey',
+  position: 'position',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TestimonialScalarFieldEnum = (typeof TestimonialScalarFieldEnum)[keyof typeof TestimonialScalarFieldEnum]
+
+
+export const PortfolioImageScalarFieldEnum = {
+  id: 'id',
+  assetId: 'assetId',
+  alt: 'alt',
+  width: 'width',
+  height: 'height',
+  originalKey: 'originalKey',
+  position: 'position',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PortfolioImageScalarFieldEnum = (typeof PortfolioImageScalarFieldEnum)[keyof typeof PortfolioImageScalarFieldEnum]
 
 
 export const UserScalarFieldEnum = {

@@ -34,6 +34,9 @@ if (!basePath) {
 export const r2 = new S3Client({
   region: "auto",
   endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+  // Newer AWS SDKs add a CRC32 checksum to presigned URLs, which R2 rejects.
+  requestChecksumCalculation: "WHEN_REQUIRED",
+  responseChecksumValidation: "WHEN_REQUIRED",
   credentials: {
     accessKeyId,
     secretAccessKey,
@@ -63,6 +66,7 @@ export async function putR2Object(
   path: string,
   body: Uint8Array | Buffer | string,
   contentType: string,
+  cacheControl?: string,
 ) {
   return r2.send(
     new PutObjectCommand({
@@ -70,6 +74,7 @@ export async function putR2Object(
       Key: r2Key(path),
       Body: body,
       ContentType: contentType,
+      ...(cacheControl ? { CacheControl: cacheControl } : {}),
     }),
   );
 }

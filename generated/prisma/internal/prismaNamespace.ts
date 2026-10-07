@@ -401,6 +401,8 @@ export const ModelName = {
   QuoteEvent: 'QuoteEvent',
   QuoteEventService: 'QuoteEventService',
   QuoteAddOn: 'QuoteAddOn',
+  Testimonial: 'Testimonial',
+  PortfolioImage: 'PortfolioImage',
   User: 'User',
   Session: 'Session',
   Account: 'Account',
@@ -420,7 +422,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "quote" | "quoteEvent" | "quoteEventService" | "quoteAddOn" | "user" | "session" | "account" | "verification"
+    modelProps: "quote" | "quoteEvent" | "quoteEventService" | "quoteAddOn" | "testimonial" | "portfolioImage" | "user" | "session" | "account" | "verification"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -717,6 +719,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.QuoteAddOnCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.QuoteAddOnCountAggregateOutputType> | number
+        }
+      }
+    }
+    Testimonial: {
+      payload: Prisma.$TestimonialPayload<ExtArgs>
+      fields: Prisma.TestimonialFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TestimonialFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestimonialPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TestimonialFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestimonialPayload>
+        }
+        findFirst: {
+          args: Prisma.TestimonialFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestimonialPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TestimonialFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestimonialPayload>
+        }
+        findMany: {
+          args: Prisma.TestimonialFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestimonialPayload>[]
+        }
+        create: {
+          args: Prisma.TestimonialCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestimonialPayload>
+        }
+        createMany: {
+          args: Prisma.TestimonialCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TestimonialCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestimonialPayload>[]
+        }
+        delete: {
+          args: Prisma.TestimonialDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestimonialPayload>
+        }
+        update: {
+          args: Prisma.TestimonialUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestimonialPayload>
+        }
+        deleteMany: {
+          args: Prisma.TestimonialDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TestimonialUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TestimonialUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestimonialPayload>[]
+        }
+        upsert: {
+          args: Prisma.TestimonialUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TestimonialPayload>
+        }
+        aggregate: {
+          args: Prisma.TestimonialAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTestimonial>
+        }
+        groupBy: {
+          args: Prisma.TestimonialGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TestimonialGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TestimonialCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TestimonialCountAggregateOutputType> | number
+        }
+      }
+    }
+    PortfolioImage: {
+      payload: Prisma.$PortfolioImagePayload<ExtArgs>
+      fields: Prisma.PortfolioImageFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PortfolioImageFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioImagePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PortfolioImageFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioImagePayload>
+        }
+        findFirst: {
+          args: Prisma.PortfolioImageFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioImagePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PortfolioImageFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioImagePayload>
+        }
+        findMany: {
+          args: Prisma.PortfolioImageFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioImagePayload>[]
+        }
+        create: {
+          args: Prisma.PortfolioImageCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioImagePayload>
+        }
+        createMany: {
+          args: Prisma.PortfolioImageCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PortfolioImageCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioImagePayload>[]
+        }
+        delete: {
+          args: Prisma.PortfolioImageDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioImagePayload>
+        }
+        update: {
+          args: Prisma.PortfolioImageUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioImagePayload>
+        }
+        deleteMany: {
+          args: Prisma.PortfolioImageDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PortfolioImageUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PortfolioImageUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioImagePayload>[]
+        }
+        upsert: {
+          args: Prisma.PortfolioImageUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PortfolioImagePayload>
+        }
+        aggregate: {
+          args: Prisma.PortfolioImageAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePortfolioImage>
+        }
+        groupBy: {
+          args: Prisma.PortfolioImageGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PortfolioImageGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PortfolioImageCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PortfolioImageCountAggregateOutputType> | number
         }
       }
     }
@@ -1114,6 +1264,36 @@ export const QuoteAddOnScalarFieldEnum = {
 export type QuoteAddOnScalarFieldEnum = (typeof QuoteAddOnScalarFieldEnum)[keyof typeof QuoteAddOnScalarFieldEnum]
 
 
+export const TestimonialScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  rating: 'rating',
+  review: 'review',
+  imageUrl: 'imageUrl',
+  imageKey: 'imageKey',
+  position: 'position',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TestimonialScalarFieldEnum = (typeof TestimonialScalarFieldEnum)[keyof typeof TestimonialScalarFieldEnum]
+
+
+export const PortfolioImageScalarFieldEnum = {
+  id: 'id',
+  assetId: 'assetId',
+  alt: 'alt',
+  width: 'width',
+  height: 'height',
+  originalKey: 'originalKey',
+  position: 'position',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PortfolioImageScalarFieldEnum = (typeof PortfolioImageScalarFieldEnum)[keyof typeof PortfolioImageScalarFieldEnum]
+
+
 export const UserScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -1447,6 +1627,8 @@ export type GlobalOmitConfig = {
   quoteEvent?: Prisma.QuoteEventOmit
   quoteEventService?: Prisma.QuoteEventServiceOmit
   quoteAddOn?: Prisma.QuoteAddOnOmit
+  testimonial?: Prisma.TestimonialOmit
+  portfolioImage?: Prisma.PortfolioImageOmit
   user?: Prisma.UserOmit
   session?: Prisma.SessionOmit
   account?: Prisma.AccountOmit

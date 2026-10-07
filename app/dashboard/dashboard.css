@@ -1,0 +1,53 @@
+/*
+ * Neutral black / white / grey theme for the dashboard and login page.
+ * Applies only while an element with [data-dashboard] is on the page, so the
+ * public website keeps its burgundy + gold look. Re-points the shared tokens
+ * the existing kanban board and quote modal already use (the modal renders in
+ * a portal on <body>, which is why this is scoped on :root).
+ */
+:root:has([data-dashboard]) {
+  --primary: #0a0a0a;
+  --primary-light: #171717;
+  --primary-dark: #171717;
+  --primary-darker: #0f0f0f;
+  --primary-darkest: #0a0a0a;
+
+  --secondary: #d4d4d4;
+  --secondary-light: #f5f5f5;
+  --secondary-dark: #a3a3a3;
+
+  --cream: #fafafa;
+  --foreground: #fafafa;
+
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.12);
+
+  scrollbar-color: #525252 #0a0a0a;
+}
+
+:root:has([data-dashboard]) ::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+:root:has([data-dashboard]) ::-webkit-scrollbar-thumb {
+  background: #525252;
+}
+
+:root:has([data-dashboard]) ::selection {
+  background: #fafafa;
+  color: #0a0a0a;
+}
+
+/* Safety net: always show the normal cursor in admin screens, even if the
+   website's custom cursor class lingers on <html> after client-side navigation. */
+html.custom-cursor:has([data-dashboard]),
+html.custom-cursor:has([data-dashboard]) * {
+  cursor: auto !important;
+}
+
+html.custom-cursor:has([data-dashboard]) button,
+html.custom-cursor:has([data-dashboard]) a,
+html.custom-cursor:has([data-dashboard]) label,
+html.custom-cursor:has([data-dashboard]) [role="button"] {
+  cursor: pointer !important;
+}

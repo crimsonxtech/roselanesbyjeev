@@ -38,6 +38,16 @@ export type QuoteEventService = Prisma.QuoteEventServiceModel
  */
 export type QuoteAddOn = Prisma.QuoteAddOnModel
 /**
+ * Model Testimonial
+ * 
+ */
+export type Testimonial = Prisma.TestimonialModel
+/**
+ * Model PortfolioImage
+ * 
+ */
+export type PortfolioImage = Prisma.PortfolioImageModel
+/**
  * Model User
  * 
  */

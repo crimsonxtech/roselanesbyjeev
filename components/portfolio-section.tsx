@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { Download, X } from "lucide-react";
 import { ZoomableLightboxImage } from "@/components/zoomable-lightbox-image";
 import {
   useBodyScrollLock,
@@ -10,237 +10,46 @@ import {
   unlockScrollbarReservation,
 } from "@/hooks/use-body-scroll-lock";
 
-const R2_BASE =
-  "https://images.roselanesbyjeev.in/roselanesbyjeev/portfolio/gallery";
-
-type PortfolioImage = {
+export type PortfolioImage = {
   id: string;
   alt: string;
   width: number;
   height: number;
+  thumbUrl: string;
+  displayUrl: string;
+  downloadUrl: string;
 };
 
-const portfolioImages: PortfolioImage[] = [
-  {
-    id: "b1689edb-6451-4004-98fd-029017ba59bd",
-    alt: "Bride portrait",
-    width: 1333,
-    height: 2000,
-  },
-  {
-    id: "8aa12ce4-478c-4770-b1a2-1a02bb5b1506",
-    alt: "Bride portrait",
-    width: 1333,
-    height: 2000,
-  },
-  {
-    id: "e6eefe33-7fea-46fa-8f5b-f7cb1f764b5f",
-    alt: "Bride portrait",
-    width: 1333,
-    height: 2000,
-  },
-  {
-    id: "80e0cf8f-1010-4d81-96fd-8ebabebc09b0",
-    alt: "Bride portrait",
-    width: 1333,
-    height: 2000,
-  },
-  {
-    id: "8e858620-ab5c-4931-a2ce-98492b1dcd43",
-    alt: "Bride portrait",
-    width: 1333,
-    height: 2000,
-  },
-  {
-    id: "f693c0e1-17cf-4b91-9040-c0e08ebe93fd",
-    alt: "Bride portrait",
-    width: 1333,
-    height: 2000,
-  },
-  {
-    id: "ff6a532c-bd7f-4a58-9047-f2dbae33e0cf",
-    alt: "Bride portrait",
-    width: 1333,
-    height: 2000,
-  },
-  {
-    id: "6e4b0e2c-7a81-4123-ba75-44aef47106e7",
-    alt: "Bride portrait",
-    width: 1333,
-    height: 2000,
-  },
-  {
-    id: "9a5ba915-c999-4a9a-a848-5080d2c7bb94",
-    alt: "Bride portrait",
-    width: 1333,
-    height: 2000,
-  },
-  {
-    id: "c6be2f22-72fd-4890-9c67-5bbbefca2912",
-    alt: "Bride portrait",
-    width: 1333,
-    height: 2000,
-  },
-  {
-    id: "df1c6991-0522-4527-b407-5196c02aeca4",
-    alt: "Couple photography",
-    width: 1080,
-    height: 1350,
-  },
-  {
-    id: "ae906b08-ad84-4dd0-8cd8-624a85084f9e",
-    alt: "Couple photography",
-    width: 1330,
-    height: 2000,
-  },
-  {
-    id: "97881ecd-832f-4418-8328-70a19eff3578",
-    alt: "Couple photography",
-    width: 1333,
-    height: 2000,
-  },
-  {
-    id: "e9f8e0ac-2eef-4188-9fb2-50946a4abbcf",
-    alt: "Couple photography",
-    width: 1333,
-    height: 2000,
-  },
-  {
-    id: "51ca6e36-8d88-420e-9e55-c0e12ebedb97",
-    alt: "Couple photography",
-    width: 1333,
-    height: 2000,
-  },
-  {
-    id: "ce043f7f-b9be-412e-9c28-229472e4aa9d",
-    alt: "Couple photography",
-    width: 1333,
-    height: 2000,
-  },
-  {
-    id: "b1d64a15-9752-4929-8838-d22b61b98e19",
-    alt: "Couple photography",
-    width: 951,
-    height: 1426,
-  },
-  {
-    id: "a605c776-8380-47f4-86ef-2ced8a79d4d7",
-    alt: "Couple photography",
-    width: 1333,
-    height: 2000,
-  },
-  {
-    id: "80aae8c9-cb60-47ed-b0a2-e5f3477d2378",
-    alt: "Wedding reception",
-    width: 1388,
-    height: 2000,
-  },
-  {
-    id: "e9aa4d0c-0a8f-48df-8e59-eb535d1109fc",
-    alt: "Wedding reception",
-    width: 1372,
-    height: 2000,
-  },
-  {
-    id: "a5875d88-49bc-4b01-a30d-f5f94bd39f4e",
-    alt: "Wedding reception",
-    width: 2000,
-    height: 1393,
-  },
-  {
-    id: "98c1efbb-c422-437e-9719-a6bb01f83ffa",
-    alt: "Wedding reception",
-    width: 1334,
-    height: 2000,
-  },
-  {
-    id: "fd98b2a8-4401-4576-b442-a8c83ce40c31",
-    alt: "Wedding reception",
-    width: 1435,
-    height: 2000,
-  },
-  {
-    id: "0b152599-aa21-44a2-b450-5301fd1ce95e",
-    alt: "Wedding reception",
-    width: 1356,
-    height: 2000,
-  },
-  {
-    id: "a124e500-304c-4b42-8186-65a845b3e1e6",
-    alt: "Wedding reception",
-    width: 1364,
-    height: 2000,
-  },
-  {
-    id: "64b98c75-2031-4529-9713-40960e84fdcd",
-    alt: "Wedding photography",
-    width: 1412,
-    height: 2000,
-  },
-  {
-    id: "f262efc8-5670-42aa-b0c2-36afa24e9cf4",
-    alt: "Wedding photography",
-    width: 2000,
-    height: 1333,
-  },
-  {
-    id: "5f1f3b67-a5ba-474d-80a2-4fd424fcaef5",
-    alt: "Wedding photography",
-    width: 2000,
-    height: 1333,
-  },
-  {
-    id: "546a8a91-767c-4236-aadc-06ee684e3e77",
-    alt: "Wedding photography",
-    width: 2000,
-    height: 1381,
-  },
-  {
-    id: "7c59df55-fcc9-4b51-ab01-92491668b721",
-    alt: "Wedding photography",
-    width: 1373,
-    height: 2000,
-  },
-  {
-    id: "ba0cade9-8954-4a0a-be86-a2235153851a",
-    alt: "Wedding photography",
-    width: 2000,
-    height: 1330,
-  },
-  {
-    id: "70616520-7997-4d06-a2f9-3341d01a2142",
-    alt: "Wedding photography",
-    width: 1333,
-    height: 2000,
-  },
-  {
-    id: "e563fb51-2448-4bb0-9bb3-9d2d59fe6000",
-    alt: "Wedding photography",
-    width: 1487,
-    height: 2000,
-  },
-  {
-    id: "a98c5748-5b2f-4a47-819f-2ddfc610813f",
-    alt: "Wedding photography",
-    width: 2000,
-    height: 1333,
-  },
-  {
-    id: "8ab068d2-bb63-4d9e-8eec-883e29e4201f",
-    alt: "Wedding photography",
-    width: 1333,
-    height: 2000,
-  },
-];
+export function PortfolioSection({
+  images: portfolioImages,
+}: {
+  images: PortfolioImage[];
+}) {
 
-function imageUrl(
-  id: string,
-  variant: "thumb" | "display",
-) {
-  return `${R2_BASE}/${id}/${variant}.webp`;
-}
+    const [masonryColumns, setMasonryColumns] =
+    React.useState(4);
 
-export function PortfolioSection() {
+  React.useEffect(() => {
+    const updateColumns = () => {
+      setMasonryColumns(
+        window.innerWidth >= 640 ? 4 : 2,
+      );
+    };
+
+    updateColumns();
+
+    window.addEventListener(
+      "resize",
+      updateColumns,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "resize",
+        updateColumns,
+      );
+    };
+  }, []);
   const [activeIndex, setActiveIndex] =
     React.useState<number | null>(null);
   const [mounted, setMounted] = React.useState(false);
@@ -549,7 +358,7 @@ export function PortfolioSection() {
         borderRadiusFrom: sourceBorderRadius,
         borderRadiusTo: "0px",
         crossfadeSrc: targetImage
-          ? imageUrl(targetImage.id, "display")
+          ? targetImage.displayUrl
           : undefined,
         onArrive: () => setIsOpening(false),
       },
@@ -558,7 +367,7 @@ export function PortfolioSection() {
         animationInProgressRef.current = false;
       },
     );
-  }, [animateImageBetweenRects, getLightboxTargetRect]);
+  }, [animateImageBetweenRects, getLightboxTargetRect, portfolioImages]);
 
   const finishClose = React.useCallback(() => {
     animationInProgressRef.current = false;
@@ -712,7 +521,7 @@ export function PortfolioSection() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [activeIndex, closeImage]);
+  }, [activeIndex, closeImage, portfolioImages.length]);
 
   /*
    * Keep focus on the close button when the lightbox opens.
@@ -740,7 +549,7 @@ export function PortfolioSection() {
         ? portfolioImages.length - 1
         : current - 1;
     });
-  }, []);
+  }, [portfolioImages.length]);
 
   /*
    * Next image.
@@ -753,7 +562,7 @@ export function PortfolioSection() {
         ? 0
         : current + 1;
     });
-  }, []);
+  }, [portfolioImages.length]);
 
   return (
     <>
@@ -806,170 +615,201 @@ export function PortfolioSection() {
             </div>
           </div>
 
-          {/* TRUE MASONRY */}
-          <div
-            aria-label="Wedding photography portfolio"
-            className="
-              columns-2
-              [column-gap:10px]
+{/* TRUE MASONRY — ROW-WISE ORDER */}
+<div
+  aria-label="Wedding photography portfolio"
+  className="
+    flex
+    w-full
+    gap-[10px]
+  "
+>
+  {Array.from({
+    length: masonryColumns,
+  }).map((_, columnIndex) => {
+    const columnImages = portfolioImages.filter(
+      (_, index) =>
+        index % masonryColumns === columnIndex,
+    );
 
-              min-[640px]:columns-4
-            "
-          >
-            {portfolioImages.map(
-              (image, index) => {
-                const isErrored = Boolean(erroredIds[image.id]);
+    return (
+      <div
+        key={columnIndex}
+        className="
+          min-w-0
+          flex-1
+          space-y-[10px]
+        "
+      >
+        {columnImages.map((image) => {
+          const index = portfolioImages.findIndex(
+            (item) => item.id === image.id,
+          );
 
-                return (
-                  <div
-                    key={image.id}
-                    className="mb-[10px] break-inside-avoid"
-                  >
-                  <button
-                    type="button"
-                    aria-label={`Open portfolio image ${
-                      index + 1
-                    } of ${portfolioImages.length}: ${image.alt}`}
-                    onClick={() => openImage(index)}
+          const isErrored = Boolean(
+            erroredIds[image.id],
+          );
+
+          return (
+            <div
+              key={image.id}
+              className="w-full"
+            >
+              <button
+                type="button"
+                aria-label={`Open portfolio image ${
+                  index + 1
+                } of ${
+                  portfolioImages.length
+                }: ${image.alt}`}
+                onClick={() =>
+                  openImage(index)
+                }
+                className="
+                  group
+                  relative
+                  block
+                  w-full
+                  overflow-hidden
+                  rounded-[16px]
+                  [clip-path:inset(0_round_16px)]
+                  border
+                  border-transparent
+                  bg-[rgba(var(--primary-darkest-rgb),.35)]
+                  p-0
+                  text-left
+                  shadow-[0_1px_2px_rgba(0,0,0,0.08)]
+
+                  transition-[box-shadow,border-color]
+                  duration-500
+                  ease-[cubic-bezier(.22,1,.36,1)]
+
+                  hover:border-[var(--secondary-light)]
+                  hover:shadow-[0_18px_40px_-12px_rgba(0,0,0,0.45)]
+
+                  focus:outline-none
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-[var(--secondary-light)]
+                  focus-visible:ring-offset-2
+                  focus-visible:ring-offset-[var(--primary-darkest)]
+                "
+              >
+                {!isErrored ? (
+                  <img
+                    src={image.thumbUrl}
+                    alt={image.alt}
+                    width={image.width}
+                    height={image.height}
+                    loading={
+                      index < 4
+                        ? "eager"
+                        : "lazy"
+                    }
+                    decoding="async"
+                    draggable={false}
+                    onError={() =>
+                      markErrored(image.id)
+                    }
+                    ref={(element) => {
+                      if (element) {
+                        thumbnailRefs.current.set(
+                          index,
+                          element,
+                        );
+                      } else {
+                        thumbnailRefs.current.delete(
+                          index,
+                        );
+                      }
+                    }}
                     className="
-                      group
-                      relative
                       block
+                      h-auto
                       w-full
-                      overflow-hidden
-                      rounded-[16px]
-                      [clip-path:inset(0_round_16px)]
-                      border
-                      border-transparent
-                      bg-[rgba(var(--primary-darkest-rgb),.35)]
-                      p-0
-                      text-left
-                      shadow-[0_1px_2px_rgba(0,0,0,0.08)]
+                      object-contain
+                      transform-gpu
 
-                      transition-[box-shadow,border-color]
+                      transition-transform
                       duration-500
                       ease-[cubic-bezier(.22,1,.36,1)]
 
-                      hover:border-[var(--secondary-light)]
-                      hover:shadow-[0_18px_40px_-12px_rgba(0,0,0,0.45)]
+                      group-hover:scale-[1.045]
 
-                      focus:outline-none
-                      focus-visible:outline-none
-                      focus-visible:ring-2
-                      focus-visible:ring-[var(--secondary-light)]
-                      focus-visible:ring-offset-2
-                      focus-visible:ring-offset-[var(--primary-darkest)]
+                      motion-reduce:transition-none
+                      motion-reduce:group-hover:scale-100
+                    "
+                  />
+                ) : (
+                  <div
+                    className="
+                      flex
+                      aspect-[2/3]
+                      w-full
+                      items-center
+                      justify-center
+                      bg-[rgba(var(--primary-darkest-rgb),.5)]
+                      text-center
+                      text-xs
+                      tracking-wide
+                      text-[var(--secondary-light)]/70
                     "
                   >
-                    {!isErrored ? (
-                      <img
-                        src={imageUrl(
-                          image.id,
-                          "thumb",
-                        )}
-                        alt={image.alt}
-                        width={image.width}
-                        height={image.height}
-                        loading={
-                          index < 4
-                            ? "eager"
-                            : "lazy"
-                        }
-                        decoding="async"
-                        draggable={false}
-                        onError={() => markErrored(image.id)}
-                        ref={(element) => {
-                          if (element) {
-                            thumbnailRefs.current.set(index, element);
-                          } else {
-                            thumbnailRefs.current.delete(index);
-                          }
-                        }}
-                        className="
-                          block
-                          h-auto
-                          w-full
-                          object-cover
-                          transform-gpu
-
-                          transition-transform
-                          duration-500
-                          ease-[cubic-bezier(.22,1,.36,1)]
-
-                          group-hover:scale-[1.045]
-
-                          motion-reduce:transition-none
-                          motion-reduce:group-hover:scale-100
-                        "
-                      />
-                    ) : (
-                      <div
-                        className="
-                          flex
-                          aspect-[2/3]
-                          w-full
-                          items-center
-                          justify-center
-                          bg-[rgba(var(--primary-darkest-rgb),.5)]
-                          text-center
-                          text-xs
-                          tracking-wide
-                          text-[var(--secondary-light)]/70
-                        "
-                      >
-                        Image unavailable
-                      </div>
-                    )}
-
-                    {/* elegant hover overlay */}
-                    <div
-                      aria-hidden="true"
-                      className="
-                        pointer-events-none
-                        absolute
-                        inset-0
-                        flex
-                        items-end
-                        bg-gradient-to-t
-                        from-[rgba(var(--primary-darkest-rgb),.72)]
-                        via-transparent
-                        to-transparent
-                        opacity-0
-
-                        transition-opacity
-                        duration-400
-                        ease-[cubic-bezier(.22,1,.36,1)]
-
-                        group-hover:opacity-100
-                        group-focus-visible:opacity-100
-                      "
-                    >
-                      <span
-                        className="
-                          m-4
-                          font-serif
-                          text-[13px]
-                          italic
-                          tracking-wide
-                          text-[var(--cream)]
-
-                          translate-y-2
-                          transition-transform
-                          duration-400
-                          ease-[cubic-bezier(.22,1,.36,1)]
-
-                          group-hover:translate-y-0
-                        "
-                      >
-                        {image.alt}
-                      </span>
-                    </div>
-                  </button>
+                    Image unavailable
                   </div>
-                );
-              },
-            )}
-          </div>
+                )}
+
+                {/* elegant hover overlay */}
+                <div
+                  aria-hidden="true"
+                  className="
+                    pointer-events-none
+                    absolute
+                    inset-0
+                    flex
+                    items-end
+                    bg-gradient-to-t
+                    from-[rgba(var(--primary-darkest-rgb),.72)]
+                    via-transparent
+                    to-transparent
+                    opacity-0
+
+                    transition-opacity
+                    duration-400
+                    ease-[cubic-bezier(.22,1,.36,1)]
+
+                    group-hover:opacity-100
+                    group-focus-visible:opacity-100
+                  "
+                >
+                  <span
+                    className="
+                      m-4
+                      font-serif
+                      text-[13px]
+                      italic
+                      tracking-wide
+                      text-[var(--cream)]
+
+                      translate-y-2
+                      transition-transform
+                      duration-400
+                      ease-[cubic-bezier(.22,1,.36,1)]
+
+                      group-hover:translate-y-0
+                    "
+                  >
+                    {image.alt}
+                  </span>
+                </div>
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    );
+  })}
+</div>
         </div>
       </section>
 
@@ -1040,6 +880,39 @@ export function PortfolioSection() {
           >
             <X className="size-5" />
           </button>
+
+          {/* DOWNLOAD ORIGINAL */}
+          <a
+            href={activeImage.downloadUrl}
+            download
+            aria-label="Download original image"
+            title="Download original"
+            className="
+              absolute
+              right-[68px]
+              top-4
+              z-50
+              flex
+              size-11
+              items-center
+              justify-center
+              rounded-full
+              border
+              border-white/15
+              bg-black/50
+              text-white
+              backdrop-blur-md
+              transition
+              hover:bg-white/10
+              focus-visible:outline-none
+              focus-visible:ring-2
+              focus-visible:ring-white/80
+              sm:right-[76px]
+              sm:top-6
+            "
+          >
+            <Download className="size-5" />
+          </a>
 
           {/* PREVIOUS */}
           <button
@@ -1124,7 +997,7 @@ export function PortfolioSection() {
           >
             <ZoomableLightboxImage
               key={activeImage.id}
-              src={imageUrl(activeImage.id, "display")}
+              src={activeImage.displayUrl}
               alt={activeImage.alt}
               width={activeImage.width}
               height={activeImage.height}

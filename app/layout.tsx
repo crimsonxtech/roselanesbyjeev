@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { CustomCursor } from "@/components/custom-cursor";
 import { ScrollRevealProvider } from "@/hooks/ScrollRevealProvider";
-import { DisableInteractions } from "@/components/disable-interactions";
+import { SiteChrome } from "@/components/site-chrome";
 
 export const metadata: Metadata = {
   title: "Roselanes by Jeev | Pixtack",
@@ -26,8 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <DisableInteractions />
-        <CustomCursor />
+        <SiteChrome />
         <ScrollRevealProvider />
         {children}
       </body>

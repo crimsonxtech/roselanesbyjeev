@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 
-type Testimonial = {
+export type Testimonial = {
+  id: string
   image: string
   alt: string
   quote: string
@@ -11,64 +12,11 @@ type Testimonial = {
   rating: number
 }
 
-const testimonials: Testimonial[] = [
-  {
-    image:
-      "https://images.roselanesbyjeev.in/roselanesbyjeev/portfolio/testimonials/44c2f01d-a233-4025-b9a5-d70e96bbf1e2.webp",
-    alt: "Aisha and Rohan",
-    quote:
-      "Jeevan captured our wedding like he'd known us for years. Every candid moment felt effortless, and the final gallery still gives us goosebumps.",
-    name: "Aisha & Rohan", 
-    rating: 5,
-  },
-  {
-    image:
-      "https://images.roselanesbyjeev.in/roselanesbyjeev/portfolio/testimonials/d903e39f-3d67-4ef2-8054-99ab0d905c92.webp",
-    alt: "Meera and Karan",
-    quote:
-      "We didn't even notice him shooting half the time — that's how natural everything felt. The pre-wedding shoot alone made us cry happy tears.",
-    name: "Meera & Karan", 
-    rating: 4,
-  },
-  {
-    image:
-      "https://images.roselanesbyjeev.in/roselanesbyjeev/portfolio/testimonials/54a31885-fdd9-4f5b-9b2e-9569c9767b07.webp",
-    alt: "Sana and Dev",
-    quote:
-      "Professional, warm, and endlessly patient with our chaotic families. The photos turned out more beautiful than we imagined possible.",
-    name: "Sana & Dev", 
-    rating: 4,
-  },
-  {
-    image:
-      "https://images.roselanesbyjeev.in/roselanesbyjeev/portfolio/testimonials/0e6912e2-e21a-4951-8bc0-9acd6654ec42.webp",
-    alt: "Priya and Arjun",
-    quote:
-      "Booking him was the easiest decision of our entire wedding planning. Fast turnaround, stunning edits, and such a calming presence on the day.",
-    name: "Priya & Arjun", 
-    rating: 5,
-  },
-  {
-    image:
-      "https://images.roselanesbyjeev.in/roselanesbyjeev/portfolio/testimonials/3ce71027-b7df-465a-8de5-703c22e7da50.webp",
-    alt: "Neha and Vikram",
-    quote:
-      "He has an eye for the tiny, fleeting moments — the ones you'd never think to ask for but end up loving the most.",
-    name: "Neha & Vikram", 
-    rating: 5,
-  },
-  {
-    image:
-      "https://images.roselanesbyjeev.in/roselanesbyjeev/portfolio/testimonials/16fc9c11-32ce-4cb2-b86e-8393cfc4f26b.webp",
-    alt: "Ritu and Sameer",
-    quote:
-      "From the first call to the final delivery, everything felt thoughtful. Worth every rupee for the memories we'll keep forever.",
-    name: "Ritu & Sameer", 
-    rating: 5,
-  },
-]
-
-export function TestimonialsSection() {
+export function TestimonialsSection({
+  testimonials,
+}: {
+  testimonials: Testimonial[]
+}) {
   const trackRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<(HTMLElement | null)[]>([])
 
@@ -921,9 +869,7 @@ const handleResize = () => {
 
                 return (
                   <article
-                    key={
-                      testimonial.name
-                    }
+                    key={testimonial.id}
                     ref={(element) => {
                       cardRefs.current[
                         index
