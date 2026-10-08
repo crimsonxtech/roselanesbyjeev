@@ -1,0 +1,2507 @@
+/* ─────────────────────────────────────────────────────────────────────
+   Pixora gallery styles — AUTO-SCOPED.
+   Every rule lives under .pixora-root (or html.pixora-active for the
+   page scrollbar), and keyframes are prefixed "px-", so nothing here can
+   affect the rest of roselanesbyjeev.in.
+   Generated from the original style.css + loader.css + cursor.css.
+   ───────────────────────────────────────────────────────────────────── */
+
+/* ===== style.css ===== */
+.pixora-root{
+
+--primary-darkest:#2b0510;
+--primary-darker:#3f0a18;
+--primary:#831132;
+
+--secondary:#d2b885;
+--secondary-light:#eeddb8;
+
+--cream:#f7ede0;
+
+--glass-bg:
+linear-gradient(
+135deg,
+rgba(255,255,255,.16),
+rgba(255,255,255,.04)
+);
+
+/* All borders across cards / buttons / inputs share this token so the
+   whole site reads as one family of "glass" surfaces. */
+--border:1px solid rgba(210,184,133,.35);
+--border-strong:1px solid rgba(238,221,184,.55);
+
+/* Soft, faded box-shadow used everywhere instead of a hard-edged one. */
+--shadow-soft:
+    0 30px 70px -12px rgba(20,3,9,.55),
+    0 8px 24px -8px rgba(20,3,9,.4),
+    inset 0 1px 0 rgba(255,255,255,.14);
+
+}
+@font-face {
+    font-family: "PixoraFont";
+    src: url("/pixora/fonts/LuveeRegular.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+    
+}
+
+
+/* Firefox */
+html.pixora-active{
+    scrollbar-width: thin;
+    scrollbar-color: var(--secondary) var(--primary-darker);
+}
+
+/* Chrome, Edge, Safari */
+html.pixora-active::-webkit-scrollbar{
+    width: 10px;
+}
+
+html.pixora-active::-webkit-scrollbar-track{
+    background: var(--primary-darker);
+    border-radius: 999px;
+}
+
+html.pixora-active::-webkit-scrollbar-thumb{
+    background: linear-gradient(
+        180deg,
+        var(--secondary-light),
+        var(--secondary),
+        var(--secondary-dark)
+    );
+    border-radius: 999px;
+    border: 2px solid var(--primary-darker);
+}
+
+html.pixora-active::-webkit-scrollbar-thumb:hover{
+    background: linear-gradient(
+        180deg,
+        #f4e6c5,
+        var(--secondary-light),
+        var(--secondary)
+    );
+}
+
+html.pixora-active::-webkit-scrollbar-corner{
+    background: var(--primary-darker);
+}
+
+
+
+html.pixora-active{
+    scroll-behavior:smooth;
+}
+
+
+
+.pixora-root{
+    font-family: "PixoraFont";
+
+}
+
+.pixora-root,.pixora-root *{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+html.pixora-active,.pixora-root,.pixora-root *{
+    cursor: none !important;
+}
+
+/* Browsers give buttons/inputs/selects their own default font in the
+   UA stylesheet instead of inheriting the page font — without this,
+   every <button> on the site (hero CTA, pin button, section tabs,
+   toolbar icons, etc.) silently falls back to the system font. */
+.pixora-root button,
+.pixora-root input,
+.pixora-root select,
+.pixora-root textarea{
+    font-family:inherit;
+}
+
+.pixora-root{
+
+background:
+
+radial-gradient(circle at 15% 90%,rgba(163,22,63,.18),transparent 45%),
+radial-gradient(circle at 85% 85%,rgba(210,184,133,.08),transparent 30%),
+radial-gradient(circle at 20% 15%,rgba(163,22,63,.12),transparent 40%),
+linear-gradient(
+340deg,
+var(--primary-darkest),
+var(--primary-darker),
+var(--primary-darkest)
+);
+
+color:var(--cream);
+
+overflow-x:clip;
+
+}
+
+.pixora-root img{
+
+display:block;
+
+width:100%;
+
+}
+
+.pixora-root #pinOverlay{
+position:fixed;
+inset:0;
+background:#000d;
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:99999;
+}
+
+.pixora-root .hidden{
+display:none!important;
+}
+
+.pixora-root .pinBox{
+width:340px;
+background:rgba(20,4,9,.7);
+backdrop-filter:blur(24px);
+-webkit-backdrop-filter:blur(24px);
+border:var(--border);
+padding:35px;
+border-radius:18px;
+text-align:center;
+box-shadow:var(--shadow-soft);
+}
+
+.pixora-root .pinBox input{
+width:100%;
+padding:15px;
+margin:20px 0;
+font-size:22px;
+text-align:center;
+letter-spacing:8px;
+border-radius:10px;
+border:var(--border);
+background:rgba(255,255,255,.06);
+color:var(--cream);
+}
+
+.pixora-root #pinBtn{
+    width:100%;
+    padding:14px;
+    border-radius:999px;
+    border:none;
+    background:var(--secondary);
+    color:var(--primary-darkest);
+    font-weight:600;
+    cursor:pointer;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+}
+
+.pixora-root #pinError{
+    color:#ff8f8f;
+    margin-top:12px;
+    font-size:.85rem;
+}
+
+/* ── Action-level PIN modal ──────────────────────────────────────────
+   Built on the fly by requestPinAuthorization() in utils.js whenever a
+   gated action (favorite / unfavorite / download) needs the PIN and the
+   visitor hasn't unlocked it yet. Same look as #pinOverlay/.pinBox but
+   class-based (not ID-based) so it can be created/destroyed freely
+   without colliding with the full-page gate markup already in the DOM. */
+
+.pixora-root .pin-modal-overlay{
+    position:fixed;
+    inset:0;
+    background:#000d;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:100000;
+    padding:20px;
+}
+
+.pixora-root .pin-modal-box{
+    position:relative;
+    width:340px;
+    max-width:100%;
+    background:rgba(20,4,9,.85);
+    backdrop-filter:blur(24px);
+    -webkit-backdrop-filter:blur(24px);
+    border:var(--border);
+    padding:35px;
+    border-radius:18px;
+    text-align:center;
+    box-shadow:var(--shadow-soft);
+}
+
+.pixora-root .pin-modal-close{
+    position:absolute;
+    top:14px;
+    right:14px;
+    width:28px;
+    height:28px;
+    border:none;
+    border-radius:50%;
+    background:rgba(255,255,255,.08);
+    color:var(--cream);
+    cursor:pointer;
+    font-size:.85rem;
+    line-height:1;
+}
+
+.pixora-root .pin-modal-box h2{
+    color:var(--cream);
+    margin:0 0 6px;
+}
+
+.pixora-root .pin-modal-hint{
+    color:rgba(247,237,224,.7);
+    font-size:.85rem;
+    margin:0;
+}
+
+.pixora-root .pin-modal-input{
+    width:100%;
+    padding:15px;
+    margin:20px 0;
+    font-size:22px;
+    text-align:center;
+    letter-spacing:8px;
+    border-radius:10px;
+    border:var(--border);
+    background:rgba(255,255,255,.06);
+    color:var(--cream);
+}
+
+.pixora-root .pin-modal-btn{
+    width:100%;
+    padding:14px;
+    border-radius:999px;
+    border:none;
+    background:var(--secondary);
+    color:var(--primary-darkest);
+    font-weight:600;
+    cursor:pointer;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+}
+
+.pixora-root .pin-modal-error{
+    color:#ff8f8f;
+    margin-top:12px;
+    font-size:.85rem;
+    min-height:1em;
+}
+
+
+
+
+@keyframes px-spin{
+
+100%{
+
+transform:rotate(360deg);
+
+}
+
+}
+
+/* NOTE: a second, functionally-identical "@keyframes spin" (using "to"
+   instead of "100%") used to be declared again near the bottom of this
+   file for .toolbar-btn.loading svg. Removed as a duplicate — this one
+   keyframes definition now serves both .spinner and .toolbar-btn.loading. */
+
+/* ── Cover / hero ─────────────────────────────────────────────────
+   Equal padding on every side comes from .hero-wrapper's uniform
+   `padding: 40px`. #hero clips its child #heroBg, which is the layer
+   that actually carries the slow ambient zoom loop. */
+
+.pixora-root .hero-wrapper,
+.pixora-root main,
+.pixora-root footer{
+    max-width:1800px;
+    margin:0 auto;
+}
+
+.pixora-root .hero-wrapper{
+    padding:40px;
+}
+
+
+.pixora-root main{
+    padding:24px;
+}
+
+.pixora-root #hero{
+    position:relative;
+
+    min-height:calc(100vh - 80px);
+
+    display:flex;
+    align-items:flex-end;
+
+    border-radius:28px;
+    overflow:hidden;
+
+    border:var(--border);
+    box-shadow:var(--shadow-soft);
+}
+.pixora-root .hero-logo{
+    position:absolute;
+    top:clamp(16px, 3.5vw, 28px);
+    left:clamp(16px, 3.5vw, 28px);
+    z-index:20;
+    display:inline-block;
+    cursor:pointer;
+}
+
+.pixora-root .hero-logo img{
+    height:clamp(84px, 16vw, 196px);
+    width:auto;
+    display:block;
+}
+.pixora-root .hero-bg{
+    position:absolute;
+    inset:-25px; /* extra bleed so the zoom never reveals an edge */
+    z-index:0;
+
+    background-size:cover;
+    background-position:center;
+
+    animation:px-coverZoom 22s ease-in-out infinite alternate;
+}
+
+@keyframes px-coverZoom{
+    from{ transform:scale(1); }
+    to{ transform:scale(1.1); }
+}
+
+@media (prefers-reduced-motion:reduce){
+    .pixora-root .hero-bg{ animation:none; }
+}
+
+.pixora-root #hero::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:1;
+
+    background:linear-gradient(
+        to top,
+        rgba(0,0,0,.95) 0%,
+        rgba(0,0,0,.75) 18%,
+        rgba(0,0,0,.35) 35%,
+        transparent 60%
+    );
+}
+
+.pixora-root .overlay{
+    position:absolute;
+    inset:0;
+    z-index:1;
+}
+
+.pixora-root .hero-content{
+    position:relative;
+    z-index:2;
+
+    width:100%;
+    padding:56px;
+
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:24px;
+}
+
+/* On the album page the hero-content needs to span the *whole* hero
+   so the top bar can sit at the very top while the title/CTA sit at
+   the very bottom, on the same cover image. */
+.pixora-root .album-hero .hero-content{
+    position:absolute;
+    inset:0;
+
+    display:flex;
+    flex-direction:column;
+
+    height:100%;
+
+    justify-content:flex-end;
+
+    padding:56px;
+
+    z-index:2;
+}
+
+.pixora-root .hero-bottom{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    width:100%;
+    gap:24px;
+}
+
+.pixora-root .hero-content h1,
+.pixora-root #coupleName,
+.pixora-root #albumTitle{
+
+    margin:0;
+
+
+    font-size:clamp(3rem,6vw,5.5rem);
+
+    color:var(--secondary-light);
+
+    line-height:1.05;
+
+    text-shadow:0 4px 18px rgba(0,0,0,.45);
+
+}
+
+.pixora-root #galleryDate{
+    color:var(--secondary);
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    font-size:.9rem;
+    opacity:.85;
+}
+
+.pixora-root .hero-btn{
+
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    padding:16px 38px;
+
+    border-radius:999px;
+
+    text-decoration:none;
+    border:none;
+    cursor:pointer;
+
+    font-weight:800;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-size:.9rem;
+
+    color:var(--primary-darkest);
+
+    background:var(--secondary);
+
+    transition:
+        transform .3s,
+        background .3s,
+        box-shadow .3s;
+
+    box-shadow:
+        0 16px 40px -10px rgba(43,5,16,.55);
+
+}
+
+.pixora-root .hero-btn:hover{
+
+    transform:translateY(-3px);
+
+    background:var(--secondary-light);
+
+}
+
+/* Bottom-right play button on an album cover — opens the fullscreen
+   slideshow. Liquid-glass circular button. */
+.pixora-root .play-btn{
+    position:absolute;
+    right:56px;
+    top:56px;
+    z-index:10;
+    bottom:auto;
+    left:auto;
+
+    width:64px;
+    height:64px;
+    border-radius:50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.3rem;
+
+    color:var(--secondary-light);
+    background:var(--glass-bg);
+    border:var(--border-strong);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+
+    cursor:pointer;
+    box-shadow:var(--shadow-soft);
+    transition:transform .3s, border-color .3s;
+}
+
+.pixora-root .play-btn:hover{
+    transform:scale(1.08);
+    border-color:var(--secondary-light);
+}
+
+.pixora-root section{
+    width:100%;
+    margin:0;
+    padding:44px 0;
+}
+.pixora-root section h2{
+ 
+
+color:var(--secondary);
+
+font-size:42px;
+
+margin:0;
+
+}
+
+.pixora-root .gallery-container{
+
+    max-width:1800px;
+
+    margin:0 auto;
+
+    padding:40px 40px 24px;
+
+}
+
+.pixora-root .section-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    margin-bottom:18px; /* was 35px — Albums title sat far from the cards */
+    flex-wrap:wrap;
+}
+
+.pixora-root .section-header span{
+    color:var(--secondary);
+    opacity:.8;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-size:.9rem;
+}
+
+/* ── Horizontal card row (Albums + Favorites share this) ─────────── */
+
+.pixora-root .card-row{
+    display:flex;
+    gap:20px;
+
+    overflow-x:auto;
+    overflow-y:hidden;
+
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+
+    padding-bottom:8px;
+
+    cursor:grab;
+    user-select:none;
+
+    padding:16px;
+}
+
+.pixora-root .card-row::-webkit-scrollbar{
+    display:none;
+}
+
+.pixora-root .card-row.dragging{
+    cursor:grabbing;
+}
+
+.pixora-root .card-row.dragging .album-card{
+    pointer-events:none; /* avoid triggering hover/click mid-drag */
+}
+
+/* ── Album card: glass frame, thumbnail as full background, name on
+   a fade at the bottom (no photo count). ────────────────────────── */
+
+.pixora-root .album-card{
+
+    position:relative;
+
+    flex:0 0 300px;
+    height:380px;
+
+    border-radius:20px;
+    overflow:hidden;
+
+    border:1px solid rgba(255,255,255,.08);
+
+    cursor:pointer;
+
+    transition:transform .35s, border-color .35s, box-shadow .35s;
+
+}
+
+.pixora-root .album-card img{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    transition:transform .5s ease;
+}
+
+.pixora-root .album-card-fade{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:30%;
+
+    background:linear-gradient(
+        to top,
+        var(--secondary-light) 0%,
+        var(--secondary-light) 60%,
+        rgba(255,255,255,0) 100%
+    );
+
+    opacity:.92;
+    pointer-events:none;
+    z-index:1; /* merged in — .album-card-fade was declared a second time later in the file with only "z-index:1" */
+}
+
+/* Frosted glass strip behind the fade for a true "liquid glass" look
+   at the base of the card, independent of the photo itself. */
+.pixora-root .album-card::after{
+    content:"";
+    position:absolute;
+    left:0; right:0; bottom:0;
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+}
+
+.pixora-root .album-card-name{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    z-index:2;
+
+    padding:22px;
+ 
+    font-size:26px;
+    color:var(--primary-darkest);
+    text-shadow:0 1px 0 rgba(255,255,255,.25);
+}
+
+.pixora-root .album-card:hover{
+    transform:translateY(-8px);
+    border-color:rgba(255,255,255,.08); 
+    
+}
+
+.pixora-root .album-card:hover img{
+    transform:scale(1.06);
+}
+
+.pixora-root .album-card-title{
+    color:var(--primary-darkest);
+}
+
+
+.pixora-root .heart-card{
+    height:100%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:70px;
+    background:#1b1b1b;
+}
+
+/* Favorite cards (photos, not albums) reuse .album-card but drop the
+   name label — the hover actions (like/share/download) take its place. */
+.pixora-root .favorite-card .album-card-name{
+    display:none;
+}
+
+/* ── Photo hover actions (like / share / download) ──────────────────
+   Shown on hover, before the photo is clicked into the lightbox. */
+
+.pixora-root .photo,
+.pixora-root .favorite-card{
+    position:relative;
+}
+
+.pixora-root .photo-actions{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    z-index:3;
+
+    display:flex;
+    justify-content:center;
+    gap:10px;
+
+    padding:14px 10px 12px;
+
+    background:linear-gradient(to top, rgba(0,0,0,.72), transparent);
+
+    opacity:0;
+    transform:translateY(6px);
+    transition:opacity .25s ease, transform .25s ease;
+    pointer-events:none;
+}
+
+.pixora-root .photo:hover .photo-actions,
+.pixora-root .favorite-card:hover .photo-actions{
+    opacity:1;
+    transform:translateY(0);
+    pointer-events:auto;
+}
+
+.pixora-root .photo-action-btn{
+    width:38px;
+    height:38px;
+    border-radius:50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:var(--glass-bg);
+    border:var(--border);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+
+    color:var(--cream);
+    cursor:pointer;
+    font-size:1rem;
+    transition:transform .2s, border-color .2s;
+}
+
+.pixora-root .photo-action-btn:hover{
+    transform:translateY(-2px);
+    border-color:var(--secondary-light);
+}
+
+.pixora-root .photo-action-btn.active{
+    color:var(--secondary-light);
+}
+
+/* ── Bulk selection / zip download ─────────────────────────────────── */
+
+.pixora-root .photos-heading{
+    position:relative;
+    scroll-margin-top:20px;
+}
+
+/* .selection-toolbar was declared twice in the original file:
+   once here with layout props, once again lower down (Album top bar
+   section) with just "justify-self:start". Merged into one rule. */
+.pixora-root .selection-toolbar{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    justify-self:start; /* merged in from the duplicate declaration in the "Album top bar" section */
+
+    overflow:hidden;
+    transition:width .38s cubic-bezier(.4,0,.2,1);
+}
+
+/* Each button/label fades and settles in with a slight stagger so the
+   expansion from "Select" into the full toolbar feels sequential
+   rather than everything popping in at once. */
+.pixora-root .selection-toolbar > *{
+    animation:px-toolbarItemIn .32s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.pixora-root .selection-toolbar > *:nth-child(1){ animation-delay:.02s; }
+.pixora-root .selection-toolbar > *:nth-child(2){ animation-delay:.08s; }
+.pixora-root .selection-toolbar > *:nth-child(3){ animation-delay:.14s; }
+.pixora-root .selection-toolbar > *:nth-child(4){ animation-delay:.2s; }
+
+@keyframes px-toolbarItemIn{
+    from{
+        opacity:0;
+        transform:translateY(6px) scale(.85);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+}
+
+.pixora-root .gallery-toolbar{
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    align-items:center;
+    gap:24px;
+}
+
+.pixora-root .select-toggle-btn,
+.pixora-root .zip-download-btn{
+    padding:10px 20px;
+    border-radius:999px;
+    background:rgba(131,17,50,.22);
+    border:var(--border);
+    color:var(--secondary);
+    cursor:pointer;
+    font-size:.85rem;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    transition:.3s;
+}
+
+.pixora-root .select-toggle-btn:hover,
+.pixora-root .zip-download-btn:hover{
+    border-color:var(--secondary-light);
+    color:var(--secondary-light);
+}
+
+.pixora-root .zip-download-btn{
+    background:var(--secondary);
+    color:var(--primary-darkest);
+    border-color:var(--secondary);
+}
+
+.pixora-root .photo-select-box{
+    position:absolute;
+    top:10px;
+    left:10px;
+    z-index:4;
+    width:22px;
+    height:22px;
+    accent-color:var(--secondary);
+    display:none;
+}
+
+.pixora-root #photoGrid.selecting .photo-select-box{
+    display:block;
+}
+
+.pixora-root #photoGrid.selecting .photo{
+    cursor:pointer;
+}
+
+.pixora-root .photo.selected{
+    outline:3px solid var(--secondary);
+    outline-offset:-3px;
+}
+
+.pixora-root .cancel-selection-btn,
+.pixora-root .toolbar-btn{
+
+    width:42px;
+    height:42px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:999px;
+
+    border:var(--border);
+
+    background:rgba(131,17,50,.22);
+
+    color:var(--secondary);
+
+    cursor:pointer;
+
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+
+}
+
+.pixora-root .cancel-selection-btn:hover,
+.pixora-root .toolbar-btn:hover{
+
+    border-color:var(--secondary-light);
+
+    color:var(--secondary-light);
+
+}
+
+.pixora-root .selection-count{
+
+    min-width:110px;
+
+    color:var(--secondary);
+
+    font-weight:600;
+
+    letter-spacing:.05em;
+
+}
+
+/* ── Album top bar: back (left) / tabs (center) / count (right), all
+   aligned on one row. ───────────────────────────────────────────── */
+
+.pixora-root .album-top{
+
+    width:100%;
+
+    display:grid;
+
+    grid-template-columns:auto 1fr auto;
+
+    align-items:center;
+
+    gap:24px;
+
+}
+.pixora-root #backBtn{
+
+    position:fixed;
+
+    top:36px;
+    left:28px;
+
+    z-index:1000;
+
+    display:inline-flex;
+    align-items:center;
+
+    padding:12px 24px;
+
+    border-radius:999px;
+
+    text-decoration:none;
+
+    color:var(--cream);
+
+    background:rgba(20,4,9,.55);
+
+    border:var(--border);
+
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+
+    box-shadow:var(--shadow-soft);
+
+    transition:
+        background .3s,
+        transform .3s,
+        border-color .3s;
+}
+
+.pixora-root #backBtn:hover{
+
+    transform:translateY(-2px);
+
+    background:rgba(20,4,9,.75);
+
+    border-color:var(--secondary-light);
+
+}
+.pixora-root #albumCount{
+    justify-self:end;
+    margin:0;
+
+    color:var(--secondary);
+
+    font-size:.95rem;
+    font-weight:600;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+
+    white-space:nowrap;
+}
+
+/* NOTE: duplicate ".selection-toolbar{ justify-self:start; }" rule
+   that used to live here has been merged into the single
+   .selection-toolbar rule above (in the "Bulk selection" section). */
+
+.pixora-root .right-toolbar{
+    justify-self:end;
+}
+
+.pixora-root #sectionTabs{
+    justify-self:center;
+
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+.pixora-root #sectionTabs button{
+    font-weight:600;
+
+    padding:12px 26px;
+
+    border-radius:999px;
+
+    background:rgba(131,17,50,.22);
+
+    border:var(--border-strong);
+
+    color:var(--secondary);
+
+    cursor:pointer;
+
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+
+    transition:
+        background .35s ease,
+        color .35s ease,
+        border-color .35s ease,
+        box-shadow .35s ease,
+        transform .35s ease;
+
+    font-size:.9rem;
+
+    letter-spacing:.08em;
+
+    text-transform:uppercase;
+
+}
+
+.pixora-root #sectionTabs button.active{
+
+    background:var(--secondary);
+
+    color:var(--primary-darkest);
+
+    border-color:var(--secondary);
+
+    box-shadow:
+        0 10px 24px rgba(38,7,17,.28),
+        0 0 20px rgba(210,184,133,.35);
+
+}
+
+.pixora-root #sectionTabs button:hover{
+
+    transform:translateY(-2px);
+
+    border-color:var(--secondary-light);
+
+    color:var(--secondary-light);
+
+    background:rgba(131,17,50,.35);
+
+}
+.pixora-root #sectionTabs button.active:hover{
+
+    background:var(--secondary-light);
+
+    border-color:var(--secondary-light);
+
+    color:var(--primary-darkest);
+
+}
+
+/* ── Justified photo grid ───────────────────────────────────────── */
+
+.pixora-root #photoGrid{
+
+display:flex;
+
+flex-direction:column;
+
+gap:12px;
+
+}
+
+.pixora-root .row{
+    display:flex;
+    gap:12px;
+}
+
+.pixora-root .row .photo{
+    flex:none;
+}
+
+/* Glass treatment lives on the *card frame*, never on the photo
+   pixels themselves (a blurred photo looks broken, not elegant). */
+.pixora-root .photo{
+
+position:relative;
+
+cursor:pointer;
+
+overflow:hidden;
+
+border-radius:18px;
+
+border:var(--border);
+
+box-shadow:var(--shadow-soft);
+
+transition:
+    transform .45s ease,
+    box-shadow .45s ease,
+    border-color .35s ease;
+
+}
+
+.pixora-root .photo img{
+
+width:100%;
+
+display:block;
+
+transition:
+
+transform .8s ease,
+
+filter .4s ease;
+
+}
+
+.pixora-root .photo:hover{
+
+    border-color:var(--secondary-light);
+
+    transform:translateY(-6px);
+
+}
+
+.pixora-root .photo:hover img{
+
+transform:scale(1.07);
+
+}
+
+.pixora-root .expiry{
+
+padding:12px;
+background:var(--secondary);
+
+color:var(--primary-darkest);
+
+text-align:center;
+
+}
+
+.pixora-root .skeleton{
+
+height:250px;
+
+background:linear-gradient(
+90deg,
+rgba(131,17,50,.35),
+rgba(210,184,133,.12),
+rgba(131,17,50,.35)
+);
+
+animation:px-loading 1.2s infinite;
+
+}
+
+.pixora-root .footer-content{
+    max-width:1800px;
+    margin:0 auto;
+    padding:24px;
+}
+
+@keyframes px-loading{
+
+0%{
+
+background-position:-200px;
+
+}
+
+100%{
+
+background-position:200px;
+
+}
+
+}
+
+/* ── Floating "scroll to top" button ───────────────────────────────── */
+
+.pixora-root .scroll-top-btn{
+    position:fixed;
+    right:28px;
+    bottom:28px;
+    z-index:500;
+
+    width:52px;
+    height:52px;
+    border-radius:50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.2rem;
+
+    color:var(--secondary-light);
+    background:var(--glass-bg);
+    border:var(--border-strong);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+
+    cursor:pointer;
+    box-shadow:var(--shadow-soft);
+
+    opacity:0;
+    transform:translateY(12px);
+    pointer-events:none;
+    transition:opacity .3s, transform .3s;
+}
+
+.pixora-root .scroll-top-btn.visible{
+    opacity:1;
+    transform:translateY(0);
+    pointer-events:auto;
+}
+
+.pixora-root .scroll-top-btn:hover{
+    border-color:var(--secondary-light);
+    transform:translateY(-3px);
+}
+
+/* ── Toast (used by the lightbox share menu) ───────────────────────── */
+.pixora-root .lb-favorite svg{
+    transition:.2s;
+}
+
+.pixora-root .lb-favorite.active svg{
+    color:#ff5a7d;
+    fill:currentColor;
+}
+.pixora-root .lb-toast{
+    position:fixed;
+    left:50%;
+    bottom:40px;
+    transform:translate(-50%,10px);
+    z-index:100000;
+
+    padding:12px 22px;
+    border-radius:999px;
+
+    background:var(--glass-bg);
+    border:var(--border-strong);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    color:var(--cream);
+    font-size:.9rem;
+
+    opacity:0;
+    transition:opacity .3s, transform .3s;
+}
+
+.pixora-root .lb-toast.visible{
+    opacity:1;
+    transform:translate(-50%,0);
+}
+
+/* ── Lightbox ─────────────────────────────────────────────────────── */
+
+.pixora-root .lb-overlay{
+    position:fixed;
+    inset:0;
+    z-index:99998;
+
+    background:rgba(10,2,5,.92);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+
+    display:flex;
+    flex-direction:column;
+}
+
+.pixora-root .lb-topbar{
+    display:flex; 
+    justify-content:space-between;
+    align-items:center;
+    padding:22px 28px;
+    z-index:2;
+}
+.pixora-root .lb-left{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.pixora-root .lb-actions{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+/* .lb-icon-btn used to be declared twice: once here at 44px, and
+   again lower down (Fullscreen slideshow section) grouped with
+   .ss-icon-btn at 52px — the later rule would have silently won and
+   overridden the 44px below. Merged into one rule at 52px (the value
+   that was actually taking effect), with display/align-items/
+   justify-content/border-radius consolidated here instead of being
+   repeated in the .ss-icon-btn grouping further down. */
+.pixora-root .lb-icon-btn{
+    width:52px; /* was 44px here — overridden by the duplicate rule further down, now merged */
+    height:52px; /* was 44px here — overridden by the duplicate rule further down, now merged */
+    border-radius:50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:var(--glass-bg);
+    border:var(--border-strong);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+
+    color:var(--cream);
+    font-size:1.05rem;
+    cursor:pointer;
+    transition:transform .2s, border-color .2s;
+}
+
+.pixora-root .lb-icon-btn:hover{
+    transform:translateY(-2px);
+    border-color:var(--secondary-light);
+}
+
+.pixora-root .lb-icon-btn.active{
+    color:var(--secondary-light);
+    border-color:var(--secondary-light);
+}
+
+/* Image sits inside a padded stage, never flush to the screen edges. */
+.pixora-root .lb-stage{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:18px;
+    padding:0 40px 10px;
+    min-height:0;
+}
+
+.pixora-root .lb-frame{
+    max-width:calc(100% - 120px);
+    max-height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.pixora-root .lb-image{
+    cursor:zoom-in;
+    max-width:100%;
+    max-height:78vh;
+    width:auto;
+    height:auto;
+    object-fit:contain;
+    border-radius:14px;
+    box-shadow:var(--shadow-soft);
+    transition:transform .3s ease;
+}
+
+.pixora-root .lb-image.zoomed{
+    cursor:zoom-out;
+    transform:scale(2.2);
+}
+
+.pixora-root .lb-nav{
+    width:52px;
+    height:52px;
+    border-radius:50%;
+    flex:0 0 auto;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.6rem;
+
+    background:var(--glass-bg);
+    border:var(--border-strong);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+
+    color:var(--cream);
+    cursor:pointer;
+    transition:transform .2s, border-color .2s;
+}
+
+.pixora-root .lb-nav:hover{
+    transform:scale(1.08);
+    border-color:var(--secondary-light);
+}
+
+.pixora-root .lb-date{
+    flex:1;
+    margin:0px;
+    justify-self:center;
+
+    color:var(--secondary-light);
+    font-size:.95rem;
+    letter-spacing:.06em;
+}
+
+.pixora-root .lb-caption{
+    position:absolute;
+    left:50%;
+    bottom:28px;
+    transform:translateX(-50%);
+
+    z-index:2;
+    text-align:center;
+}
+
+.pixora-root .lb-title{
+    margin:0;
+    color:var(--cream);
+    font-size:1rem;
+    letter-spacing:.05em;
+}
+
+.pixora-root .lb-subtitle{
+    color:var(--secondary);
+    letter-spacing:.06em;
+    font-size:.9rem;
+}
+
+.pixora-root .lb-share-menu{
+    position:absolute;
+    top:52px;
+    right:0;
+
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+
+    padding:10px;
+    border-radius:14px;
+
+    background:var(--glass-bg);
+    border:var(--border-strong);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    box-shadow:var(--shadow-soft);
+
+    min-width:180px;
+}
+
+.pixora-root .lb-share-menu button{
+    padding:10px 14px;
+    border-radius:8px;
+    border:none;
+    background:transparent;
+    color:var(--cream);
+    text-align:left;
+    cursor:pointer;
+    font-size:.9rem;
+}
+
+.pixora-root .lb-share-menu button:hover{
+    background:rgba(255,255,255,.08);
+}
+
+@media(max-width:768px){
+    .pixora-root .lb-stage{ padding:0 12px; gap:8px; }
+    .pixora-root .lb-frame{ max-width:calc(100% - 60px); }
+    .pixora-root .lb-nav{ width:40px; height:40px; font-size:1.2rem; }
+}
+
+
+/* ── Fullscreen slideshow ───────────────────────────────────────────── */
+/* NOTE: the duplicate ".lb-icon-btn, .ss-icon-btn { width:52px; height:52px;
+   display:flex; align-items:center; justify-content:center; border-radius:50%; }"
+   rule that used to be here has been merged into the single .lb-icon-btn
+   rule in the Lightbox section above. .ss-icon-btn keeps its own sizing
+   below (42px), which is the value that was actually winning the cascade. */
+
+.pixora-root .lb-icon-btn svg,
+.pixora-root .ss-icon-btn svg{
+    width:22px;
+    height:22px;
+    stroke-width:2;
+}
+.pixora-root .lb-nav svg{
+    width:30px;
+    height:30px;
+    stroke-width:2;
+}
+
+.pixora-root .ss-overlay{
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    background:#000;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+}
+
+.pixora-root .ss-image{
+    max-width:90%;
+    max-height:88%;
+    object-fit:contain; 
+    border-radius:10px;
+    opacity:1;
+    transition:opacity .4s ease;
+}
+
+.pixora-root .ss-image.ss-fade-out{ 
+    opacity:0;
+}
+.pixora-root .ss-image.ss-fade-in{
+    opacity:1;
+}
+
+@keyframes px-ssFadeIn{
+    from{ opacity:0; transform:scale(1.02); }
+    to{ opacity:1; transform:scale(1); }
+}
+
+.pixora-root .ss-topbar{
+    position:absolute;
+    top:0; left:0; right:0;
+    z-index:2;
+
+    display:flex;
+    align-items:center;
+    gap:18px;
+    padding:24px 28px;
+
+    background:linear-gradient(to bottom, rgba(0,0,0,.55), transparent);
+
+    transition:opacity .35s ease, transform .35s ease;
+}
+
+/* Tapping empty space in the slideshow toggles this class on .ss-overlay
+   to hide the topbar/controls for a clean, uninterrupted view; tapping
+   again brings them back. Buttons themselves stop click propagation so
+   they don't trigger this. */
+.pixora-root .ss-overlay.ss-controls-hidden .ss-topbar{
+    opacity:0;
+    transform:translateY(-12px);
+    pointer-events:none;
+}
+
+.pixora-root .ss-overlay.ss-controls-hidden .ss-controls{
+    opacity:0;
+    transform:translate(-50%, 12px);
+    pointer-events:none;
+}
+
+.pixora-root .ss-caption{
+    color:var(--secondary-light);
+    letter-spacing:.06em;
+    font-size:.95rem;
+}
+
+.pixora-root .ss-controls{
+
+    position:absolute;
+    left:50%;
+    bottom:28px;
+    transform:translateX(-50%);
+
+    display:flex;
+    align-items:center;
+    gap:16px;
+
+    padding:16px 22px;
+
+    border-radius:999px;
+
+    background:var(--glass-bg);
+
+    border:var(--border-strong);
+
+    backdrop-filter:blur(22px);
+    -webkit-backdrop-filter:blur(22px);
+
+    box-shadow:
+        0 18px 50px rgba(0,0,0,.45),
+        inset 0 1px 0 rgba(255,255,255,.08);
+
+    transition:opacity .35s ease, transform .35s ease;
+
+    max-width:94vw;
+    overflow-x:auto;
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+}
+
+.pixora-root .ss-controls::-webkit-scrollbar{
+    display:none;
+}
+
+.pixora-root .ss-icon-btn{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(210,184,133,.3);
+
+    color:var(--cream);
+    font-size:1rem;
+    cursor:pointer;
+    transition:transform .2s, border-color .2s, color .2s;
+}
+
+.pixora-root .ss-icon-btn:hover{
+    transform:translateY(-2px);
+    border-color:var(--secondary-light);
+    background:rgba(210,184,133,.12);
+}
+
+.pixora-root .ss-icon-btn.active{
+    background:var(--secondary);
+    color:var(--primary-darkest);
+    border-color:var(--secondary);
+
+    box-shadow:
+        0 0 18px rgba(210,184,133,.35),
+        inset 0 0 8px rgba(255,255,255,.12);
+}
+.pixora-root .ss-speed{
+    position:relative;
+}
+
+.pixora-root .ss-speed-btn{
+
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    height:42px;
+
+    padding:0 16px;
+
+    border-radius:999px;
+
+    border:var(--border);
+
+    background:rgba(255,255,255,.06);
+
+    color:var(--cream);
+
+    cursor:pointer;
+
+    backdrop-filter:blur(18px);
+
+    transition:.25s;
+}
+
+.pixora-root .ss-speed-btn:hover{
+
+    border-color:var(--secondary-light);
+
+}
+
+.pixora-root .ss-speed-btn.open{
+
+    background:var(--secondary);
+
+    color:var(--primary-darkest);
+
+    border-color:var(--secondary);
+
+}
+
+.pixora-root .ss-speed-menu{
+
+    position:fixed;
+
+    min-width:180px;
+
+    padding:8px;
+
+    border-radius:16px;
+
+    background:var(--glass-bg);
+
+    border:var(--border-strong);
+
+    backdrop-filter:blur(20px);
+
+    box-shadow:var(--shadow-soft);
+
+    opacity:0;
+
+    visibility:hidden;
+
+    transform:translateY(10px);
+
+    transition:
+        opacity .2s,
+        transform .2s,
+        visibility .2s;
+}
+
+.pixora-root .ss-speed-menu.open{
+
+    opacity:1;
+
+    visibility:visible;
+
+    transform:translateY(0);
+
+}
+
+.pixora-root .ss-speed-menu button{
+
+    width:100%;
+
+    padding:12px 14px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:none;
+
+    color:var(--cream);
+
+    text-align:left;
+
+    cursor:pointer;
+
+    transition:.2s;
+}
+
+.pixora-root .ss-speed-menu button:hover{
+
+    background:rgba(255,255,255,.08);
+
+}
+
+.pixora-root .ss-speed-menu button.active{
+
+    background:var(--secondary);
+
+    color:var(--primary-darkest);
+
+}
+
+.pixora-root .lb-icon-btn.flash,
+.pixora-root .ss-icon-btn.flash{
+    background:var(--secondary);
+    color:var(--primary-darkest);
+    border-color:var(--secondary);
+    transform:scale(.94);
+    box-shadow:
+        0 0 18px rgba(210,184,133,.45),
+        inset 0 0 10px rgba(255,255,255,.15);
+
+    transition:
+        background .15s,
+        color .15s,
+        border-color .15s,
+        transform .15s,
+        box-shadow .15s;
+}
+
+@media (max-width:1024px){
+
+    .pixora-root .hero-wrapper{
+        padding:24px;
+    }
+
+    .pixora-root #hero{
+        min-height:75vh;
+    }
+
+    .pixora-root .hero-content{
+        padding:40px;
+    }
+
+    .pixora-root .hero-bottom{
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-end;
+        gap:24px;
+    }
+
+    .pixora-root #albumTitle{
+        font-size:clamp(2.8rem,5vw,4.2rem);
+    }
+
+    .pixora-root .play-btn{
+        top:40px;
+        right:40px;
+    }
+
+    .pixora-root .gallery-toolbar{
+        grid-template-columns:auto 1fr auto;
+        gap:16px;
+    }
+
+    .pixora-root #sectionTabs{
+        justify-content:center;
+        flex-wrap:wrap;
+    }
+}
+
+
+@media(max-width:768px) {
+    .pixora-root .ss-controls {
+        gap: 8px;
+        padding: 10px 14px;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        width: auto;
+        max-width: 92vw;
+    }
+
+    .pixora-root .ss-icon-btn{
+        width: 40px;
+        height: 40px;
+        flex: 0 0 auto;
+    }
+
+    .pixora-root .ss-icon-btn svg{
+        width: 18px;
+        height: 18px;
+    }
+
+    .pixora-root .ss-speed-btn{
+        height: 40px;
+        padding: 0 12px;
+        gap: 6px;
+        font-size: .82rem;
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    .pixora-root .ss-speed-menu{
+        min-width: 150px;
+    }
+
+    .pixora-root .ss-topbar{
+        padding: 18px 18px;
+        gap: 12px;
+    }
+
+    .pixora-root .ss-caption{
+        font-size: .82rem;
+    }
+}
+
+@media(max-width:420px){
+    .pixora-root .ss-controls{
+        gap: 6px;
+        padding: 8px 10px;
+    }
+
+    .pixora-root .ss-icon-btn{
+        width: 36px;
+        height: 36px;
+    }
+
+    .pixora-root .ss-speed-btn span{
+        display: none; /* keep just the chevron to save space on very small screens */
+    }
+
+    .pixora-root .ss-speed-btn{
+        padding: 0 10px;
+    }
+}
+@media (max-width:768px){
+
+    .pixora-root .hero-wrapper{
+        padding:16px;
+    }
+
+    .pixora-root #hero{
+        min-height:70vh;
+        border-radius:22px;
+    }
+
+    .pixora-root .hero-content{
+        position:absolute;
+        inset:0;
+
+        display:flex;
+        flex-direction:column;
+        justify-content:flex-end;
+        align-items:center;
+
+        padding:24px;
+    }
+
+    .pixora-root .hero-bottom{
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        text-align:center;
+        gap:18px;
+        width:100%;
+    }
+
+    .pixora-root .hero-content h1,
+    .pixora-root #coupleName,
+    .pixora-root #albumTitle{
+        text-align:center;
+    }
+
+    .pixora-root .hero-btn{
+        width:auto;
+        max-width:100%;
+        padding:15px 34px;
+    }
+
+    .pixora-root #albumTitle{
+        font-size:2.6rem;
+        line-height:1.05;
+    }
+
+    .pixora-root .play-btn{
+        top:24px;
+        right:24px;
+
+        width:52px;
+        height:52px;
+    }
+
+    .pixora-root #backBtn{
+        top:16px;
+        left:16px;
+        padding:10px 18px;
+        font-size:.85rem;
+    }
+
+    .pixora-root .gallery-toolbar{
+        display:grid;
+        grid-template-columns:1fr auto;
+        grid-template-areas:
+            "select count"
+            "sections sections";
+        row-gap:14px;
+        column-gap:12px;
+        align-items:center;
+        margin:28px 0;
+    }
+
+    /* While picking photos for zip/favorite, the count isn't useful —
+       hide it and let the selection toolbar (cancel / count / favorite
+       / download) use the full row width instead. */
+    .pixora-root .gallery-toolbar.selecting{
+        grid-template-areas:
+            "select select"
+            "sections sections";
+    }
+
+    .pixora-root .gallery-toolbar.selecting #albumCount{
+        display:none;
+    }
+
+    .pixora-root .selection-toolbar{
+        grid-area:select;
+        justify-self:start;
+        width:auto;
+        flex-wrap:wrap;
+    }
+
+    .pixora-root .gallery-toolbar.selecting .selection-toolbar{
+        justify-self:stretch;
+        width:100%;
+        justify-content:space-between;
+    }
+
+    /* Tabs share the available row width equally and shrink (with an
+       ellipsis on overflowing text) rather than scrolling or wrapping
+       — every tab stays visible and the row always fits the screen. */
+    .pixora-root #sectionTabs{
+        grid-area:sections;
+        width:100%;
+        display:flex;
+        flex-wrap:nowrap;
+        gap:8px;
+    }
+
+    .pixora-root #sectionTabs button{
+        flex:1 1 0;
+        min-width:0;
+        padding:10px 10px;
+        font-size:.76rem;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        text-align:center;
+    }
+
+    .pixora-root #albumCount{
+        grid-area:count;
+        justify-self:end;
+        text-align:right;
+        white-space:nowrap;
+    }
+}
+
+@media(max-width:380px){
+    .pixora-root #backBtn{
+        top:12px;
+        left:12px;
+        padding:8px 14px;
+        font-size:.8rem;
+    }
+
+    .pixora-root .play-btn{
+        top:16px;
+        right:16px;
+        width:46px;
+        height:46px;
+    }
+}
+
+
+.pixora-root .lb-icon-btn.loading {
+    pointer-events: none;
+    opacity: .8;
+}
+
+.pixora-root .lb-icon-btn.loading i {
+    animation: px-lb-spin .8s linear infinite;
+}
+
+@keyframes px-lb-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.pixora-root .toolbar-btn.loading {
+    pointer-events: none;
+    opacity: .8;
+}
+
+.pixora-root .toolbar-btn.loading svg {
+    animation: px-spin .8s linear infinite; /* reuses the single @keyframes spin declared near the top of the file */
+}
+
+/* NOTE: a duplicate "@keyframes spin { to { transform: rotate(360deg); } }"
+   used to be declared again here — removed. It was functionally identical
+   to the @keyframes spin defined near the top of this file (used by
+   .spinner), so .toolbar-btn.loading svg now just reuses that one. */
+.pixora-root .favorites-grid{
+    column-count:4;
+    column-gap:16px;
+}
+
+.pixora-root .favorite-card{
+    display:inline-block;
+    width:100%;
+    margin:0 0 16px;
+    break-inside:avoid;
+}
+
+ 
+.pixora-root .favorites-grid .favorite-card{
+    flex:none;
+    height:auto;
+}
+
+.pixora-root #favoriteSelectedBtn.active{
+    color: var(--secondary-light);
+    border-color: var(--secondary-light);
+    background: rgba(210,184,133,.18);
+}
+
+.pixora-root #favoriteSelectedBtn.active svg{
+    fill: currentColor;
+}
+
+
+/* Mobile tweaks */
+@media (max-width: 768px) {
+
+    /* Lightbox top bar */
+    .pixora-root .lb-topbar{
+        padding:14px 16px;
+    }
+
+    .pixora-root .lb-actions{
+        gap:8px;
+    }
+
+    .pixora-root .lb-icon-btn{
+        width:38px;
+        height:38px;
+    }
+
+    .pixora-root .lb-icon-btn svg{
+        width:18px;
+        height:18px;
+    }
+
+    .pixora-root .lb-date{
+        font-size:.8rem;
+    }
+
+    /* Smaller sections */
+    .pixora-root section{
+        padding:28px 0;
+    }
+
+    .pixora-root .gallery-container{
+        padding:12px 8px 8px;
+    }
+
+    .pixora-root .section-header{
+        margin-bottom:4px;
+    }
+
+    .pixora-root section h2{
+        font-size:24px;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .pixora-root .lb-icon-btn{
+        width:34px;
+        height:34px;
+    }
+
+    .pixora-root .lb-icon-btn svg{
+        width:16px;
+        height:16px;
+    }
+
+    .pixora-root .lb-topbar{
+        padding:12px;
+    }
+
+    .pixora-root .lb-actions{
+        gap:6px;
+    }
+
+    .pixora-root section{
+        padding:20px 0;
+    }
+
+    .pixora-root .gallery-container{
+        padding:20px 12px 12px;
+    }
+
+    .pixora-root section h2{
+        font-size:28px;
+    }
+}
+
+@media (max-width:768px){
+    .pixora-root .gallery-toolbar.selecting .selection-toolbar{
+        justify-self:start;
+        width:auto;
+        justify-content:flex-start;
+        flex-wrap:wrap;
+    }
+}
+@media (max-width:768px){
+
+    .pixora-root .favorites-grid{
+        display:block;
+        column-count:2;
+        column-gap:12px;
+    }
+
+    .pixora-root .favorites-grid .favorite-card{
+        display:inline-block;
+        width:100%;
+        margin:0 0 12px;
+        break-inside:avoid;
+        aspect-ratio:auto;
+        height:auto;
+    }
+
+    /* IMPORTANT */
+    .pixora-root .favorites-grid .favorite-card img{
+        position:static;
+        inset:auto;
+        width:100%;
+        height:auto;
+        display:block;
+        object-fit:contain;
+    }
+}
+
+/* Favorites should look like gallery photos */
+.pixora-root .favorite-card{
+    /* position:relative; — removed here, already set above via the
+       shared ".photo, .favorite-card { position:relative; }" rule */
+    overflow:hidden;
+    border-radius:18px;
+    border:var(--border);
+    box-shadow:var(--shadow-soft);
+    transition:
+        transform .45s ease,
+        box-shadow .45s ease,
+        border-color .35s ease;
+
+    height:auto;
+}
+
+.pixora-root .favorite-card img{
+    position:static;
+    width:100%;
+    height:auto;
+    display:block;
+    object-fit:cover;
+    transition:transform .8s ease;
+}
+
+.pixora-root .favorite-card:hover{
+    transform:translateY(-6px);
+    border-color:var(--secondary-light);
+}
+
+.pixora-root .favorite-card:hover img{
+    transform:scale(1.07);
+}
+
+/* ===== loader.css ===== */
+.pixora-root #preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center; 
+    visibility: visible;
+ 
+
+    background:
+        radial-gradient(circle at 15% 90%, rgba(163,22,63,.18) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(210,184,133,.10) 0%, transparent 30%),
+        radial-gradient(circle at 20% 15%, rgba(163,22,63,.14) 0%, transparent 40%),
+        radial-gradient(circle at 90% 10%, rgba(131,17,50,.20) 0%, transparent 45%),
+        linear-gradient(
+            340deg,
+            var(--primary-darkest),
+            var(--primary-darker),
+            var(--primary-darkest)
+        );
+
+    transition:
+        opacity .8s ease,
+        visibility .8s ease;
+}
+
+
+.pixora-root #preloader.hide {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.pixora-root .loader-glass {
+    width: 248px;
+    aspect-ratio: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,.12),
+            rgba(255,255,255,.03)
+        );
+
+    border: 1px solid rgba(255,255,255,.10);
+
+    backdrop-filter: blur(26px);
+    -webkit-backdrop-filter: blur(26px);
+
+    box-shadow:
+        0 20px 50px rgba(0,0,0,.35),
+        inset 0 1px 1px rgba(255,255,255,.28);
+
+    animation: px-pulse 2s ease-in-out infinite;
+}
+
+.pixora-root .loader-glass img {
+    width: 236px;
+    z-index:2;
+    animation:
+        px-logoFloat 2s ease-in-out infinite,
+        px-logoFade 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes px-logoFade {
+    from {
+        opacity: .75;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes px-pulse {
+    0%,100%{
+        transform:scale(1);
+    }
+    50%{
+        transform:scale(1.04);
+    }
+}
+
+@keyframes px-logoFloat {
+    0%,100%{
+        transform:translateY(0);
+    }
+    50%{
+        transform:translateY(-6px);
+    }
+}
+
+
+.pixora-root .loader-ring{
+    position:absolute;
+    width:236px;
+    height:236px;
+    transform:rotate(180deg);
+}
+
+.pixora-root .track{
+    fill:none;
+    stroke:rgba(255,255,255,.08);
+    stroke-width:1;
+}
+
+.pixora-root .arc{
+    fill:none;
+    stroke:var(--secondary);
+    stroke-width:2;
+    stroke-linecap:round;
+
+    stroke-dasharray:163.4;
+}
+
+.pixora-root .arc-left{
+    animation:px-leftArc 1.5s ease forwards;
+}
+
+.pixora-root .arc-right{
+    animation:px-rightArc 1.5s ease forwards;
+}
+
+@keyframes px-leftArc{
+
+    from{
+        stroke-dashoffset:163.4;
+    }
+
+    to{
+        stroke-dashoffset:81.7;
+    }
+
+}
+
+@keyframes px-rightArc{
+
+    from{
+        stroke-dashoffset:-163.4;
+    }
+
+    to{
+        stroke-dashoffset:-81.7;
+    }
+
+}
+
+/* ===== cursor.css ===== */
+.pixora-root .cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 40px;
+    aspect-ratio: 1;
+    border: 1.5px solid var(--secondary);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition:
+        transform .08s linear,
+        width .2s ease,
+        height .2s ease,
+        border-color .2s ease,
+        opacity .2s ease;
+    will-change: transform;
+    z-index: 999999;
+    mix-blend-mode: normal;
+}
+
+.pixora-root .cursor-dot {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 8px;
+    aspect-ratio: 1;
+    background: var(--secondary);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: transform .15s ease;
+    will-change: transform;
+    z-index: 1000000;
+}
+
+.pixora-root .cursor-dot.active {
+    transform: translate(-50%, -50%) scale(2.5);
+}
+
+.pixora-root .cursor.hover {
+    width: 56px;
+    height: 56px;
+}
+
+.pixora-root .cursor.hidden,
+.pixora-root .cursor-dot.hidden {
+    opacity: 0;
+}
+ 
+
+@media (hover: none),
+(pointer: coarse) {
+
+    .pixora-root .cursor,
+    .pixora-root .cursor-dot {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .pixora-root .cursor,
+    .pixora-root .cursor-dot {
+        transition: none;
+    }
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .pixora-root {
+        cursor: none;
+    }
+
+    .pixora-root input,
+    .pixora-root textarea,
+    .pixora-root [contenteditable="true"] {
+        cursor: text;
+    }
+}
+
+/* ── Additions made during the Next.js port ───────────────────────────── */
+
+/* body{} used to provide the wrapper's footprint + missing token */
+.pixora-root{
+    min-height:100vh;
+    --secondary-dark:#a88f5c; /* was referenced but never defined */
+}
+
+/* lucide-react renders <svg>, not <i>, so spin the svg directly */
+.pixora-root .lb-icon-btn.loading svg{
+    animation:px-lb-spin .8s linear infinite;
+}
