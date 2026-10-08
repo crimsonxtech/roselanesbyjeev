@@ -72,6 +72,11 @@ export type Testimonial = Prisma.TestimonialModel
  */
 export type PortfolioImage = Prisma.PortfolioImageModel
 /**
+ * Model SiteContent
+ * 
+ */
+export type SiteContent = Prisma.SiteContentModel
+/**
  * Model User
  * 
  */

@@ -92,6 +92,42 @@ model QuoteAddOn {
   qty     Int
 }
 
+// ---- Portfolio ----
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  rating    Int // 1-5
+  review    String
+  imageUrl  String
+  imageKey  String // object key in the bucket, used for deletes
+  position  Int // 0 = first
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([position])
+}
+
+model PortfolioImage {
+  id          String   @id @default(cuid())
+  assetId     String   @unique // R2 folder: portfolio/gallery/<assetId>/{thumb,display}.webp (+ original.*)
+  alt         String // caption shown on hover and used as alt text
+  width       Int // display-size dimensions, gives the masonry its aspect ratio
+  height      Int
+  originalKey String? // null for older images that have no stored original
+  position    Int // 0 = first
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([position])
+}
+
+model SiteContent {
+  section   String   @id // "hero" | "about" | "contact"
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
 // ---- Better Auth (unchanged) ----
 
 model User {
@@ -156,5 +192,3 @@ model Verification {
   @@index([identifier])
   @@map("verification")
 }
-
-

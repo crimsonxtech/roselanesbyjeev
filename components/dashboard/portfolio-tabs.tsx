@@ -4,8 +4,11 @@ import Link, { useLinkStatus } from "next/link";
 import { Spinner } from "./spinner";
 
 const VIEWS = [
+  { key: "home", label: "Home", href: "/dashboard?section=portfolio&view=home" },
   { key: "gallery", label: "Gallery", href: "/dashboard?section=portfolio&view=gallery" },
   { key: "testimonials", label: "Testimonials", href: "/dashboard?section=portfolio&view=testimonials" },
+  { key: "about", label: "About", href: "/dashboard?section=portfolio&view=about" },
+  { key: "contact", label: "Contact", href: "/dashboard?section=portfolio&view=contact" },
 ] as const;
 
 function Pending() {
@@ -13,7 +16,7 @@ function Pending() {
   return pending ? <Spinner className="h-3 w-3" /> : null;
 }
 
-export function PortfolioTabs({ active }: { active: "gallery" | "testimonials" }) {
+export function PortfolioTabs({ active }: { active: "home" | "gallery" | "testimonials" | "about" | "contact" }) {
   return (
     <nav aria-label="Portfolio views" className="mb-6 inline-flex gap-1 rounded-md border border-neutral-800 p-1">
       {VIEWS.map((v) => (

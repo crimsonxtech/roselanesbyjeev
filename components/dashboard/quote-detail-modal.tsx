@@ -104,26 +104,35 @@ export function QuoteDetailModal({
   quote,
   onClose,
   onQuoteUpdated,
+  onQuoteDeleted,
 }: {
   quote: QuoteWithRelations;
   onClose: () => void;
   onQuoteUpdated: (quote: QuoteWithRelations) => void;
+  onQuoteDeleted: (quoteId: string) => void;
 }) {
   useBodyScrollLock(true);
 
-  const [editing, setEditing] = React.useState(false); 
+  const [editing, setEditing] = React.useState(false);
   const [draft, setDraft] = React.useState<QuoteEditDraft>(() => makeDraft(quote));
   const [saving, setSaving] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
 
   const [addOnFormOpen, setAddOnFormOpen] = React.useState(false);
-const [addOnName, setAddOnName] = React.useState("");
-const [addOnQty, setAddOnQty] = React.useState(1);
+  const [addOnName, setAddOnName] = React.useState("");
+  const [addOnQty, setAddOnQty] = React.useState(1);
 
   const [price, setPrice] = React.useState("");
   const [sending, setSending] = React.useState(false);
   const [sent, setSent] = React.useState(false);
   const [sendError, setSendError] = React.useState<string | null>(null);
+  const [wasPreviouslySent, setWasPreviouslySent] = React.useState(
+    !!quote.confirmationSentAt
+  );
+
+  const [confirmingDelete, setConfirmingDelete] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
+  const [deleteError, setDeleteError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     setDraft(makeDraft(quote));
@@ -132,6 +141,8 @@ const [addOnQty, setAddOnQty] = React.useState(1);
   function startEditing() {
     setDraft(makeDraft(quote));
     setSaveError(null);
+    setConfirmingDelete(false);
+    setDeleteError(null);
     setEditing(true);
   }
 
@@ -151,20 +162,20 @@ const [addOnQty, setAddOnQty] = React.useState(1);
   }
 
   function addEvent() {
-  setDraft((prev) => ({
-    ...prev,
-    events: [
-      ...prev.events,
-      {
-        label: "Wedding",
-        date: "",
-        timeOfDay: "",
-        venue: "",
-        services: [],
-      },
-    ],
-  }));
-}
+    setDraft((prev) => ({
+      ...prev,
+      events: [
+        ...prev.events,
+        {
+          label: "Wedding",
+          date: "",
+          timeOfDay: "",
+          venue: "",
+          services: [],
+        },
+      ],
+    }));
+  }
 
   function removeEvent(index: number) {
     setDraft((prev) => ({
@@ -229,70 +240,72 @@ const [addOnQty, setAddOnQty] = React.useState(1);
     }));
   }
 
-
   function openAddOnForm() {
-  setAddOnName("");
-  setAddOnQty(1);
-  setAddOnFormOpen(true);
-}
+    setAddOnName("");
+    setAddOnQty(1);
+    setAddOnFormOpen(true);
+  }
 
-function cancelAddOnForm() {
-  setAddOnName("");
-  setAddOnQty(1);
-  setAddOnFormOpen(false);
-}
+  function cancelAddOnForm() {
+    setAddOnName("");
+    setAddOnQty(1);
+    setAddOnFormOpen(false);
+  }
 
-function addAddOn() {
-  const name = addOnName.trim();
+  function addAddOn() {
+    const name = addOnName.trim();
 
-  if (!name) return;
+    if (!name) return;
 
-  setDraft((prev) => {
-    const exists = prev.addOns.some(
-      (addon) => addon.name.toLowerCase() === name.toLowerCase()
-    );
+    setDraft((prev) => {
+      const exists = prev.addOns.some(
+        (addon) => addon.name.toLowerCase() === name.toLowerCase()
+      );
 
-    if (exists) return prev;
+      if (exists) return prev;
 
-    return {
+      return {
+        ...prev,
+        addOns: [
+          ...prev.addOns,
+          {
+            name,
+            qty: Math.max(1, Math.min(5, addOnQty)),
+          },
+        ],
+      };
+    });
+
+    cancelAddOnForm();
+  }
+
+  function changeAddOnQty(index: number, delta: number) {
+    setDraft((prev) => ({
       ...prev,
-      addOns: [
-        ...prev.addOns,
-        {
-          name,
-          qty: Math.max(1, Math.min(5, addOnQty)),
-        },
-      ],
-    };
-  });
+      addOns: prev.addOns.map((addon, i) =>
+        i === index
+          ? {
+              ...addon,
+              qty: Math.max(1, Math.min(5, addon.qty + delta)),
+            }
+          : addon
+      ),
+    }));
+  }
 
-  cancelAddOnForm();
-}
-
-function changeAddOnQty(index: number, delta: number) {
-  setDraft((prev) => ({
-    ...prev,
-    addOns: prev.addOns.map((addon, i) =>
-      i === index
-        ? {
-            ...addon,
-            qty: Math.max(1, Math.min(5, addon.qty + delta)),
-          }
-        : addon
-    ),
-  }));
-}
-
-function removeAddOn(index: number) {
-  setDraft((prev) => ({
-    ...prev,
-    addOns: prev.addOns.filter((_, i) => i !== index),
-  }));
-}
+  function removeAddOn(index: number) {
+    setDraft((prev) => ({
+      ...prev,
+      addOns: prev.addOns.filter((_, i) => i !== index),
+    }));
+  }
 
   async function saveChanges() {
     setSaving(true);
     setSaveError(null);
+
+    // Did anything actually change? (avoid re-opening "send" on a no-op save)
+    const hasChanges = JSON.stringify(draft) !== JSON.stringify(makeDraft(quote));
 
     try {
       const response = await fetch(`/api/dashboard/quotes/${quote.id}`, {
@@ -307,7 +320,20 @@ function removeAddOn(index: number) {
         throw new Error(result.error || "Failed to save changes.");
       }
 
-      onQuoteUpdated(result.quote);
+      // An edit invalidates the previously sent email -> allow sending again
+      const wasSent = !!quote.confirmationSentAt;
+      const updated =
+        hasChanges && wasSent
+          ? { ...result.quote, confirmationSentAt: null }
+          : result.quote;
+
+      if (hasChanges && wasSent) {
+        setSent(false); // re-enable the Send button
+        setSendError(null);
+        setWasPreviouslySent(true);
+      }
+
+      onQuoteUpdated(updated);
       setEditing(false);
     } catch (error) {
       setSaveError(
@@ -335,12 +361,12 @@ function removeAddOn(index: number) {
         body: JSON.stringify({
           quoteId: quote.id,
           client: {
-  name: quote.name,
-  phone: quote.phone,
-  email: quote.email,
-  additionalEmail: quote.additionalEmail,
-  budget: quote.budget,
-},
+            name: quote.name,
+            phone: quote.phone,
+            email: quote.email,
+            additionalEmail: quote.additionalEmail,
+            budget: quote.budget,
+          },
           events: quote.events.map((ev) => ({
             id: ev.id,
             label: ev.label,
@@ -365,6 +391,7 @@ function removeAddOn(index: number) {
       }
 
       setSent(true);
+      setWasPreviouslySent(true);
       onQuoteUpdated({ ...quote, confirmationSentAt: new Date() });
     } catch (error) {
       setSendError(
@@ -372,6 +399,30 @@ function removeAddOn(index: number) {
       );
     } finally {
       setSending(false);
+    }
+  }
+
+  async function deleteQuote() {
+    setDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const response = await fetch(`/api/dashboard/quotes/${quote.id}`, {
+        method: "DELETE",
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Failed to delete quote request.");
+      }
+
+      onQuoteDeleted(quote.id);
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error ? error.message : "Failed to delete quote request."
+      );
+      setDeleting(false);
     }
   }
 
@@ -416,14 +467,28 @@ function removeAddOn(index: number) {
 
           <div className="flex shrink-0 items-center gap-2">
             {!editing && (
-              <button
-                type="button"
-                onClick={startEditing}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--secondary)]/40 px-3 py-2 text-xs font-semibold text-[var(--secondary-light)] hover:bg-[var(--secondary)]/10"
-              >
-                <Pencil size={14} />
-                Edit
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={startEditing}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--secondary)]/40 px-3 py-2 text-xs font-semibold text-[var(--secondary-light)] hover:bg-[var(--secondary)]/10"
+                >
+                  <Pencil size={14} />
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteError(null);
+                    setConfirmingDelete(true);
+                  }}
+                  disabled={deleting}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-red-400/40 px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-500/10 disabled:opacity-50"
+                >
+                  <Trash2 size={14} />
+                  Delete
+                </button>
+              </>
             )}
             <button type="button" onClick={onClose} aria-label="Close">
               <X className="h-5 w-5 text-[var(--cream)]/60" />
@@ -455,29 +520,29 @@ function removeAddOn(index: number) {
                     placeholder="Phone"
                   />
                   <input
-  className={inputClass}
-  type="email"
-  value={draft.email}
-  onChange={(e) => setDraft({ ...draft, email: e.target.value })}
-  placeholder="Email"
-/>
+                    className={inputClass}
+                    type="email"
+                    value={draft.email}
+                    onChange={(e) => setDraft({ ...draft, email: e.target.value })}
+                    placeholder="Email"
+                  />
 
-<input
-  className={inputClass}
-  type="email"
-  value={draft.additionalEmail}
-  onChange={(e) =>
-    setDraft({ ...draft, additionalEmail: e.target.value })
-  }
-  placeholder="Additional email"
-/>
+                  <input
+                    className={inputClass}
+                    type="email"
+                    value={draft.additionalEmail}
+                    onChange={(e) =>
+                      setDraft({ ...draft, additionalEmail: e.target.value })
+                    }
+                    placeholder="Additional email"
+                  />
 
-<input
-  className={inputClass}
-  value={draft.budget}
-  onChange={(e) => setDraft({ ...draft, budget: e.target.value })}
-  placeholder="Budget"
-/>
+                  <input
+                    className={inputClass}
+                    value={draft.budget}
+                    onChange={(e) => setDraft({ ...draft, budget: e.target.value })}
+                    placeholder="Budget"
+                  />
                 </div>
 
                 <textarea
@@ -653,6 +718,7 @@ function removeAddOn(index: number) {
                   ))}
                 </div>
               </section>
+
               <section>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--secondary)]">
@@ -865,6 +931,44 @@ function removeAddOn(index: number) {
             </div>
           ) : (
             <>
+              {confirmingDelete && (
+                <div className="mb-5 rounded-[10px] border border-red-400/30 bg-red-500/[0.07] p-4">
+                  <p className="text-sm font-semibold text-red-200">
+                    Delete this quote request?
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--cream)]/60">
+                    This permanently removes {quote.name}&apos;s request, including its
+                    events, services and add-ons, from the database. This cannot be
+                    undone.
+                  </p>
+                  {deleteError && (
+                    <p className="mt-2 text-xs text-red-300">{deleteError}</p>
+                  )}
+                  <div className="mt-3 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setConfirmingDelete(false);
+                        setDeleteError(null);
+                      }}
+                      disabled={deleting}
+                      className="rounded-lg border border-[var(--cream)]/15 px-3 py-2 text-xs text-[var(--cream)]/70 disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={deleteQuote}
+                      disabled={deleting}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-red-500 px-3 py-2 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-60"
+                    >
+                      <Trash2 size={13} />
+                      {deleting ? "Deleting..." : "Yes, delete"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="mb-4 flex items-center justify-between">
                 <p className="text-[.82rem] text-[var(--cream)]/80">
                   Budget: {quote.budget}
@@ -911,7 +1015,7 @@ function removeAddOn(index: number) {
               {showSendForm && (
                 <div className="mt-5 rounded-[10px] border border-[var(--secondary)]/30 bg-[var(--secondary)]/[0.06] p-4">
                   <p className="mb-2 text-[.7rem] font-semibold uppercase tracking-[0.1em] text-[var(--secondary-light)]">
-                    Send quotation
+                    {wasPreviouslySent ? "Send updated quotation" : "Send quotation"}
                   </p>
                   <div className="flex gap-2">
                     <input

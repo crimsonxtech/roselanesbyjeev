@@ -81,6 +81,7 @@ export function PortfolioManager({ initial }: { initial: PortfolioDTO[] }) {
   const [editing, setEditing] = React.useState<PortfolioDTO | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [savingOrder, setSavingOrder] = React.useState(false);
+  const [savedOrder, setSavedOrder] = React.useState(() => initial.map((i) => i.id));
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
 
   const sensors = useSensors(
@@ -93,21 +94,36 @@ export function PortfolioManager({ initial }: { initial: PortfolioDTO[] }) {
     [items]
   );
 
-  async function handleDragEnd({ active, over }: DragEndEvent) {
+  const orderDirty = React.useMemo(
+    () => items.map((i) => i.id).join("|") !== savedOrder.join("|"),
+    [items, savedOrder]
+  );
+
+  React.useEffect(() => {
+    if (!orderDirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [orderDirty]);
+
+  function handleDragEnd({ active, over }: DragEndEvent) {
     if (!over || active.id === over.id) return;
     const from = items.findIndex((i) => i.id === active.id);
     const to = items.findIndex((i) => i.id === over.id);
     if (from < 0 || to < 0) return;
 
-    const prev = items;
-    const next = arrayMove(items, from, to);
-    setItems(next);
+    setItems(arrayMove(items, from, to));
+    setError(null);
+  }
+
+  async function saveOrder() {
+    if (!orderDirty || savingOrder) return;
     setError(null);
     setSavingOrder(true);
     try {
-      await api("/api/dashboard/portfolio/reorder", json("PUT", { ids: next.map((i) => i.id) }));
+      await api("/api/dashboard/portfolio/reorder", json("PUT", { ids: items.map((i) => i.id) }));
+      setSavedOrder(items.map((i) => i.id));
     } catch (e) {
-      setItems(prev);
       setError(e instanceof Error ? e.message : "Could not save the new order");
     } finally {
       setSavingOrder(false);
@@ -133,15 +149,24 @@ export function PortfolioManager({ initial }: { initial: PortfolioDTO[] }) {
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <p className="flex items-center gap-2 text-sm text-neutral-500">
           {items.length} photo{items.length === 1 ? "" : "s"}. Drag by the number to reorder.
+          {orderDirty && <span className="text-amber-400">Unsaved order</span>}
           {savingOrder && (
             <span className="inline-flex items-center gap-1.5 text-neutral-300">
               <Spinner className="h-3.5 w-3.5" /> Saving order
             </span>
           )}
         </p>
-        <button className={btnPrimary} onClick={() => setAdding(true)}>
-          Add photos
-        </button>
+        <div className="flex gap-2">
+          {orderDirty && (
+            <button className={btnPrimary} onClick={() => void saveOrder()} disabled={savingOrder}>
+              {savingOrder && <Spinner />}
+              {savingOrder ? "Saving" : "Save order"}
+            </button>
+          )}
+          <button className={btnPrimary} onClick={() => setAdding(true)}>
+            Add photos
+          </button>
+        </div>
       </div>
 
       {error && (

@@ -36,6 +36,7 @@ export function TestimonialsManager({ initial }: { initial: TestimonialDTO[] }) 
   const [editing, setEditing] = React.useState<TestimonialDTO | "new" | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [savingOrder, setSavingOrder] = React.useState(false);
+  const [savedOrder, setSavedOrder] = React.useState(() => initial.map((i) => i.id));
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
 
   const sensors = useSensors(
@@ -43,15 +44,30 @@ export function TestimonialsManager({ initial }: { initial: TestimonialDTO[] }) 
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  async function handleDragEnd({ active, over }: DragEndEvent) {
+  const orderDirty = React.useMemo(
+    () => items.map((i) => i.id).join("|") !== savedOrder.join("|"),
+    [items, savedOrder]
+  );
+
+  React.useEffect(() => {
+    if (!orderDirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [orderDirty]);
+
+  function handleDragEnd({ active, over }: DragEndEvent) {
     if (!over || active.id === over.id) return;
     const from = items.findIndex((i) => i.id === active.id);
     const to = items.findIndex((i) => i.id === over.id);
     if (from < 0 || to < 0) return;
 
-    const prev = items;
-    const next = arrayMove(items, from, to);
-    setItems(next);
+    setItems(arrayMove(items, from, to));
+    setError(null);
+  }
+
+  async function saveOrder() {
+    if (!orderDirty || savingOrder) return;
     setError(null);
     setSavingOrder(true);
 
@@ -59,11 +75,11 @@ export function TestimonialsManager({ initial }: { initial: TestimonialDTO[] }) 
       const res = await fetch("/api/dashboard/testimonials/reorder", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: next.map((i) => i.id) }),
+        body: JSON.stringify({ ids: items.map((i) => i.id) }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Request failed");
+      setSavedOrder(items.map((i) => i.id));
     } catch (e) {
-      setItems(prev);
       setError(e instanceof Error ? e.message : "Could not save the new order");
     } finally {
       setSavingOrder(false);
@@ -99,15 +115,24 @@ export function TestimonialsManager({ initial }: { initial: TestimonialDTO[] }) 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <p className="flex items-center gap-2 text-sm text-neutral-500">
           Drag a card by its number to change the order on the website.
+          {orderDirty && <span className="text-amber-400">Unsaved order</span>}
           {savingOrder && (
             <span className="inline-flex items-center gap-1.5 text-neutral-300">
               <Spinner className="h-3.5 w-3.5" /> Saving order
             </span>
           )}
         </p>
-        <button className={btnPrimary} onClick={() => setEditing("new")}>
-          Add testimonial
-        </button>
+        <div className="flex gap-2">
+          {orderDirty && (
+            <button className={btnPrimary} onClick={() => void saveOrder()} disabled={savingOrder}>
+              {savingOrder && <Spinner />}
+              {savingOrder ? "Saving" : "Save order"}
+            </button>
+          )}
+          <button className={btnPrimary} onClick={() => setEditing("new")}>
+            Add testimonial
+          </button>
+        </div>
       </div>
 
       {error && (

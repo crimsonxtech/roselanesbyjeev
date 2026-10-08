@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
+import type { AboutContent } from "@/lib/site-content";
 
-export default function AboutSection() {
+export default function AboutSection({ content: copy }: { content: AboutContent }) {
   type ActiveElement = "hero" | "intro" | "story" | "quote" | null;
   const [activeElement, setActiveElement] = React.useState<ActiveElement>(null);
   const lastPointerType = React.useRef<string>("mouse");
@@ -231,10 +232,10 @@ export default function AboutSection() {
   className="min-w-0 max-w-full font-display text-[clamp(2.1rem,8vw,3.3rem)] font-medium leading-[1.05] tracking-[-0.02em] text-[var(--cream)]"
 >
   <span className="italic whitespace-nowrap">
-    About
+    {copy.headingItalic}
   </span>{" "}
   <span className="font-brand inline whitespace-nowrap text-[clamp(2.5rem,8vw,4.3rem)] leading-none text-[var(--secondary-light)]">
-    Roselanes
+    {copy.headingBrand}
   </span>
 </h2>
         </header>
@@ -477,8 +478,8 @@ export default function AboutSection() {
                 `}
               >
 <img
-  src="https://images.roselanesbyjeev.in/roselanesbyjeev/portfolio/about/08cf1a04-712f-4ca9-946a-888e109a2bdf.webp"
-  alt="Portrait of the Roselanes founder"
+  src={copy.image.url}
+  alt={copy.image.alt}
   loading="lazy"
   decoding="async"
   className={`
@@ -538,7 +539,7 @@ export default function AboutSection() {
           text-[var(--cream)]
         "
       >
-        Jeevan
+        {copy.founderName}
       </h4>
 
       <span
@@ -552,7 +553,7 @@ export default function AboutSection() {
           text-[var(--secondary)]
         "
       >
-        Founder &amp; Lead Photographer
+        {copy.founderTitle}
       </span>
     </div>
 
@@ -618,7 +619,7 @@ export default function AboutSection() {
     });
   }}
 >
-  Work With Us
+  {copy.primaryCta}
 </a>
               </Button>
 
@@ -639,7 +640,7 @@ export default function AboutSection() {
                         });
                     }}
                   >
-                    View Portfolio →
+                    {copy.secondaryCta}
                   </a>
               </Button>
             </div>
@@ -687,13 +688,7 @@ export default function AboutSection() {
         
 
               <p className={bodyTextClass}>
-                Roselanes by Jeev Photography is inspired by the language
-                of a rose — where every petal speaks of love, every bloom
-                holds an emotion, and every fragrance carries a feeling.
-                Just like a rose, we believe the purest emotions deserve
-                to be cherished. Through our frames, we preserve the love,
-                laughter, tears, romance, and countless unspoken feelings
-                that make every story beautifully yours.
+                {copy.intro}
               </p>
             </div>
 
@@ -717,15 +712,7 @@ export default function AboutSection() {
  
 
               <p className={bodyTextClass}>
-                I know that one day, these photographs will become more
-                than just photographs to you. Years from now, I want you
-                to look back at a frame and feel it all again — the laughter,
-                the tears, the nervous smiles, and the warmth of the people
-                you love. For me, photography is not just about capturing
-                what happened. It is about understanding your story and
-                preserving the little emotions that make it truly yours.
-                My promise is simple — to capture your day not just as it
-                looked, but as your heart remembers it.
+                {copy.story}
               </p>
             </div>
 
@@ -774,8 +761,7 @@ export default function AboutSection() {
                   text-[var(--secondary-light)]
                 "
               >
-                When the moment fades, let the feeling remain — blooming
-                forever through every frame.
+                {copy.quote}
               </p>
             </div>
           </div>

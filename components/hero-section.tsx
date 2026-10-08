@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Dancing_Script } from "next/font/google"
 import { ZoomableLightboxImage } from "@/components/zoomable-lightbox-image"
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock"
+import type { HeroContent } from "@/lib/site-content"
 
 const dancingScript = Dancing_Script({
   subsets: ["latin"],
@@ -27,33 +28,6 @@ type HeroImage = {
   width: number
   height: number
 }
-
-const HERO_IMAGES: HeroImage[] = [
-  {
-    src: "https://images.roselanesbyjeev.in/roselanesbyjeev/portfolio/hero/a39513c3-f6e6-4ee3-ad7a-742768d2e7c9.webp",
-    alt: "Portrait of the Roselanes photographer",
-    width: 1067,
-    height: 1600,
-  },
-  {
-    src: "https://images.roselanesbyjeev.in/roselanesbyjeev/portfolio/hero/fdf149a3-93d9-487b-a14a-92554065b56f.webp",
-    alt: "Roselanes wedding photography",
-    width: 800,
-    height: 1200,
-  },
-  {
-    src: "https://images.roselanesbyjeev.in/roselanesbyjeev/portfolio/hero/e90ddf4e-df1a-4248-b8ad-5809deeed47e.webp",
-    alt: "Roselanes wedding photography",
-    width: 800,
-    height: 1200,
-  },
-  {
-    src: "https://images.roselanesbyjeev.in/roselanesbyjeev/portfolio/hero/0436c077-4616-4704-aca5-cd6a3513c7d6.webp",
-    alt: "Roselanes wedding photography",
-    width: 800,
-    height: 1200,
-  },
-]
 
 /**
  * Scales its children's font-size so the rendered line
@@ -256,8 +230,19 @@ function StatCard({
   )
 }
 
-export function HeroSection() {
+export function HeroSection({ content }: { content: HeroContent }) {
   const heroRef = React.useRef<HTMLElement>(null)
+
+  const HERO_IMAGES = React.useMemo<HeroImage[]>(
+    () =>
+      content.images.map((image) => ({
+        src: image.url,
+        alt: image.alt,
+        width: image.width,
+        height: image.height,
+      })),
+    [content.images],
+  )
 
   const [countersStarted, setCountersStarted] =
     React.useState(false)
@@ -600,7 +585,7 @@ max-[560px]:[--hero-visual-size:none]
       drop-shadow-[0_1px_1px_rgba(0,0,0,.35)]
     "
   >
-    Luxé wedding and lifestyle photography
+    {content.tagline}
   </span>
 </p>
 
@@ -616,9 +601,9 @@ max-[560px]:[--hero-visual-size:none]
               "
             >
               <FitText targetPercent={0.8} minFontSize={32} maxFontSize={140}>
-                <span className="italic">A</span>{" "}
+                <span className="italic">{content.headlineItalic}</span>{" "}
                 <span className="font-brand text-[var(--secondary)]">
-                  Wedding
+                  {content.headlineBrand}
                 </span>
               </FitText>
               <FitText
@@ -627,7 +612,7 @@ max-[560px]:[--hero-visual-size:none]
                 maxFontSize={110}
                 className="italic"
               >
-                Theory
+                {content.headlineLine2}
               </FitText>
             </h1>
 
@@ -656,11 +641,14 @@ max-[560px]:[--hero-visual-size:none]
                   max-[480px]:gap-[7px]
                 "
               >
-                <StatCard target={500} label="Events" start={countersStarted} />
-
-                <StatCard target={6} label="Years" start={countersStarted} />
-
-                <StatCard target={120} label="Clients" start={countersStarted} />
+                {content.stats.map((stat, index) => (
+                  <StatCard
+                    key={index}
+                    target={stat.value}
+                    label={stat.label}
+                    start={countersStarted}
+                  />
+                ))}
               </div>
 
               {/* ACTION BUTTONS */}
@@ -707,7 +695,7 @@ max-[560px]:[--hero-visual-size:none]
                     href="/quote"
                     className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
                   >
-                    Get a Quote
+                    {content.primaryCta}
                   </a>
                 </Button>
 
@@ -737,7 +725,7 @@ max-[560px]:[--hero-visual-size:none]
                     }}
                     className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
                   >
-                    Explore Portfolio →
+                    {content.secondaryCta}
                   </a>
                 </Button>
               </div>

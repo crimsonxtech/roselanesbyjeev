@@ -74,6 +74,11 @@ export function KanbanBoard({ quotes: initialQuotes }: { quotes: QuoteWithRelati
     setSelected(updated);
   }
 
+  function handleQuoteDeleted(quoteId: string) {
+    setQuotes((prev) => prev.filter((q) => q.id !== quoteId));
+    setSelected(null);
+  }
+
   return (
     <>
       <DndContext id="quotes-kanban" sensors={sensors} onDragEnd={handleDragEnd}>
@@ -96,6 +101,7 @@ export function KanbanBoard({ quotes: initialQuotes }: { quotes: QuoteWithRelati
           quote={selected}
           onClose={() => setSelected(null)}
           onQuoteUpdated={handleQuoteUpdated}
+          onQuoteDeleted={handleQuoteDeleted}
         />
       )}
     </>

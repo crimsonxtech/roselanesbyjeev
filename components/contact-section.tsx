@@ -9,6 +9,7 @@ import {
   Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { telHref, waHref, type ContactContent } from "@/lib/site-content";
 import {
   Select,
   SelectContent,
@@ -201,7 +202,7 @@ function AnimatedPurposeLabel({ text }: { text: string }) {
 const inputClass =
   "h-[54px] w-full rounded-[10px] border border-[var(--glass-border)] bg-[var(--input-bg)] px-4 text-[15px] font-medium text-[var(--cream)] outline-none transition-all duration-300 placeholder:text-[var(--placeholder)] focus:border-[var(--secondary-light)] focus:bg-[var(--input-focus-bg)] focus:ring-4 focus:ring-[var(--secondary)]/15";
 
-export default function ContactSection() {
+export default function ContactSection({ content }: { content: ContactContent }) {
   const [purpose, setPurpose] = React.useState<Purpose | "">("");
   const [purposeError, setPurposeError] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
@@ -310,10 +311,10 @@ export default function ContactSection() {
   className="min-w-0 max-w-full font-display text-[clamp(2.1rem,8vw,3.3rem)] font-medium leading-[1.05] tracking-[-0.02em] text-[var(--cream)]"
 >
   <span className="italic whitespace-nowrap">
-    Let&apos;s Create
+    {content.headingItalic}
   </span>{" "}
   <span className="font-brand inline whitespace-nowrap text-[clamp(2.5rem,10vw,4.3rem)] leading-none text-[var(--secondary-light)]">
-    Something Beautiful
+    {content.headingBrand}
   </span>
 </h2>
 </header>
@@ -329,13 +330,13 @@ export default function ContactSection() {
               }
             >
               <h3 className="mb-2 text-lg font-bold leading-[1.3] text-[var(--cream)]">
-                Hyderabad, Telangana
+                {content.studioTitle}
               </h3>
 
               <p className="m-0 text-sm font-medium leading-[1.6] text-[var(--cream)]/60">
-                Roselanes by Jeev
+                {content.studioLine1}
                 <br />
-                By Appointment Only
+                {content.studioLine2}
               </p>
             </ContactCard>
 
@@ -348,10 +349,10 @@ export default function ContactSection() {
               }
             >
               <a
-                href="mailto:roselanesbyjeev@gmail.com"
+                href={`mailto:${content.email}`}
                 className="block break-words text-[15px] font-bold leading-[1.4] text-[var(--cream)] outline-none transition-colors hover:text-[var(--secondary-light)] focus-visible:text-[var(--secondary-light)] focus-visible:ring-2 focus-visible:ring-[var(--secondary-light)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
               >
-                roselanesbyjeev@gmail.com
+                {content.email}
               </a>
             </ContactCard>
 
@@ -365,10 +366,10 @@ export default function ContactSection() {
                 }
               >
                 <a
-                  href="tel:+919550044475"
+                  href={telHref(content.phone)}
                   className="block text-[14px] font-bold leading-[1.4] text-[var(--cream)] outline-none hover:text-[var(--secondary-light)] focus-visible:text-[var(--secondary-light)] focus-visible:ring-2 focus-visible:ring-[var(--secondary-light)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
                 >
-                  Talk to Us
+                  {content.phoneLabel}
                 </a>
               </ContactCard>
 
@@ -392,18 +393,18 @@ export default function ContactSection() {
                 }
               >
                 <a
-                  href="https://wa.me/919550044475?text=Hi%20Roselanes%20by%20Jeev%2C%20I%27d%20like%20to%20know%20more%20about%20your%20photography%20services."
+                  href={waHref(content.whatsapp, content.whatsappMessage)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block text-[14px] font-bold leading-[1.4] text-[var(--cream)] outline-none hover:text-[var(--secondary-light)] focus-visible:text-[var(--secondary-light)] focus-visible:ring-2 focus-visible:ring-[var(--secondary-light)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-sm"
                 >
-                  Chat with us
+                  {content.whatsappLabel}
                 </a>
               </ContactCard>
             </div>
 
             <a
-              href="https://www.instagram.com/roselanes_by_jeev/"
+              href={content.instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
               data-reveal
@@ -417,13 +418,13 @@ export default function ContactSection() {
 
               <div className="flex h-5 items-center justify-center">
                 <span className="text-[9px] font-extrabold uppercase leading-5 tracking-[0.14em] text-[var(--secondary)]">
-                  Follow our stories
+                  {content.instagramLabel}
                 </span>
               </div>
 
               <div className="flex h-5 items-center justify-center">
                 <span className="text-xs font-extrabold leading-5">
-                  @roselanes_by_jeev
+                  {content.instagramHandle}
                 </span>
               </div>
             </a>
@@ -434,7 +435,7 @@ export default function ContactSection() {
               <span className="relative size-2 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,.8)]">
                 <span className="absolute -inset-1.5 animate-ping rounded-full border border-emerald-400/70" />
               </span>
-              Usually replies within 24 hours.
+              {content.replyNote}
             </div>
           </aside>
 
@@ -643,7 +644,7 @@ export default function ContactSection() {
     className="!min-w-0 !min-h-[46px] flex-1 !px-3 font-bold normal-case !text-[0.68rem] !tracking-[0.04em] sm:!px-4 sm:!text-[0.8rem]"
   >
     <a
-      href="https://www.instagram.com/roselanes_by_jeev/"
+      href={content.instagramUrl}
       target="_blank"
       rel="noopener noreferrer"
       className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"

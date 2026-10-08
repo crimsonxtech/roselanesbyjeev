@@ -9,15 +9,17 @@ import { PortfolioSection } from "@/components/portfolio-section";
 import Footer from "@/components/footer";
 import { prisma } from "@/lib/prisma";
 import { toPortfolioDTO } from "@/lib/portfolio-dto";
+import { getSiteContent } from "@/lib/site-content-server";
 
 // Dashboard edits call revalidatePath("/"), so changes show up immediately.
 // This is only a safety net in case a revalidation is ever missed.
 export const revalidate = 3600;
 
 export default async function Page() {
-  const [images, testimonials] = await Promise.all([
+  const [images, testimonials, content] = await Promise.all([
     prisma.portfolioImage.findMany({ orderBy: { position: "asc" } }),
     prisma.testimonial.findMany({ orderBy: { position: "asc" } }),
+    getSiteContent(),
   ]);
 
   return (
@@ -26,7 +28,7 @@ export default async function Page() {
       <SiteHeader />
 
       <main className="relative z-[1] min-h-screen">
-        <HeroSection />
+        <HeroSection content={content.hero} />
         {images.length > 0 && <PortfolioSection images={images.map(toPortfolioDTO)} />}
         <QuoteSection />
         {testimonials.length > 0 && (
@@ -41,8 +43,8 @@ export default async function Page() {
             }))}
           />
         )}
-        <AboutSection />
-        <ContactSection />
+        <AboutSection content={content.about} />
+        <ContactSection content={content.contact} />
       </main>
       <Footer />
     </>
